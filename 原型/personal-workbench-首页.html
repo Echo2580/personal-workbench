@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>个人工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;800&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* ============ 基础 ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#33342e;          /* 统一轮廓/正文 */
+  --ink-soft:rgba(51,52,46,.55);
+  --paper:#f5f0e2;        /* 窗口纸面 */
+  --paper2:#fbf7ea;       /* 更亮的纸 */
+  --wall:#eae3d0;         /* 墙纸 */
+  --sage:#a9ba99;         /* 灰绿 */
+  --sage-d:#87a077;
+  --slate:#8ba4b6;        /* 灰蓝 */
+  --slate-d:#6d8a9e;
+  --coral:#c95f46;        /* 强调色 */
+  --sun:#e9b44c;
+  --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --px:"VT323","Courier New",monospace;
+  --kai:"Kaiti SC","STKaiti","KaiTi","楷体",serif;
+}
+html,body{height:100%}
+body{
+  background:#d8d1bf;
+  font-family:var(--sans);
+  color:var(--ink);
+  display:flex;
+  overflow:auto;
+}
+.stage{
+  position:relative;
+  width:1440px;height:900px;flex:0 0 auto;
+  margin:auto;
+  background:var(--wall);
+  overflow:hidden;
+  box-shadow:0 0 0 2px var(--ink),0 30px 80px rgba(40,42,36,.35);
+}
+/* 墙纸：细点阵 + 两块安静的色团 */
+.wall-dots{
+  position:absolute;inset:0;
+  background-image:radial-gradient(rgba(51,52,46,.07) 1px,transparent 1.5px);
+  background-size:9px 9px;
+}
+.wall-blob1{
+  position:absolute;left:-60px;top:40px;width:840px;height:560px;
+  background:radial-gradient(closest-side,rgba(198,212,182,.85),rgba(198,212,182,0) 72%);
+}
+.wall-blob2{
+  position:absolute;right:40px;top:-120px;width:640px;height:480px;
+  background:radial-gradient(closest-side,rgba(222,216,196,.9),rgba(222,216,196,0) 70%);
+}
+/* 桌面区域（下半部分的“桌子”） */
+.desk{
+  position:absolute;left:0;right:0;top:560px;bottom:0;
+  background:#ccd4bc;
+  border-top:2px solid var(--ink-soft);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35);
+}
+.desk::after{ /* 桌面上的细点 */
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(51,52,46,.05) 1px,transparent 1.5px);
+  background-size:9px 9px;
+}
+
+/* ============ 顶部菜单栏（低强调导航） ============ */
+.menubar{
+  position:absolute;left:0;right:0;top:0;height:36px;z-index:40;
+  background:var(--paper);
+  border-bottom:2px solid var(--ink);
+  display:flex;align-items:center;padding:0 18px;gap:22px;
+}
+.mb-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;letter-spacing:1px}
+.mb-logo canvas{width:18px;height:18px;image-rendering:pixelated}
+.mb-menu{display:flex;gap:20px;font-size:13px;color:var(--ink-soft)}
+.mb-menu span{cursor:default}
+.mb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.mb-time{font-family:var(--px);font-size:19px;letter-spacing:1px;padding-top:2px}
+.mb-gear{width:17px;height:17px;image-rendering:pixelated;opacity:.7}
+
+/* ============ 通用：复古窗口 ============ */
+.window{
+  position:absolute;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  border-radius:10px;
+  box-shadow:7px 9px 0 rgba(51,52,46,.13);
+}
+.titlebar{
+  height:30px;border-bottom:2px solid var(--ink);
+  border-radius:8px 8px 0 0;
+  display:flex;align-items:center;gap:10px;padding:0 10px;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(51,52,46,.05) 3px 5px),
+    var(--sage);
+}
+.titlebar.blue{background:
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(51,52,46,.05) 3px 5px),
+    var(--slate);}
+.tb-btn{width:13px;height:13px;border:2px solid var(--ink);border-radius:3px;background:var(--paper2);flex:0 0 auto}
+.tb-btn.close{background:var(--coral)}
+.tb-title{flex:1;text-align:center;font-size:13.5px;font-weight:700;letter-spacing:2px}
+.tb-spacer{width:13px;flex:0 0 auto}
+
+/* ============ 复古电视 ============ */
+.tv{position:absolute;left:96px;top:112px;width:474px;z-index:10}
+.tv-shadow{
+  position:absolute;left:24px;right:24px;top:434px;height:26px;
+  background:radial-gradient(closest-side,rgba(51,52,46,.28),rgba(51,52,46,0) 75%);
+}
+.antenna{position:absolute;top:-58px;left:200px;width:3px;height:78px;background:var(--ink);border-radius:2px;transform-origin:bottom center;z-index:-1}
+.antenna::after{content:"";position:absolute;top:-7px;left:-3.5px;width:10px;height:10px;border-radius:50%;background:var(--ink)}
+.antenna.a1{transform:rotate(-26deg)}
+.antenna.a2{transform:rotate(24deg);left:238px;height:88px;top:-66px}
+.tv-case{
+  position:relative;width:474px;height:404px;
+  background:linear-gradient(180deg,#f2e9d3 0%,#e9dfc5 55%,#ddd0b0 100%);
+  border:2.5px solid var(--ink);
+  border-radius:24px;
+  box-shadow:
+    inset 0 3px 0 rgba(255,255,255,.65),
+    inset 0 -6px 0 rgba(51,52,46,.08),
+    9px 11px 0 rgba(51,52,46,.14);
+}
+.tv-bezel{
+  position:absolute;left:22px;top:24px;width:334px;height:304px;
+  background:#41413a;border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.45);
+  padding:11px;
+}
+.tv-screen-wrap{position:relative;width:100%;height:100%;border-radius:10px;overflow:hidden;background:#1d2220}
+#tvScreen{width:100%;height:100%;display:block;image-rendering:pixelated}
+.scanlines{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(10,14,12,.16) 0 1px,transparent 1px 3px);
+}
+.glare{
+  position:absolute;inset:0;pointer-events:none;border-radius:10px;
+  background:
+    linear-gradient(118deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.05) 22%,transparent 34%),
+    radial-gradient(120% 90% at 50% 45%,transparent 62%,rgba(10,14,12,.32) 100%);
+}
+.tv-panel{position:absolute;right:20px;top:24px;width:88px;bottom:24px}
+.knob{
+  position:relative;width:46px;height:46px;margin:6px auto 0;
+  border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#f6efdd,#d9cba6 62%,#bfae87);
+  border:2.5px solid var(--ink);
+  box-shadow:0 3px 0 rgba(51,52,46,.35),inset 0 -3px 4px rgba(51,52,46,.18);
+}
+.knob::before{ /* 防滑纹 */
+  content:"";position:absolute;inset:4px;border-radius:50%;
+  background:repeating-conic-gradient(rgba(51,52,46,.22) 0 4deg,transparent 4deg 12deg);
+  -webkit-mask:radial-gradient(circle,transparent 56%,#000 57%);
+          mask:radial-gradient(circle,transparent 56%,#000 57%);
+}
+.knob i{position:absolute;left:50%;top:4px;width:3.5px;height:13px;margin-left:-1.75px;background:var(--ink);border-radius:2px}
+.knob.k2 i{transform:rotate(52deg);transform-origin:1.75px 19px}
+.knob-label{font-family:var(--px);font-size:13px;text-align:center;letter-spacing:1px;color:#5a5342;margin-top:3px}
+.speaker{
+  position:absolute;left:4px;right:4px;top:142px;height:118px;
+  border:2px solid var(--ink);border-radius:9px;
+  background:#e6dcc0;
+  box-shadow:inset 0 2px 5px rgba(51,52,46,.25);
+  overflow:hidden;
+}
+.speaker::before{
+  content:"";position:absolute;inset:5px;border-radius:5px;
+  background:repeating-linear-gradient(0deg,#57503f 0 3.5px,transparent 3.5px 10px);
+}
+.tv-led{
+  position:absolute;right:8px;bottom:8px;width:9px;height:9px;border-radius:50%;
+  background:var(--coral);border:1.5px solid var(--ink);
+  box-shadow:0 0 7px rgba(201,95,70,.9);
+}
+.tv-brand{
+  position:absolute;left:34px;bottom:14px;
+  font-family:var(--px);font-size:16px;letter-spacing:2px;color:#6a6147;
+}
+.tv-feet{position:absolute;left:0;right:0;top:404px;height:18px}
+.tv-feet span{
+  position:absolute;top:0;width:64px;height:18px;background:#3b3a32;
+  border:2.5px solid var(--ink);border-top:none;
+}
+.tv-feet span:first-child{left:56px;border-radius:0 0 9px 12px;transform:skewX(-12deg)}
+.tv-feet span:last-child{right:56px;border-radius:0 0 12px 9px;transform:skewX(12deg)}
+
+/* ============ 像素鲸鱼 ============ */
+.whale{position:absolute;left:606px;top:400px;z-index:11}
+.whale-shadow{
+  position:absolute;left:18px;top:138px;width:190px;height:22px;
+  background:radial-gradient(closest-side,rgba(51,52,46,.38),rgba(51,52,46,0) 75%);
+}
+#whalePx{width:224px;height:144px;image-rendering:pixelated;display:block;position:relative}
+.whale-tag{
+  position:absolute;left:132px;top:130px;
+  background:var(--paper2);border:1.5px solid var(--ink);border-radius:5px;
+  padding:2px 9px 3px;font-size:11.5px;font-weight:700;letter-spacing:1px;
+  transform:rotate(-5deg);
+  box-shadow:2.5px 3px 0 rgba(51,52,46,.18);
+  white-space:nowrap;
+}
+.whale-tag::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--coral);margin-right:5px;vertical-align:1px}
+
+/* ============ 撕页台历 ============ */
+.cal{
+  position:absolute;left:1092px;top:84px;width:228px;z-index:12;
+  transform:rotate(1.6deg);
+  filter:drop-shadow(6px 8px 0 rgba(51,52,46,.13));
+}
+.cal-top{
+  position:relative;height:36px;
+  background:linear-gradient(180deg,#d06a50,#b9523a);
+  border:2px solid var(--ink);border-bottom:none;
+  border-radius:10px 10px 0 0;
+}
+.cal-top::after{content:"";position:absolute;left:0;right:0;top:5px;height:4px;background:rgba(255,255,255,.25)}
+.ring{
+  position:absolute;top:-9px;width:15px;height:24px;border-radius:8px;
+  border:3px solid #6f6a5c;background:linear-gradient(180deg,#fdfaf0,#cfc8b2);
+  box-shadow:0 2px 2px rgba(51,52,46,.3);
+}
+.ring.r1{left:52px}.ring.r2{right:52px}
+.cal-body{
+  background:var(--paper2);
+  border:2px solid var(--ink);
+  border-top:2px dashed rgba(51,52,46,.4);
+  padding:14px 0 26px;text-align:center;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),
+    95.8% 100%,91.6% calc(100% - 7px),87.4% 100%,83.2% calc(100% - 7px),
+    79% 100%,74.8% calc(100% - 7px),70.6% 100%,66.4% calc(100% - 7px),
+    62.2% 100%,58% calc(100% - 7px),53.8% 100%,49.6% calc(100% - 7px),
+    45.4% 100%,41.2% calc(100% - 7px),37% 100%,32.8% calc(100% - 7px),
+    28.6% 100%,24.4% calc(100% - 7px),20.2% 100%,16% calc(100% - 7px),
+    11.8% 100%,7.6% calc(100% - 7px),3.4% 100%,0 calc(100% - 7px));
+}
+.cal-year{font-size:13px;letter-spacing:5px;color:var(--ink-soft);font-weight:700}
+.cal-day{font-family:var(--serif);font-weight:800;font-size:76px;line-height:1.06;letter-spacing:2px}
+.cal-week{display:inline-block;font-size:14.5px;font-weight:700;letter-spacing:6px;padding:2px 14px 2px 20px;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);margin-top:2px}
+.cal-weather{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:13px;font-size:13.5px;font-weight:600}
+.cal-weather canvas{width:34px;height:26px;image-rendering:pixelated}
+.cal-yi{margin-top:10px;font-family:var(--kai);font-size:13px;color:var(--ink-soft);letter-spacing:2px}
+
+/* ============ 今日待办 ============ */
+.todo{left:1016px;top:372px;width:344px;z-index:13}
+.todo-list{padding:12px 18px 16px}
+.todo-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 2px;font-size:15px;
+  border-bottom:2px dotted rgba(51,52,46,.25);
+}
+.todo-item:last-child{border-bottom:none}
+.checkbox{
+  width:19px;height:19px;flex:0 0 auto;
+  border:2px solid var(--ink);border-radius:5px;background:var(--paper2);
+  box-shadow:inset 0 1.5px 0 rgba(51,52,46,.12);
+  display:flex;align-items:center;justify-content:center;
+}
+.todo-item.done .todo-text{color:rgba(51,52,46,.45);text-decoration:line-through 2px rgba(51,52,46,.4)}
+.todo-foot{
+  display:flex;justify-content:space-between;
+  font-family:var(--px);font-size:14px;color:var(--ink-soft);
+  padding:0 18px 12px;letter-spacing:1px;
+}
+
+/* ============ 随手记便笺 ============ */
+.note{
+  position:absolute;left:706px;top:104px;width:262px;z-index:9;
+  background:linear-gradient(180deg,#f9ecae,#f4e193);
+  border:1.5px solid rgba(51,52,46,.55);
+  padding:34px 22px 20px;
+  transform:rotate(2.6deg);
+  box-shadow:5px 7px 0 rgba(51,52,46,.12);
+}
+.note::after{ /* 右下角微卷 */
+  content:"";position:absolute;right:0;bottom:0;width:26px;height:26px;
+  background:linear-gradient(315deg,var(--wall) 0 46%,#e8d67e 50%,#f4e193 100%);
+  border-left:1.5px solid rgba(51,52,46,.35);border-top:1.5px solid rgba(51,52,46,.35);
+}
+.tape{
+  position:absolute;top:-13px;left:50%;margin-left:-47px;width:94px;height:27px;
+  background:
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 6px,transparent 6px 12px),
+    rgba(146,170,138,.82);
+  border-left:2px dashed rgba(51,52,46,.3);border-right:2px dashed rgba(51,52,46,.3);
+  transform:rotate(-2.5deg);
+  box-shadow:0 2px 3px rgba(51,52,46,.15);
+}
+.note-text{font-family:var(--kai);font-size:15.5px;line-height:2.05;letter-spacing:1px}
+.note-sign{margin-top:10px;text-align:right;font-family:var(--kai);font-size:13px;color:rgba(51,52,46,.6);letter-spacing:1px;padding-right:22px}
+
+/* ============ 项目入口 ============ */
+.project{left:112px;top:612px;width:352px;z-index:12}
+.project-body{display:flex;align-items:center;gap:18px;padding:20px 22px 22px}
+#folderPx{width:74px;height:60px;image-rendering:pixelated;flex:0 0 auto}
+.project-info{flex:1}
+.project-name{font-size:17px;font-weight:800;letter-spacing:1.5px}
+.project-sub{margin-top:5px;font-size:12.5px;color:var(--ink-soft);letter-spacing:1px}
+.btn-open{
+  margin-top:13px;display:inline-block;
+  font-family:var(--sans);font-size:13.5px;font-weight:700;letter-spacing:3px;
+  color:var(--paper2);background:var(--coral);
+  border:2px solid var(--ink);border-radius:7px;
+  padding:7px 22px 8px 25px;cursor:pointer;
+  box-shadow:3.5px 3.5px 0 var(--ink);
+}
+.btn-open:active{transform:translate(2px,2px);box-shadow:1.5px 1.5px 0 var(--ink)}
+
+/* ============ 桌面小盆栽（点缀物件） ============ */
+.plant{position:absolute;left:656px;top:676px;z-index:8}
+.plant-shadow{position:absolute;left:-6px;top:74px;width:76px;height:14px;background:radial-gradient(closest-side,rgba(51,52,46,.25),transparent 75%)}
+#plantPx{width:64px;height:76px;image-rendering:pixelated;display:block}
+
+/* ============ 热饮杯（点缀物件） ============ */
+.mug{position:absolute;left:1176px;top:692px;z-index:8}
+.mug-shadow{position:absolute;left:-8px;top:72px;width:88px;height:14px;background:radial-gradient(closest-side,rgba(51,52,46,.25),transparent 75%)}
+#mugPx{width:70px;height:75px;image-rendering:pixelated;display:block}
+
+/* ============ 角落信息（低强调） ============ */
+.corner-meta{
+  position:absolute;right:20px;bottom:14px;z-index:40;
+  font-family:var(--px);font-size:15px;letter-spacing:1.5px;
+  color:rgba(51,52,46,.5);
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- 墙纸与桌面 -->
+  <div class="wall-blob1"></div>
+  <div class="wall-blob2"></div>
+  <div class="desk"></div>
+  <div class="wall-dots"></div>
+
+  <!-- 菜单栏 -->
+  <header class="menubar">
+    <div class="mb-logo"><canvas id="logoPx" width="12" height="12"></canvas>个人工作台</div>
+    <nav class="mb-menu"><span>文件</span><span>编辑</span><span>窗口</span><span>关于</span></nav>
+    <div class="mb-right">
+      <canvas id="gearPx" class="mb-gear" width="12" height="12"></canvas>
+      <span class="mb-time">17:42</span>
+    </div>
+  </header>
+
+  <!-- 复古电视 -->
+  <section class="tv">
+    <div class="antenna a1"></div>
+    <div class="antenna a2"></div>
+    <div class="tv-case">
+      <div class="tv-bezel">
+        <div class="tv-screen-wrap">
+          <canvas id="tvScreen" width="64" height="48"></canvas>
+          <div class="scanlines"></div>
+          <div class="glare"></div>
+        </div>
+      </div>
+      <div class="tv-panel">
+        <div class="knob k1"><i></i></div>
+        <div class="knob-label">VOL</div>
+        <div class="knob k2" style="margin-top:10px"><i></i></div>
+        <div class="knob-label">CH</div>
+        <div class="speaker"></div>
+        <div class="tv-led"></div>
+      </div>
+      <div class="tv-brand">WORKBENCH·WB-14</div>
+    </div>
+    <div class="tv-feet"><span></span><span></span></div>
+    <div class="tv-shadow"></div>
+  </section>
+
+  <!-- 像素鲸鱼 -->
+  <div class="whale">
+    <div class="whale-shadow"></div>
+    <canvas id="whalePx" width="28" height="18"></canvas>
+    <div class="whale-tag">小蓝</div>
+  </div>
+
+  <!-- 随手记便笺 -->
+  <aside class="note">
+    <div class="tape"></div>
+    <p class="note-text">首页就先这样吧：<br>一台电视、一条鲸鱼，<br>台历和待办放在手边。<br>剩下的工具，慢慢往里放。</p>
+    <p class="note-sign">—— 10.15 深夜</p>
+  </aside>
+
+  <!-- 撕页台历 -->
+  <aside class="cal">
+    <div class="cal-top"><span class="ring r1"></span><span class="ring r2"></span></div>
+    <div class="cal-body">
+      <div class="cal-year">2026 · 十月</div>
+      <div class="cal-day">16</div>
+      <div class="cal-week">星期五</div>
+      <div class="cal-weather"><canvas id="wxPx" width="17" height="13"></canvas>多云转晴&nbsp;&nbsp;18° / 24°</div>
+      <div class="cal-yi">宜：把想法做出来</div>
+    </div>
+  </aside>
+
+  <!-- 今日待办 -->
+  <section class="window todo">
+    <div class="titlebar blue">
+      <span class="tb-btn close"></span>
+      <span class="tb-title">今日待办</span>
+      <span class="tb-btn"></span>
+    </div>
+    <div class="todo-list">
+      <div class="todo-item done">
+        <span class="checkbox">
+          <svg width="15" height="13" viewBox="0 0 15 13"><path d="M2 7 L6 11 L13 2" fill="none" stroke="#c95f46" stroke-width="3" stroke-linecap="square"/></svg>
+        </span>
+        <span class="todo-text">确定首页方案</span>
+      </div>
+      <div class="todo-item"><span class="checkbox"></span><span class="todo-text">整理项目资料</span></div>
+      <div class="todo-item"><span class="checkbox"></span><span class="todo-text">阅读 Python 笔记</span></div>
+    </div>
+    <div class="todo-foot"><span>TODO.TXT</span><span>周五</span></div>
+  </section>
+
+  <!-- 项目入口 -->
+  <section class="window project">
+    <div class="titlebar">
+      <span class="tb-btn close"></span>
+      <span class="tb-title">项目</span>
+      <span class="tb-btn"></span>
+    </div>
+    <div class="project-body">
+      <canvas id="folderPx" width="22" height="18"></canvas>
+      <div class="project-info">
+        <div class="project-name">个人工作台</div>
+        <div class="project-sub">项目启动器 · v0.1</div>
+        <button class="btn-open">打开</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 小盆栽 -->
+  <div class="plant">
+    <div class="plant-shadow"></div>
+    <canvas id="plantPx" width="16" height="19"></canvas>
+  </div>
+
+  <!-- 热饮杯 -->
+  <div class="mug">
+    <div class="mug-shadow"></div>
+    <canvas id="mugPx" width="14" height="15"></canvas>
+  </div>
+
+  <div class="corner-meta">PERSONAL WORKBENCH · V0.1 · 2026</div>
+</div>
+
+<script>
+/* ---------- 小于 1440×900 的窗口等比缩放预览 ---------- */
+function fitStage(){
+  if(location.search.includes('nofit')) return;
+  const s = Math.min(innerWidth / 1440, innerHeight / 900, 1);
+  document.querySelector('.stage').style.zoom = s;
+}
+addEventListener('resize', fitStage);
+fitStage();
+
+/* ---------- 像素绘制工具 ---------- */
+function px(id, map, pal){
+  const c = document.getElementById(id), x = c.getContext('2d');
+  map.forEach((row, y) => {
+    [...row].forEach((ch, i) => {
+      const col = pal[ch];
+      if(col){ x.fillStyle = col; x.fillRect(i, y, 1, 1); }
+    });
+  });
+}
+
+/* ---------- 菜单栏图标 ---------- */
+px('logoPx', [
+  ".oooooooooo.",
+  "obbbbbbbbbbo",
+  "obwwwwwwwwbo",
+  "obwggggggwbo",
+  "obwg....gwbo",
+  "obwggggggwbo",
+  "obwwwwwwwwbo",
+  "obbbbbbbbbbo",
+  ".oooooooooo.",
+  "....obbo....",
+  "..oobbbboo..",
+  ".oooooooooo."
+], {o:'#33342e', b:'#e9dfc5', w:'#8ba4b6', g:'#f5f0e2'});
+
+px('gearPx', [
+  ".....oo.....",
+  ".....oo.....",
+  "..o.oooo.o..",
+  "..oooooooo..",
+  ".ooo.oo.ooo.",
+  ".oo..oo..oo.",
+  ".oo..oo..oo.",
+  ".ooo.oo.ooo.",
+  "..oooooooo..",
+  "..o.oooo.o..",
+  ".....oo.....",
+  ".....oo....."
+], {o:'#33342e'});
+
+/* ---------- 像素鲸鱼（面向电视） ---------- */
+px('whalePx', [
+  "......s.....s...............",
+  ".....s.s.....s..............",
+  "......s.....................",
+  "............................",
+  "....ooooo...................",
+  "..obbbbbbbo.............oo..",
+  ".obbbbbbbbo..........obbo...",
+  ".obwbbbbbbbbo.......obbbo...",
+  "obwkbbbbbbbbbo......obbbo...",
+  "obkkbbbbbbbbbbo...obbo......",
+  "obbbbbbbbbbbbbbo..obbbo.....",
+  "oblbbbbbbbbbbbbdo.obbbo.....",
+  "obllbbbbbbbbbbdddoobbbo.....",
+  "oblllbbbbbbbbbdddddbbo......",
+  ".oblllbbbbbbbbddddoo........",
+  "..obllbbbbbbbddddo..........",
+  "...obbbbbbbbbbddo...........",
+  ".....ooooooooo.............."
+], {
+  o:'#23405c', b:'#4e93d9', d:'#3a72b4', l:'#cfe9f8',
+  w:'#ffffff', k:'#23405c', s:'#9fd3ec'
+});
+
+/* ---------- 天气：云后太阳 ---------- */
+px('wxPx', [
+  "......yyy..........",
+  ".....yyyyy.........",
+  "..y.yyyyyyy........",
+  ".....yyyyy.........",
+  "....ooyyyoo........",
+  "...owwwwwwww.......",
+  "..owwwwwwwwww......",
+  ".owwwwwwwwwwwwo....",
+  ".owwwwwwwwwwwwo....",
+  "..owwwwwwwwwwwwo...",
+  "...oooooooooooo....",
+], {y:'#e9b44c', o:'#33342e', w:'#fdfef9'});
+
+/* ---------- 文件夹 ---------- */
+px('folderPx', [
+  "...ooooooo..............",
+  "..obbbbbbboo............",
+  ".obbbbbbbbbbo...........",
+  ".ooooooooooooooooooooo..",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obwwbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "obbbbbbbbbbbbbbbbbbbbbbo",
+  "oooooooooooooooooooooooo"
+], {o:'#33342e', b:'#9db8c9', w:'#c9dbe6'});
+
+/* ---------- 小盆栽 ---------- */
+px('plantPx', [
+  "......gg........",
+  "......gg....g...",
+  "..g...gg...gg...",
+  "..gg..gg...gg...",
+  "..gg.gggg.ggg...",
+  "...ggggggggg....",
+  "...ggggggggg....",
+  "....ggggggg.....",
+  "....ggggggg.....",
+  ".....ggggg......",
+  "..ttttttttttt...",
+  ".ttttttttttttt..",
+  ".tthhttttttttt..",
+  ".tthhttttttttt..",
+  ".ttttttttttttt..",
+  "..ttttttttttt...",
+  "...ttttttttt....",
+  "....ttttttt.....",
+  ".....ttttt......"
+], {g:'#5f8371', t:'#b9523a', h:'#d98a72'});
+
+/* ---------- 热饮杯 ---------- */
+px('mugPx', [
+  "...s...s......",
+  "....s.s.......",
+  "...s...s......",
+  "..............",
+  ".oooooooooo...",
+  ".owmmmmmmmo...",
+  ".ommmmmmmmo.o.",
+  ".ommmmmmmmo.oo",
+  ".ommmmmmmmo.oo",
+  ".ommmmmmmmo.o.",
+  ".ommmmmmmmo...",
+  ".ommmmmmmmo...",
+  "..ommmmmmmo...",
+  "...oooooo....."
+], {o:'#33342e', m:'#8ba4b6', w:'#c9dbe6', s:'rgba(51,52,46,.35)'});
+
+/* ---------- 电视屏幕：像素风景 ---------- */
+(function(){
+  const c = document.getElementById('tvScreen'), x = c.getContext('2d');
+  const W = 64, H = 48, HOR = 30;             // 海平线
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+  /* 天空：6 个色带 */
+  const sky = ['#8fb8ae','#9dc0b4','#acc9ba','#bcd2c1','#cddbc7','#dfe4cc'];
+  for(let y = 0; y < HOR; y++){
+    x.fillStyle = sky[Math.min(sky.length - 1, Math.floor(y * sky.length / HOR))];
+    x.fillRect(0, y, W, 1);
+  }
+  /* 色带交界抖动 */
+  for(let y = 4; y < HOR; y += 5){
+    for(let i = 0; i < 10; i++){
+      const xx = Math.floor(rnd() * W);
+      x.fillStyle = sky[Math.min(sky.length - 1, Math.floor((y + 1) * sky.length / HOR))];
+      x.fillRect(xx, y, 1, 1);
+    }
+  }
+  /* 太阳（像素圆） */
+  const sx = 20, sy = 11, r = 5;
+  for(let dy = -r; dy <= r; dy++) for(let dx = -r; dx <= r; dx++){
+    const d = dx*dx + dy*dy;
+    if(d <= r*r + 2){
+      x.fillStyle = d <= (r-2)*(r-2) ? '#f6d788' : '#e9b44c';
+      x.fillRect(sx + dx, sy + dy, 1, 1);
+    }
+  }
+  /* 云 */
+  function cloud(cx, cy, w, col){
+    x.fillStyle = col;
+    x.fillRect(cx, cy, w, 2);
+    x.fillRect(cx + 2, cy - 2, Math.floor(w/2), 2);
+    x.fillRect(cx + Math.floor(w/2) + 2, cy - 1, Math.floor(w/3), 1);
+  }
+  cloud(38, 7, 12, '#eef4ea');
+  cloud(6, 17, 9, '#e3ecdf');
+  cloud(47, 15, 8, '#e9f0e4');
+
+  /* 远山 */
+  const far = [0,0,0,1,1,2,2,3,3,4,4,5,5,4,4,3,3,2,3,4,5,6,6,7,7,6,6,5,5,4,4,3,4,5,5,6,7,8,8,7,7,6,6,5,4,4,3,3,2,2,3,3,4,4,3,3,2,2,1,1,1,0,0,0];
+  x.fillStyle = '#87a796';
+  far.forEach((h, i) => h && x.fillRect(i, HOR - 6 - h, 1, h + 6));
+  /* 近山 */
+  const near = [0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,8,9,9,8,8,7,6,6,5,4,3,2,1,0,0,0,0,0,0,0,1,2,2,3,4,5,5,6,6,5,4,4,3,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  x.fillStyle = '#5f8371';
+  near.forEach((h, i) => h && x.fillRect(i, HOR - h, 1, h));
+  /* 山上的小树 */
+  x.fillStyle = '#4a6b5a';
+  [[15,4],[17,5],[42,3],[44,4]].forEach(([tx,ty]) => {
+    x.fillRect(tx, HOR - ty - 2, 1, 2); x.fillRect(tx - 1, HOR - ty - 1, 3, 1);
+  });
+
+  /* 海 */
+  const sea = ['#7ea9b6','#74a0ae','#6996a5','#5f8d9c','#548393','#4a7a8a'];
+  for(let y = HOR; y < H; y++){
+    x.fillStyle = sea[Math.min(sea.length - 1, Math.floor((y - HOR) * sea.length / (H - HOR)))];
+    x.fillRect(0, y, W, 1);
+  }
+  /* 波光（含太阳倒影） */
+  for(let i = 0; i < 42; i++){
+    const xx = Math.floor(rnd() * W), yy = HOR + 1 + Math.floor(rnd() * (H - HOR - 2));
+    const nearSun = Math.abs(xx - sx) < 5;
+    x.fillStyle = nearSun ? '#f2cf7d' : '#cfe6e8';
+    x.fillRect(xx, yy, nearSun ? 2 : 1 + Math.floor(rnd() * 2), 1);
+  }
+  /* 小帆船 */
+  x.fillStyle = '#3b4a44';
+  x.fillRect(47, HOR + 7, 6, 2); x.fillRect(48, HOR + 9, 4, 1);
+  x.fillStyle = '#c95f46';
+  x.fillRect(50, HOR + 1, 1, 6); x.fillRect(51, HOR + 2, 2, 4);
+  x.fillStyle = '#f5f0e2';
+  x.fillRect(48, HOR + 2, 2, 5); x.fillRect(49, HOR + 1, 1, 1);
+
+  /* 频道角标 CH 03（3×5 像素字） */
+  const glyph = {
+    'C': ['111','100','100','100','111'],
+    'H': ['101','101','111','101','101'],
+    '0': ['111','101','101','101','111'],
+    '3': ['111','001','111','001','111']
+  };
+  function badge(str, px, py, col){
+    x.fillStyle = col;
+    [...str].forEach((ch, i) => {
+      if(ch === ' ') return;
+      glyph[ch].forEach((row, dy) => [...row].forEach((v, dx) => {
+        if(v === '1') x.fillRect(px + i * 4 + dx, py + dy, 1, 1);
+      }));
+    });
+  }
+  badge('CH 03', 47, 4, 'rgba(30,50,45,.55)');
+  badge('CH 03', 46, 3, '#eef4ea');
+})();
+</script>
+</body>
+</html>
