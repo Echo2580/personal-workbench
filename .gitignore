@@ -23,3 +23,8 @@ docs/local-evidence/
 .coverage
 htmlcov/
 .superpowers/
+
+# 前端依赖与构建产物（兜底：子项目自带 .gitignore，这里防根目录误操作）
+node_modules/
+dist/
+.vite/
