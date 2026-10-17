@@ -1,14 +1,11 @@
 @echo off
 REM ---------------------------------------------------------------
 REM Development launcher.
-REM Runs the workbench against an isolated data directory so that
-REM experiments never touch the daily-use instance stored in
-REM %LOCALAPPDATA%\PersonalWorkbench.
+REM Delegates to scripts\start-dev.ps1, which points the workbench at
+REM an isolated data directory so experiments never touch the
+REM daily-use instance stored in %LOCALAPPDATA%\PersonalWorkbench.
 REM
-REM To temporarily run against the real (daily) data instead:
-REM   set WORKBENCH_DATA_DIR=
-REM   start.cmd
+REM Desktop shortcut and this .cmd share the same logic source.
 REM ---------------------------------------------------------------
-set "WORKBENCH_DATA_DIR=%LOCALAPPDATA%\PersonalWorkbench-dev"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-dev.ps1"
 if errorlevel 1 pause
