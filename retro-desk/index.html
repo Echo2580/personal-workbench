@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retro Desk · 复古工作台</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="room">
+
+  <!-- 顶部菜单栏 -->
+  <div id="menuBar">
+    <span class="mb-logo">◆</span>
+    <span class="mb-item mb-bold">Retro Desk</span>
+    <span class="mb-item">文件</span>
+    <span class="mb-item">编辑</span>
+    <span class="mb-item">窗口</span>
+    <span class="mb-item">特别</span>
+    <span class="mb-spacer"></span>
+    <span class="mb-item" id="menuDate"></span>
+  </div>
+
+  <!-- 便笺（左上，经典窗框 + 泛黄纸面） -->
+  <section class="desk-object window paper-win" id="memo">
+    <div class="titlebar drag-handle">
+      <span class="tb-box"></span>
+      <span class="tb-title">便笺</span>
+      <span class="tb-btns"><button class="tb-collapse" type="button" title="收起">□</button></span>
+    </div>
+    <div class="memo-paper">
+      <div class="memo-pin"></div>
+      <textarea id="memoText" placeholder="随手记点什么…" spellcheck="false"></textarea>
+      <div class="memo-actions">
+        <button id="memoSave" type="button">保存</button>
+        <button id="memoToTodo" type="button">转为待办</button>
+        <span id="memoHint" class="hint"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 撕页日历（左下） -->
+  <section class="desk-object window" id="calendar">
+    <div class="titlebar drag-handle">
+      <span class="tb-box"></span>
+      <span class="tb-title">日历</span>
+      <span class="tb-btns"><button class="tb-collapse" type="button" title="收起">□</button></span>
+    </div>
+    <div class="cal-card">
+      <div class="cal-body" id="calBody" title="点击展开 / 收起月历">
+        <div class="cal-weekday" id="calWeekday"></div>
+        <div class="cal-day" id="calDay"></div>
+        <div class="cal-month" id="calMonthLabel"></div>
+        <div class="cal-weather" id="calWeather"></div>
+      </div>
+      <div class="cal-month-view hidden" id="calMonthView"></div>
+      <div class="cal-tip">点击日历展开月历</div>
+    </div>
+  </section>
+
+  <!-- 今日待办（右上） -->
+  <section class="desk-object window" id="todoWin">
+    <div class="titlebar drag-handle">
+      <span class="tb-box"></span>
+      <span class="tb-title">今日待办</span>
+      <span class="tb-btns"><button class="tb-collapse" type="button" title="收起">□</button></span>
+    </div>
+    <div class="win-body">
+      <ul id="todoList"></ul>
+      <button id="todoMore" class="link-btn" type="button">展开全部</button>
+      <form id="todoForm">
+        <input id="todoInput" placeholder="添加任务…" maxlength="40" autocomplete="off">
+        <button type="submit" title="添加">＋</button>
+      </form>
+      <div class="todo-count" id="todoCount"></div>
+    </div>
+  </section>
+
+  <!-- 项目文件夹（右下，桌面图标） -->
+  <section class="desk-object" id="folder">
+    <div class="folder-icon" id="folderIcon" tabindex="0" title="双击打开项目文件夹">
+      <div class="folder-tab"></div>
+      <div class="folder-body"></div>
+    </div>
+    <div class="folder-label">项目文件夹</div>
+  </section>
+
+  <!-- 项目窗口（默认隐藏） -->
+  <section class="desk-object window hidden" id="projectWin">
+    <div class="titlebar drag-handle">
+      <span class="tb-box"></span>
+      <span class="tb-title">项目文件夹</span>
+      <span class="tb-btns">
+        <button class="tb-collapse" type="button" title="收起">□</button>
+        <button class="tb-close" id="projectClose" type="button" title="关闭">×</button>
+      </span>
+    </div>
+    <div class="win-body">
+      <ul id="projectList"></ul>
+      <div class="proj-note">项目入口在 js/widgets.js 的 PROJECTS 中统一配置。</div>
+    </div>
+  </section>
+
+  <!-- 复古电视（中央） -->
+  <section class="desk-object" id="tv">
+    <div class="tv-shell">
+      <div class="tv-antenna"></div>
+      <div class="tv-brand drag-handle" title="拖动电视">RETRO-TRON <span>Model 1997</span></div>
+      <div class="tv-screen-wrap">
+        <div class="tv-screen" id="tvScreen">
+          <canvas id="tvCanvas" width="192" height="120"></canvas>
+          <video id="tvVideo" class="hidden" playsinline loop muted></video>
+          <div class="tv-glass"></div>
+          <div id="tvFlash"></div>
+          <div class="tv-off hidden" id="tvOffMask"></div>
+          <div class="tv-toast" id="tvToast"></div>
+          <button id="tvBigPlay" class="hidden" type="button" title="播放">▶</button>
+        </div>
+        <div class="tv-side">
+          <div class="tv-speaker"></div>
+          <div class="tv-ch-display" id="chDisplay">--</div>
+          <div class="tv-knob" id="chKnob" title="频道旋钮（点击换台）"></div>
+          <div class="tv-knob disabled" id="volKnob" title="音量旋钮"></div>
+          <button class="tv-power" id="tvPower" type="button" title="电源">⏻</button>
+        </div>
+      </div>
+      <div class="tv-controls">
+        <button id="chPrev" type="button" title="上一个频道">◀</button>
+        <button id="chNext" type="button" title="下一个频道">▶</button>
+        <button id="tvPause" type="button" title="暂停 / 继续">⏸</button>
+        <button id="tvBack" type="button" class="hidden" title="退出视频，回到频道">返回频道</button>
+        <label class="tv-file" title="选择本地视频，仅浏览器本地处理">本地视频<input type="file" id="tvFile" accept="video/*"></label>
+        <button id="tvMute" type="button" title="静音切换" disabled>🔇</button>
+        <input type="range" id="tvVolume" min="0" max="100" value="60" disabled title="音量">
+      </div>
+      <div class="tv-legs"><span></span><span></span></div>
+    </div>
+  </section>
+
+  <!-- 像素鲸鱼 -->
+  <div id="whale" title="点我聊天，拖动搬家">
+    <canvas id="whaleCanvas" width="96" height="56"></canvas>
+    <div id="whaleBubble" class="hidden"></div>
+  </div>
+
+  <!-- 聊天窗口（默认隐藏） -->
+  <section class="desk-object window hidden" id="chatWin">
+    <div class="titlebar drag-handle">
+      <span class="tb-box"></span>
+      <span class="tb-title">小鲸 · 桌面助手（本地演示）</span>
+      <span class="tb-btns">
+        <button class="tb-collapse" type="button" title="收起">□</button>
+        <button class="tb-close" id="chatClose" type="button" title="关闭">×</button>
+      </span>
+    </div>
+    <div class="win-body">
+      <div id="chatLog"></div>
+      <form id="chatForm">
+        <input id="chatInput" placeholder="和小鲸聊聊…" autocomplete="off">
+        <button type="submit">发送</button>
+      </form>
+      <div class="chat-note">当前为本地演示回复；接入 DeepSeek 时只需替换 js/chat.js 里的 RD.chatAdapter。</div>
+    </div>
+  </section>
+
+  <!-- 底部图标坞 -->
+  <div id="taskbar">
+    <span class="dock">
+      <button id="tidyBtn" class="dock-item" type="button"><i>✦</i><span>整理桌面</span></button>
+      <button id="petToggle" class="dock-item" type="button"><i>🐳</i><span>暂停鲸鱼</span></button>
+    </span>
+    <span id="taskChips"></span>
+  </div>
+</div>
+
+<script src="js/state.js"></script>
+<script src="js/tv.js"></script>
+<script src="js/whale.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/widgets.js"></script>
+<script src="js/drag.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
