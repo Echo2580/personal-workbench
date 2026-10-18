@@ -346,3 +346,18 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
   `/api/v1/preferences` 支持 `quickEntries` 部分更新（最多 8 个、http(s) 校验、去重）。
 - 布局：第三行三张卡统一 300px，内部滚动；首页 1440/600 无横向溢出。
 - 测试：笔记/偏好接口测试重写并新增（19 例）；浏览器回归 21 passed；全量 **832 passed / 3 skipped**。
+
+
+## 2026-10-18：数据备份与恢复
+
+- 新增 API-only 模块 `app/modules/backup`（无导航路由）：
+  - `GET /api/v1/backup/export`：导出 JSON 备份（任务/目标/来源、笔记、偏好、当日快讯、settings.toml、
+    projects.toml、history），文件名 `personal-workbench-backup-YYYYMMDD-HHMMSS.json`；
+  - `POST /api/v1/backup/restore`：校验格式/版本/TOML/任务快照后原子写回，**恢复前自动备份当前数据**
+    到 `<data_dir>/backups/auto-*.json`（最多保留 10 份）；失败时自动回滚；
+  - `GET /api/v1/backup/info`：数据目录、版本、任务/目标/来源/笔记/项目计数与自动备份列表。
+- 不备份：logs/cache/esbuild/runtime、新闻抓取缓存（可重抓）、AI 密钥（系统环境变量）。
+- 设置页新增「数据备份与恢复」区块：导出下载、从备份恢复（文件选择 → 预览内容 → 二次确认）、
+  自动备份列表与数据目录显示；恢复成功后提示并刷新页面。
+- 测试：新增 `tests/unit/test_backup.py`（6 例）；端到端验收 13/14（409 为跨浏览器提醒会话竞争）。
+- 全量回归 **838 passed / 3 skipped**。

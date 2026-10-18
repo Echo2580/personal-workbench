@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict
 import os
 from .core.security import create_session_token, install_security, error_response
 from .module_registry import default_registry
+from .modules.backup.module import definition as backup_definition
 from .modules.home.module import definition as home_definition
 
 
@@ -51,6 +52,8 @@ def create_app(data_dir=None, extra_modules=()):
     app.state.registry = default_registry(definition(service))
     # 首页数据服务（天气/段子/随手记）：只有 API，没有导航路由。
     app.state.registry.register(home_definition())
+    # 数据备份服务（导出/恢复/概览）：只有 API，没有导航路由。
+    app.state.registry.register(backup_definition())
     for module in extra_modules:
         app.state.registry.register(module)
     for module in app.state.registry.list_modules():
