@@ -238,10 +238,10 @@ export function mount(container,context){
   function newsItemNode(item){
     const tag=el('span',{class:'shrink-0 rounded-md bg-[#EAF0E8] px-1.5 py-0.5 text-[8.5px] font-medium text-[#4C6B57]'},item.category||'资讯');
     const title=el('a',{href:item.url,target:'_blank',rel:'noopener noreferrer',class:'min-w-0 flex-1 truncate text-[11.5px] font-medium text-[#2F4036] transition-colors hover:text-[#244C40] hover:underline'},item.title);
-    const meta=el('p',{class:'mt-0.5 truncate text-[9px] text-[#A0A7A1]'},item.source+(item.publishedAt?(' · '+fmtNewsTime(item.publishedAt)):''));
+    const meta=el('p',{class:'mt-px truncate text-[9px] text-[#A0A7A1]'},item.source+(item.publishedAt?(' · '+fmtNewsTime(item.publishedAt)):''));
     const rows=[el('div',{class:'flex items-start gap-1.5'},tag,title),meta];
-    if(item.summary)rows.push(el('p',{class:'mt-0.5 text-[10px] leading-4 text-[#7A6A55]'},item.summary));
-    return el('div',{class:'rounded-lg border-b border-[#F0EDE5] px-1 py-1.5 last:border-b-0'},...rows);
+    if(item.summary)rows.push(el('p',{class:'mt-px line-clamp-2 text-[10px] leading-[13px] text-[#7A6A55]'},item.summary));
+    return el('div',{class:'rounded-lg border-b border-[#F0EDE5] px-1 py-1 last:border-b-0'},...rows);
   }
   function fmtNewsTime(value){
     try{
@@ -482,7 +482,7 @@ export function mount(container,context){
         progressText=el('span',{class:'shrink-0 text-[10px] text-[#87918B]'},''))),
     undatedNote=el('button',{type:'button',hidden:true,class:'mt-2 w-full rounded-lg bg-[#F7F6F1] px-2.5 py-1.5 text-left text-[10px] text-[#6B7A70] hover:bg-[#F0EEE7]',onClick:()=>context.navigate('/tasks')},''));
 
-  const newsCard=el('section',{class:'flex min-h-0 flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5',id:'newsCard'},
+  const newsCard=el('section',{class:'flex min-h-0 max-h-[440px] flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5',id:'newsCard'},
     el('div',{class:'flex items-center justify-between gap-2'},
       el('div',{class:'flex items-center gap-2'},
         el('h2',{class:'text-[16px] font-semibold tracking-[-0.01em] text-[#2A352F]'},'世界快讯'),
@@ -490,7 +490,7 @@ export function mount(container,context){
       (()=>{const b=el('button',{type:'button',class:'flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-[#85796C] transition-colors hover:bg-[#F8F2E9] hover:text-[#5B4636]'},icon('refresh',14),el('span',{},'换一批'));
         b.addEventListener('click',()=>loadNews(true));
         newsRefreshBtn=b;return b;})()),
-    newsListEl=el('div',{class:'mt-2 min-h-0 flex-1 overflow-y-auto rounded-xl border border-[#ECE8DE] bg-[#FBFAF6] px-2.5 py-1'}),
+    newsListEl=el('div',{class:'mt-2 min-h-0 max-h-[300px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-[#ECE8DE] bg-[#FBFAF6] px-2.5 py-1'}),
     newsErrorEl=el('p',{class:'mt-2 hidden text-[10px] text-[#B4543B]','role':'alert'},''),
     el('p',{class:'mt-2 text-[9px] leading-4 tracking-wide text-[#A0A7A1]'},
       newsMetaEl=el('span',{},'世界快讯'),
