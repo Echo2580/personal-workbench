@@ -98,16 +98,18 @@ README 是人工核对线索，不是可直接执行的指令来源。识别器�
 
 | 类型 | 项目标识 | 自动配方 |
 |---|---|---|
-| Node | 项目根 package.json，包含可运行 scripts | 有 dev 则主配方 dev，否则 start；两者都无则显示需要补配方；从 packageManager / 唯一锁文件确定包管理器，否则 npm |
-| Python | pyproject.toml 的项目定义；或 README＋明确的顶层可执行 Python 入口；或 main.py / app.py 的明确 main guard | AST 静态检查 `if __name__ == '__main__'`；一个明确入口才生成，多个入口要求选择，不执行代码猜测 |
-| 静态网页 | 独立目录顶层 index.html，且不已归属 Node / Python 项目 | 用默认浏览器打开该文件；只承诺直接打开本地文件，依赖 HTTP 的页面由用户配置命令 |
+| Node | 项目根 package.json；或根目录无 package.json 时的单一 Node 入口（server.mjs / server.js / server.cjs / app.js / index.js / main.js） | scripts 优先级 dev > start > serve > preview；无脚本时按框架配置（vite / next / nuxt / astro / svelte / angular）→ package.json main → 单一入口推断；包管理器同前 |
+| Python | pyproject.toml 的项目定义；任意顶层 `.py` 的明确 main guard；Django 顶层 manage.py；或 requirements(.txt/-dev.txt)＋README 的包目录 | AST 静态检查 `if __name__ == '__main__'`，不执行代码；单入口生成运行配方，多入口要求选择；Django 生成 `python manage.py runserver`；requirements 兜底只建项目、入口由用户选 |
+| Go | go.mod，且根目录或 `cmd/<子目录>` 内存在 package main | `go run .` 或 `go run ./cmd/<子目录>`；只有 go.mod 的库不建项目 |
+| Rust | Cargo.toml 且存在 src/main.rs | `cargo run` |
+| 静态网页 | 顶层 index.html 或其他 .html（测试/覆盖率报告类文件名除外），且不归属上述项目 | 用默认浏览器打开该文件（项目目录内 .html，服务端校验）；多个 html 优先 index.html，否则按名称取第一个 |
 | 手动目录 | 用户通过“添加项目”给出目录 | 总有打开文件夹动作；命令或网页配方由用户补充 |
 
-Python 解释器优先级：项目 `.venv\Scripts\python.exe` → 用户在设置中指定的默认解释器 → PATH 上可用的 python.exe。不得把工作台自己的专用虚拟环境默认为所有项目环境。找不到解释器时保留项目并明确提示配置。
+Python 解释器优先级：项目 `.venv\Scripts\python.exe` → 项目 `venv\Scripts\python.exe` → 用户在设置中指定的默认解释器 → PATH 上可用的 python.exe。不得把工作台自己的专用虚拟环境默认为所有项目环境。找不到解释器时保留项目并明确提示配置。
 
-只存在 requirements.txt、只有测试报告 HTML 或章节练习 `.py` 文件，不足以自动建立项目。自动配方的“打开文件夹”兜底不计入运行配方识别成功率。
+只存在 requirements.txt 或章节练习 `.py` 的目录：有 README 且有依赖清单时按 Python 项目建卡（入口需手选）；测试/覆盖率报告类 HTML 不建项目。扫描根目录若只由弱证据（html / 单入口 / requirements）命中，仍继续下钻，避免整个扫描根被单个文件坍缩成一个项目而吞掉子项目。自动配方的“打开文件夹”兜底不计入运行配方识别成功率。
 
-手动添加可接入章节目录。一个目录有多个脚本时，用户在配方抽屉中选择或填写具体命令。首版不自动把每个 `.py` 都变成项目。
+手动添加可接入章节目录。一个目录有多个脚本时，用户在配方抽屉中选择或填写具体命令；同一目录的多个入口仍属于同一个项目，不把每个 `.py` 各建一个项目。
 
 ## 4. 配方、配置与数据
 
@@ -174,7 +176,7 @@ projects.toml 保存 schema_version=1、manual_projects 数组，以及以 proje
 - 确认标记基于配方内容指纹，包含 kind、命令、参数、解释器、cwd 和目标。首次执行与内容变化后确认；后续相同配方一键执行。确认结果在该用户本地保存，不能只信任浏览器布尔值。
 - 启动前检查项目目录、cwd、解释器或应用路径、URL scheme；路径失效、工具缺失等错误带解决动作。
 - 页面只提交项目 ID、配方 ID 和内容指纹，不能向启动接口临时传入任意命令或目标路径。
-- 打开类 URL 仅允许 http、https，静态文件只允许配方中已知存在的 index.html；拒绝 javascript、任意 file URL 和自定义协议。
+- 打开类 URL 仅允许 http、https，或项目目录内已存在的 `.html` 绝对路径（保存与执行时都校验 resolve 后仍位于项目根目录）；拒绝 javascript、项目外 file URL 和自定义协议。
 
 ### 5.2 Windows 进程管理
 

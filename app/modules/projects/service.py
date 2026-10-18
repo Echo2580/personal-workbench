@@ -326,12 +326,21 @@ class ProjectService:
                 )
             if r.kind == "url" and not r.target.startswith(("http://", "https://")):
                 target = Path(r.target)
+                inside = False
+                try:
+                    target.resolve().relative_to(Path(p.path).resolve())
+                    inside = True
+                except (OSError, ValueError):
+                    inside = False
                 if (
-                    target.resolve() != (Path(p.path) / "index.html").resolve()
+                    not inside
+                    or target.suffix.casefold() != ".html"
                     or not target.is_file()
                 ):
                     raise WorkbenchError(
-                        "invalid_target", "静态网页只允许本项目已有的 index.html。", 422
+                        "invalid_target",
+                        "静态网页只允许项目目录内已有的 .html 文件。",
+                        422,
                     )
             if r.kind == "directory" and (
                 not Path(r.target).is_absolute() or not Path(r.target).is_dir()

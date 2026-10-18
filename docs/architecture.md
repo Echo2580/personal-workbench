@@ -25,7 +25,7 @@
 
 设置与人工覆盖的 TOML 是事实来源；扫描 JSON 是缓存。`ProjectService` 合并自动项目、手动目录和完整人工覆盖，保留历史与活跃运行临时卡片。扫描在单独工作线程执行，同时只允许一轮，后台调度在完成后等待配置周期。
 
-识别只读顶层标识和有界文件，读取上限 1 MiB。Python 用 AST 判断 main guard，不 import；测试运行器不作为业务入口。Node 用 scripts 和包管理器信息生成原生命令。普通已识别项目内不继续拆子项目，显式 workspaces 才继续检查独立子目录。
+识别只读顶层标识和有界文件，读取上限 1 MiB。Python 用 AST 判断 main guard，不 import；测试运行器不作为业务入口。Node 用 scripts 和包管理器信息生成原生命令。识别优先级为 package.json → go.mod → Cargo.toml → Python → 无 manifest 纯 Node → 顶层 HTML；扫描根目录若只命中弱证据（html/单入口/requirements）会继续下钻，普通已识别项目内仍不拆子项目，显式 workspaces 才继续检查独立子目录。Go/Rust 配方分别使用 `go`、`cargo` 原生命令。
 
 路径规范化后用 SHA-256 完整摘要建立 ID。名称不是身份，PID 不是管理授权。配方指纹包括项目身份、类型、程序、参数、工作目录和目标；批准接口仅保存当前指纹，执行接口再次校验。
 

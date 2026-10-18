@@ -22,11 +22,11 @@ class OpenActionService:
                     p = Path(recipe.target)
                     if (
                         not p.is_absolute()
-                        or p.name.lower() != "index.html"
+                        or p.suffix.lower() != ".html"
                         or not p.is_file()
                     ):
                         raise WorkbenchError(
-                            "invalid_target", "只允许已保存的网页或 index.html。", 422
+                            "invalid_target", "只允许已保存的网页或项目内 .html 文件。", 422
                         )
                     target = p.as_uri()
                 if not webbrowser.open(target):

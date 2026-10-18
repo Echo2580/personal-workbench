@@ -6,6 +6,30 @@ from .models import ScanResult, DetectedProject, utcnow
 from .detectors import detect_project
 from .recipes import generate_recipes
 
+STRONG_MARKERS = ("package.json", "go.mod", "Cargo.toml", "pyproject.toml", "manage.py")
+
+
+def has_strong_marker(path):
+    """目录根部是否有强项目清单文件；弱命中（仅 html/单入口/requirements 等）不算。"""
+    return any((Path(path) / name).is_file() for name in STRONG_MARKERS)
+
+
+def root_boundary_is_weak(path, detection):
+    """扫描根目录的命中是否属于「单文件式弱证据」，弱证据不能作为扫描边界。
+
+    requirements 依赖清单 + README 的包目录仍按项目边界处理（避免展开其 tests/、
+    .planning/ 等内部目录）；纯 html / 无 package.json 的 Node / 普通 Python 入口
+    视为弱证据，允许继续下钻找子项目。
+    """
+    if has_strong_marker(path):
+        return False
+    if detection.type == "python" and any(
+        (Path(path) / name).is_file()
+        for name in ("requirements.txt", "requirements-dev.txt")
+    ):
+        return False
+    return True
+
 
 def normalize_project_path(path):
     return os.path.normcase(os.path.abspath(os.path.normpath(str(path))))
@@ -73,7 +97,10 @@ def scan_roots(settings, manual_paths, scan_id=None):
                             else:
                                 limited = True
                                 warnings.append(f"{child}：工作区超过深度限制")
-                return
+                # 扫描根目录若只命中弱证据（html/单入口等），继续下钻，
+                # 避免整个扫描根被单个文件坍缩成一个项目而吞掉子项目。
+                if depth > 0 or not root_boundary_is_weak(path, detection):
+                    return
             with os.scandir(path) as it:
                 children = sorted(
                     [

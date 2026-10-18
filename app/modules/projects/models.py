@@ -84,15 +84,15 @@ class Recipe(DTO):
                 raise ValueError("打开配方仅接受目标")
             if self.kind == "url":
                 u = urlsplit(self.target)
-                # Static index paths are validated again against the saved project by the service.
+                # 静态文件是否位于项目目录内由 service 再校验；这里只限制 http(s) 或 .html 绝对路径。
                 if u.scheme not in ("http", "https") or not u.netloc:
                     from pathlib import Path
 
                     if not (
                         Path(self.target).is_absolute()
-                        and Path(self.target).name.lower() == "index.html"
+                        and Path(self.target).suffix.lower() == ".html"
                     ):
-                        raise ValueError("只允许 http/https 或静态 index.html 绝对路径")
+                        raise ValueError("只允许 http/https 或项目内 .html 绝对路径")
         return self
 
 
@@ -139,6 +139,8 @@ class Detection(DTO):
     scripts: list[str] = Field(default_factory=list)
     workspaces: list[str] = Field(default_factory=list)
     evidence: list[str] = Field(default_factory=list)
+    # 识别到的框架（python: django；node: vite/next/nuxt/astro/svelte/angular），供配方生成使用。
+    framework: str = ""
 
 
 class DetectedProject(DTO):
