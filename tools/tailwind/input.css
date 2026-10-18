@@ -1,0 +1,94 @@
+/* Tailwind entry for the workbench shell.
+   Build (repo does not depend on Node at runtime):
+     cd %TEMP%\wb-tw && npm install tailwindcss@3.4.17
+     npx tailwindcss -c D:\...\wb\tools\tailwind\tailwind.config.js -i D:\...\wb\tools\tailwind\input.css -o D:\...\wb\app\web\styles\tailwind.css --minify
+   Only the generated app/web/styles/tailwind.css is committed. */
+/* preflight 关闭后，浏览器 UA 默认的按钮外观（灰底、边框、内边距）会暴露出来。
+   这里用元素级 reset 清掉，工具类（class 选择器）优先级更高，可正常覆盖。 */
+button{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:inherit;border-radius:0;white-space:normal}
+/* preflight 的另一半：border 工具类只设宽度，没有 solid 样式就画不出线。 */
+*,::before,::after{border-width:0;border-style:solid;border-color:#e5e7eb}
+/* 旧表单样式会渗进新外壳输入框，形成"框中框"；新外壳输入用工具类重绘。 */
+#globalSearch,#quickInput{border:0;background:transparent;padding:0;min-height:0;border-radius:0}
+#content :focus-visible,#sidebar :focus-visible,header :focus-visible{outline-color:#8DAA99}
+#toast{position:fixed}
+
+@tailwind utilities;
+
+*,::before,::after{--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000}
+
+:root{
+  --wb-ink:#1F332A;
+  --wb-ink-strong:#243029;
+  --wb-green:#244C40;
+  --wb-green-soft:#779A86;
+  --wb-green-pale:#DCE8DF;
+  --wb-bg:#F5F4EF;
+  --wb-card:#FFFFFF;
+  --wb-line:#E7E5DC;
+  --wb-muted:#6B7A70;
+  --wb-amber:#8A6A2F;
+}
+
+#sidebar.wb-sidebar{
+  width:220px;flex:none;position:sticky;top:0;height:100vh;
+  background:var(--wb-green);color:#fff;border-right:0;
+  padding:0;display:flex;flex-direction:column;z-index:10;
+}
+.wb-brand{display:flex;align-items:center;gap:12px;height:68px;flex:none;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.wb-brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#EAF1EC}
+.wb-brand-title{font-size:15px;font-weight:600;letter-spacing:.02em}
+.wb-brand-sub{margin-top:2px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#AFC4B8}
+.wb-nav{flex:none;overflow:auto;padding:20px 12px 12px;display:flex;flex-direction:column;gap:4px}
+.wb-nav-label{padding:0 12px 8px;font-size:10px;font-weight:500;letter-spacing:.14em;color:#A5BCAF;margin:0}
+.wb-nav-item{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:40px;
+  padding:8px 12px;border:0;border-radius:12px;background:none;
+  color:#C8D8CF;font:inherit;font-size:13px;text-align:left;cursor:pointer;
+}
+.wb-nav-item:hover:enabled{background:rgba(255,255,255,.1);color:#fff}
+.wb-nav-item.is-active{background:var(--wb-green-soft);color:#fff;font-weight:500;box-shadow:0 4px 12px rgba(11,33,24,.12)}
+.wb-nav-item:disabled{color:#8AA095;cursor:default;opacity:1}
+.wb-nav-planned{margin-left:auto;font-size:10px;color:#A5BCAF}
+.wb-nav-dot{display:none;margin-left:auto;height:6px;width:6px;border-radius:9999px;background:#E8F1E9}
+.wb-nav-item.is-active .wb-nav-dot{display:block}
+.wb-sidebar-bottom{margin-top:auto;flex:none;padding:12px 12px 18px;border-top:1px solid rgba(255,255,255,.1)}
+.wb-sidebar-note{margin:12px 12px 0;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;line-height:1.5;color:#9FB6AA}
+
+.wb-main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--wb-bg)}
+.wb-topbar{height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 28px;background:rgba(255,255,255,.72);border-bottom:1px solid var(--wb-line)}
+.wb-breadcrumb{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--wb-muted);min-width:0}
+.wb-breadcrumb strong{color:var(--wb-ink);font-weight:600}
+.wb-connection{margin-left:auto;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.wb-menu{display:none}
+#content{flex:1;min-width:0;width:100%;max-width:none;margin:0;padding:0;outline:none}
+#content.page-pad{padding:28px 32px 40px}
+#content.hide-scrollbar{scrollbar-width:none}
+#content.hide-scrollbar::-webkit-scrollbar{display:none}
+/* tokens.css 把根字号设为 14px，会让所有 rem 工具类缩水 12.5%；
+   这里恢复 16px 基准（Tailwind 设计值），同时把正文锁定回 14px，旧页面字号不变。 */
+:root{font-size:16px}
+body{font-size:14px;line-height:1.6}
+#offline{margin:16px 32px 0}
+
+.wb-card{background:var(--wb-card);border:1px solid var(--wb-line);border-radius:18px;padding:20px}
+.wb-card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.wb-card-head h2{margin:0;font-size:16px;font-weight:600;color:#25362D}
+.wb-card-head .wb-card-hint{margin-left:auto;font-size:11px;color:var(--wb-muted)}
+.wb-placeholder{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;background:#F3F1E7;color:#8A6A2F;font-size:10px;letter-spacing:.02em}
+.wb-icon{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.wb-primary{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:5px 14px;border:1px solid var(--wb-green);border-radius:10px;background:var(--wb-green);color:#fff;font-size:12.5px}
+.wb-primary:hover:enabled{background:#1C3E34;border-color:#1C3E34}
+.wb-quiet{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:5px 14px;border:1px solid #DCDAD0;border-radius:10px;background:#fff;color:#3C5A4C;font-size:12.5px}
+.wb-quiet:hover:enabled{background:#F5F4EF;border-color:#C9C6B8}
+.wb-planned-item{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px dashed #DCDAD0;border-radius:999px;background:#FBFAF6;color:#7E8C84;font-size:12px}
+.wb-planned-tag{font-size:10px;color:#9FB2A7}
+
+@media (max-width:1023px){
+  #sidebar.wb-sidebar{position:fixed;inset:0 auto 0 0;transform:translateX(-100%);transition:transform .18s ease}
+  #sidebar.wb-sidebar.open{transform:translateX(0);box-shadow:0 0 0 100vmax rgba(11,33,24,.28);display:flex}
+}
+@media (prefers-reduced-motion:reduce){
+  #sidebar.wb-sidebar{transition:none}
+}

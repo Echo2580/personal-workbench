@@ -1,3 +1,39 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>个人工作台</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/styles/tokens.css"><link rel="stylesheet" href="/styles/shell.css"><link rel="stylesheet" href="/modules/projects/styles.css"></head>
-<body><div class="layout"><aside id="sidebar" aria-label="主导航"><div class="brand"><span class="brand-mark">W</span>个人工作台</div><nav id="navigation"></nav><div class="sidebar-bottom"><button id="settings-nav" class="nav-item">设置</button><button id="exit" class="nav-item">退出工作台</button><p class="small muted">只在这台电脑上运行</p></div></aside><div class="workspace"><header class="topbar"><button id="menu" class="button quiet" aria-label="展开导航" aria-expanded="false">菜单</button><div class="breadcrumb">个人工作台 <span>/</span> <strong id="page-title">工作台</strong></div><span id="connection" role="status">正在连接本地服务</span></header><div id="offline" class="banner error" hidden>服务已断开，启动与停止暂不可用。正在重新连接…</div><main id="content" tabindex="-1"><p class="muted">正在加载工作台…</p></main></div></div><div id="notifications" aria-live="polite"></div><script type="module" src="/shell.js"></script></body></html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>个人工作台</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/styles/tokens.css"><link rel="stylesheet" href="/styles/shell.css"><link rel="stylesheet" href="/modules/projects/styles.css"><link rel="stylesheet" href="/styles/tailwind.css"></head>
+<body class="bg-[#F5F4EF] text-[#243029] antialiased">
+<div class="flex min-h-screen w-full lg:h-screen lg:overflow-hidden">
+<aside id="sidebar" class="wb-sidebar hidden flex-col bg-[#244C40] text-white lg:flex" aria-label="主导航">
+<div class="wb-brand"><span class="wb-brand-mark" aria-hidden="true"></span><div class="min-w-0 flex-1"><p class="wb-brand-title">个人工作台</p><p class="wb-brand-sub">Personal desk</p></div><button id="nav-close" type="button" aria-label="关闭导航" class="grid h-8 w-8 place-items-center rounded-lg text-[#C8D8CF] hover:bg-white/10 lg:hidden"><span id="nav-close-icon"></span></button></div>
+<nav id="navigation" class="wb-nav" aria-label="主导航"></nav>
+<div class="mx-3 mt-7 rounded-xl border border-white/10 bg-white/5 p-3"><div class="flex items-center gap-2 text-[11px] text-[#D2DFD7]"><span id="brand-leaf"></span><span>今日节奏</span></div><p class="mt-2 text-[11px] leading-5 text-[#AFC4B8]">先完成最重要的一件事，再让日程慢慢展开。</p></div>
+<div class="wb-sidebar-bottom"><button id="settings-nav" type="button" class="wb-nav-item">设置</button><button id="exit" type="button" class="wb-nav-item">退出工作台</button><button id="my-space" type="button" class="mt-2 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-white/10"><span class="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#D9B982] text-[12px] font-semibold text-[#244C40]">林<span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#244C40] bg-[#A9D5A8]"></span></span><span class="min-w-0 flex-1"><span class="block text-[12px] font-medium text-white">我的空间</span><span class="mt-0.5 block text-[10px] text-[#AFC4B8]">林同学 · 个人版</span></span><span id="my-space-arrow"></span></button></div>
+</aside>
+<div class="wb-main flex h-full min-h-0 min-w-0 flex-1 flex-col">
+<div class="flex h-[60px] shrink-0 items-center justify-between bg-[#244C40] px-4 text-white lg:hidden">
+<button id="menu" type="button" aria-label="展开导航" aria-expanded="false" class="grid h-9 w-9 place-items-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20"><span id="menu-icon"></span></button>
+<div class="flex items-center gap-2"><span class="wb-brand-mark" aria-hidden="true"></span><span class="text-sm font-semibold">个人工作台</span></div>
+<span class="grid h-8 w-8 place-items-center rounded-full bg-[#D9B982] text-[11px] font-semibold text-[#244C40]">林</span>
+</div>
+<header class="flex min-h-[60px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E4E1D6]/80 bg-[#F5F4EF] px-4 py-3 sm:min-h-[68px] sm:px-6 lg:flex-nowrap">
+<div class="hidden items-center gap-2 sm:flex"><span class="text-[11px] text-[#929A94]">工作空间</span><span id="breadcrumb-arrow"></span><strong id="page-title" class="text-[13px] font-medium text-[#35443B]">工作台</strong></div>
+<div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+<span id="connection" class="wb-connection hidden sm:inline" role="status">正在连接本地服务</span>
+<div class="relative min-w-0 flex-1 sm:w-[352px] sm:flex-none" id="searchWrap">
+<div class="flex h-[38px] items-center gap-2 rounded-xl border border-[#DFDCD1] bg-[#FCFBF7] px-3 text-[#8B948E] shadow-[0_1px_2px_rgba(36,76,64,0.03)] transition-colors focus-within:border-[#8DAA99] focus-within:bg-white"><span id="search-icon"></span><input aria-label="全局搜索" autocomplete="off" class="min-w-0 flex-1 bg-transparent text-[12px] text-[#2C3A32] outline-none placeholder:text-[#A2A9A4]" id="globalSearch" placeholder="搜索项目、工具、笔记…" type="text"/><kbd class="hidden shrink-0 rounded-md border border-[#E5E1D7] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[#9AA19C] sm:inline-block">Ctrl K</kbd></div>
+<div aria-label="搜索结果" class="absolute left-0 right-0 top-[calc(100%+8px)] z-50 hidden max-h-[360px] overflow-y-auto overscroll-contain rounded-2xl border border-[#E4E1D6] bg-[#FEFDF9] p-1.5 shadow-[0_18px_40px_rgba(36,76,64,0.14)]" id="searchResults" role="listbox"></div>
+</div>
+<button id="bell" type="button" aria-label="通知" class="relative hidden h-[38px] w-[38px] shrink-0 place-items-center rounded-xl border border-[#DFDCD1] bg-[#FCFBF7] text-[#5D6C63] transition-colors hover:border-[#B8C9BE] hover:bg-white hover:text-[#244C40] sm:grid"><span id="bell-icon"></span><span class="absolute right-2.5 top-2 h-1.5 w-1.5 rounded-full bg-[#D09269]" aria-hidden="true"></span></button>
+<span class="hidden h-6 w-px bg-[#DEDCD4] sm:block" aria-hidden="true"></span>
+<button id="header-avatar" type="button" aria-label="我的空间" class="hidden h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#D9B982] sm:grid text-[11px] font-semibold text-[#244C40] ring-2 ring-white transition-transform hover:scale-[1.04]">林</button>
+</div>
+</header>
+<div id="offline" class="banner error" hidden>服务已断开，启动与停止暂不可用。正在重新连接…</div>
+<main id="content" tabindex="-1" class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"><p class="muted p-8">正在加载工作台…</p></main>
+</div>
+</div>
+<div id="notifications" aria-live="polite"></div>
+<div id="navBackdrop" class="fixed inset-0 z-[9] hidden bg-[#15241E]/45 lg:hidden" aria-hidden="true"></div>
+<div aria-hidden="true" class="fixed inset-0 z-40 hidden bg-[#15241E]/35" id="drawerBackdrop"></div>
+<div aria-live="polite" class="fixed bottom-6 left-1/2 z-[90] hidden -translate-x-1/2 items-center rounded-full bg-[#244C40] px-4 py-2 text-[11px] font-medium text-white shadow-[0_10px_30px_rgba(20,36,30,0.24)]" id="toast" role="status"></div>
+<script type="module" src="/shell.js"></script>
+</body></html>
