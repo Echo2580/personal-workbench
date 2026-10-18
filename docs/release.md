@@ -76,5 +76,6 @@ git -C 'D:\AI实训project\个人工作台\wb' push origin v0.2.0
 | `v0.3.0` | `76fb7c6` | 世界快讯按日缓存（换一批才刷新）、首页第二行紧凑化（380px 内部滚动） |
 | `v0.4.0` | 以 annotated tag 指向为准 | 全站深色界面、全局搜索及首页编辑修复；包含常用入口/日程/随手记和备份恢复；855 passed、3 skipped，用户验收完成，2026-10-18 |
 | `v0.4.1` | 以 annotated tag 指向为准 | 浏览器窗口自适应与短窗口操作可达性；873 passed、3 skipped，2026-10-18 |
+| `v0.5.0` | 以 annotated tag 指向为准 | 自动识别扩展（Python/Node/Web/Go/Rust、Django）、首页大字可编辑与「我的空间」、待办提醒自定义/绝对时间、数据根迁入项目内 `data\`；978 passed、4 skipped，2026-10-19 |
 
-发布详情见 [v0.4.0](releases/v0.4.0.md)、[v0.4.1](releases/v0.4.1.md)。
+发布详情见 [v0.4.0](releases/v0.4.0.md)、[v0.4.1](releases/v0.4.1.md)、[v0.5.0](releases/v0.5.0.md)。

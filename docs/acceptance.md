@@ -407,4 +407,15 @@
 - 弱边界修复只覆盖「扫描根目录」场景；普通嵌套目录中先命中的项目（无论强弱）仍不继续拆子项目（例如 requirements+README 的父目录会保留为其内部 web/tests 的边界），需要时把子目录另加为扫描根或手动添加。
 - 「我的空间」面板为非模态 popover（无 focus trap）；320px 以下视口未单独验证；首页 h1 的 aria-label 仍为「我的一天」以兼容既有测试，读屏不读自定义文案。
 - 数据兼容：旧 preferences.json 自动补默认；识别/配方变化可能导致既有项目首次执行时需重新确认配方指纹（预期行为）。
-- 本轮改动未 commit/push；另有并行会话对 `app/web/modules/tasks/app.js`、`app/web/modules/tasks/view.html`、`tests/tasks/test_frontend_manual_task_payload.py`、`tests/browser/test_manual_task.py` 的未提交修改，不属于本记录范围，提交时需与本轮改动分开。
+- 本轮改动（识别扩展、首页个性化）已由用户批准提交：`f1c6b5b`、`1752b19`、`805cf7b`；并行会话的 tasks 修正在 `387c1f4` 单独提交。
+
+
+## 2026-10-19 数据根迁移与新建待办提醒选项
+
+| 检查 | 实际结果 |
+|---|---|
+| 数据根 | 默认 `<项目根>/data`（开发 `wb\data`、稳定 `wb-stable\data`）；`--data-dir` / `WORKBENCH_DATA_DIR` 覆盖；`.gitignore` 忽略 `/data/`（单测与运行核验） |
+| 稳定版迁移 | 迁移前备份 `wb-stable\data` 到 `数据备份\wb-stable-data-20261019-0042`（21 文件，业务文件 SHA-256 记录在 `gpt\.planning\2026-10-19-release\pre-release-backup.json`）；迁移后冒烟与数据一致性见 `v0.5.0` 发布记录与 tag 说明 |
+| 待办提醒 | 新建待办默认不提醒；支持「提前 N 分钟」（自定义）与「指定提醒时间」；缺时间时弹窗提示且不发请求；仅日期截止不再 422（node 前端载荷回归 + 浏览器流程） |
+| 回归 | **978 passed / 4 skipped**（303.63s）；4 项跳过 = 真实模型默认关闭、2 项原截图项目路径依赖、Windows 符号链接权限 1 项 |
+| 限制 | 提醒仅在服务/页面运行期间生效；Go/Rust 工具链未安装；识别与首页个性化限制同上一节 |
