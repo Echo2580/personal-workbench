@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+
+<html class="h-full w-full" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>个人工作台 · 今日总览</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+</head>
+<body class="h-full w-full bg-[#F5F4EF] font-['PingFang_SC','Microsoft_YaHei','Noto_Sans_SC',sans-serif] text-[#243029] antialiased selection:bg-[#DCE8DF] lg:overflow-hidden">
+<div class="flex min-h-screen w-full lg:h-screen lg:overflow-hidden">
+<aside class="hidden h-full w-[220px] shrink-0 flex-col bg-[#244C40] text-white lg:flex">
+<div class="flex h-[68px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
+<div class="grid h-9 w-9 place-items-center rounded-[11px] border border-white/25 bg-white/10">
+<iconify-icon class="text-[#EAF1EC]" icon="solar:widget-5-linear" width="20"></iconify-icon>
+</div>
+<div class="min-w-0">
+<p class="text-[15px] font-semibold tracking-wide text-white">个人工作台</p>
+<p class="mt-0.5 text-[9px] uppercase tracking-[0.16em] text-[#AFC4B8]">Personal desk</p>
+</div>
+</div>
+<div class="flex min-h-0 flex-1 flex-col px-3 py-5">
+<p class="px-3 text-[10px] font-medium tracking-[0.14em] text-[#A5BCAF]">工作区</p>
+<nav aria-label="主导航" class="mt-3 space-y-1">
+<button class="group flex w-full items-center gap-3 rounded-xl bg-[#779A86] px-3 py-2.5 text-left text-[13px] font-medium text-white shadow-[0_4px_12px_rgba(11,33,24,0.12)] transition-colors" onclick="handleNav('今日总览')" type="button">
+<iconify-icon icon="solar:home-smile-linear" width="18"></iconify-icon>
+<span>今日总览</span>
+<span class="ml-auto h-1.5 w-1.5 rounded-full bg-[#E8F1E9]"></span>
+</button>
+<button class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('待办清单')" type="button">
+<iconify-icon icon="solar:checklist-minimalistic-linear" width="18"></iconify-icon>
+<span>待办清单</span>
+</button>
+<button class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('日历日程')" type="button">
+<iconify-icon icon="solar:calendar-linear" width="18"></iconify-icon>
+<span>日历日程</span>
+</button>
+<button class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('项目空间')" type="button">
+<iconify-icon icon="solar:folder-with-files-linear" width="18"></iconify-icon>
+<span>项目空间</span>
+</button>
+<button class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('收藏导航')" type="button">
+<iconify-icon icon="solar:star-linear" width="18"></iconify-icon>
+<span>收藏导航</span>
+</button>
+<button class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('随手笔记')" type="button">
+<iconify-icon icon="solar:notebook-linear" width="18"></iconify-icon>
+<span>随手笔记</span>
+</button>
+</nav>
+<div class="mt-7 rounded-xl border border-white/10 bg-white/5 p-3">
+<div class="flex items-center gap-2 text-[11px] text-[#D2DFD7]">
+<iconify-icon class="text-[#BBD0C2]" icon="solar:leaf-linear" width="15"></iconify-icon>
+<span>今日节奏</span>
+</div>
+<p class="mt-2 text-[11px] leading-5 text-[#AFC4B8]">先完成最重要的一件事，再让日程慢慢展开。</p>
+</div>
+</div>
+<div class="shrink-0 border-t border-white/10 p-3">
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="showToast('个性化设置将在完整版中开放')" type="button">
+<iconify-icon icon="solar:settings-linear" width="17"></iconify-icon>
+<span>个性化设置</span>
+</button>
+<button class="mt-1 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-white/10" onclick="showToast('正在进入「我的空间」')" type="button">
+<span class="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#D9B982] text-[12px] font-semibold text-[#244C40]">
+            林
+            <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#244C40] bg-[#A9D5A8]"></span>
+</span>
+<span class="min-w-0 flex-1">
+<span class="block text-[12px] font-medium text-white">我的空间</span>
+<span class="mt-0.5 block text-[10px] text-[#AFC4B8]">林同学 · 个人版</span>
+</span>
+<iconify-icon class="text-[#AFC4B8]" icon="solar:alt-arrow-down-linear" width="15"></iconify-icon>
+</button>
+</div>
+</aside>
+<div class="flex h-full min-w-0 flex-1 flex-col">
+<div class="flex h-[60px] shrink-0 items-center justify-between bg-[#244C40] px-4 text-white lg:hidden">
+<div class="flex items-center gap-3">
+<button aria-label="打开导航" class="grid h-9 w-9 place-items-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20" onclick="openMobileNav()" type="button">
+<iconify-icon icon="solar:hamburger-menu-linear" width="20"></iconify-icon>
+</button>
+<div class="flex items-center gap-2">
+<div class="grid h-7 w-7 place-items-center rounded-lg border border-white/25 bg-white/10">
+<iconify-icon icon="solar:widget-5-linear" width="16"></iconify-icon>
+</div>
+<span class="text-sm font-semibold">个人工作台</span>
+</div>
+</div>
+<button class="grid h-8 w-8 place-items-center rounded-full bg-[#D9B982] text-[11px] font-semibold text-[#244C40]" onclick="showToast('正在进入「我的空间」')" type="button">林</button>
+</div>
+<header class="flex min-h-[60px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E4E1D6]/80 bg-[#F5F4EF] px-4 py-3 sm:min-h-[68px] sm:px-6 lg:flex-nowrap">
+<div class="hidden items-center gap-2 sm:flex">
+<span class="text-[11px] text-[#929A94]">工作空间</span>
+<iconify-icon class="text-[#B3B8B3]" icon="solar:alt-arrow-right-linear" width="13"></iconify-icon>
+<span class="text-[13px] font-medium text-[#35443B]">今日总览</span>
+</div>
+<div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+<div class="relative min-w-0 flex-1 sm:w-[352px] sm:flex-none" id="searchWrap">
+<div class="flex h-[38px] items-center gap-2 rounded-xl border border-[#DFDCD1] bg-[#FCFBF7] px-3 text-[#8B948E] shadow-[0_1px_2px_rgba(36,76,64,0.03)] transition-colors focus-within:border-[#8DAA99] focus-within:bg-white">
+<iconify-icon class="shrink-0" icon="solar:magnifer-linear" width="16"></iconify-icon>
+<input aria-label="全局搜索" autocomplete="off" class="min-w-0 flex-1 bg-transparent text-[12px] text-[#2C3A32] outline-none placeholder:text-[#A2A9A4]" id="globalSearch" placeholder="搜索项目、工具、笔记…" type="text"/>
+<kbd class="hidden shrink-0 rounded-md border border-[#E5E1D7] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[#9AA19C] sm:inline-block">Ctrl K</kbd>
+</div>
+<div aria-label="搜索结果" class="absolute left-0 right-0 top-[calc(100%+8px)] z-50 hidden max-h-[360px] overflow-y-auto overscroll-contain rounded-2xl border border-[#E4E1D6] bg-[#FEFDF9] p-1.5 shadow-[0_18px_40px_rgba(36,76,64,0.14)] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden" id="searchResults" role="listbox"></div>
+</div>
+<button aria-label="通知" class="relative hidden h-[38px] w-[38px] shrink-0 place-items-center rounded-xl border border-[#DFDCD1] bg-[#FCFBF7] text-[#5D6C63] transition-colors hover:border-[#B8C9BE] hover:bg-white hover:text-[#244C40] sm:grid" onclick="showToast('暂时没有新的通知')" type="button">
+<iconify-icon icon="solar:bell-linear" width="18"></iconify-icon>
+<span class="absolute right-2.5 top-2 h-1.5 w-1.5 rounded-full bg-[#D09269]"></span>
+</button>
+<span class="hidden h-6 w-px bg-[#DEDCD4] sm:block"></span>
+<button aria-label="进入我的空间" class="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#D9B982] text-[11px] font-semibold text-[#244C40] ring-2 ring-white transition-transform hover:scale-[1.04]" onclick="showToast('正在进入「我的空间」')" type="button">林</button>
+</div>
+</header>
+<main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<div class="mx-auto flex min-h-full w-full max-w-[1560px] flex-col px-4 pb-3 pt-4 sm:px-6 lg:px-5 lg:pt-5">
+<div class="grid grid-cols-1 gap-4 lg:min-h-[740px] lg:flex-1 lg:grid-rows-[minmax(210px,0.92fr)_minmax(300px,1.22fr)_minmax(222px,0.96fr)]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+<section class="flex flex-col justify-between rounded-2xl border border-[#E3E0D5] bg-white p-5 shadow-[0_4px_18px_rgba(36,76,64,0.04)]">
+<div class="flex items-start justify-between gap-4">
+<div class="min-w-0">
+<div class="flex flex-wrap items-center gap-2 text-[11px] font-medium tracking-wide text-[#7C867F]">
+<iconify-icon class="text-[#8FA396]" icon="solar:calendar-date-linear" width="14"></iconify-icon>
+<span>10 月 17 日・星期六</span>
+<span class="rounded-full bg-[#F0F2EC] px-2 py-0.5 text-[9px] font-medium tracking-normal text-[#738072]">今天</span>
+</div>
+<h1 class="mt-2 text-[26px] font-semibold leading-none tracking-[-0.02em] text-[#1F332A]">我的一天</h1>
+<p class="mt-2 text-[12.5px] leading-5 text-[#7B857F]" id="heroSummary">3 件待办，2 项日程，给今天留一点从容。</p>
+</div>
+<button class="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#244C40] px-4 py-2.5 text-[12px] font-medium text-white shadow-[0_4px_10px_rgba(36,76,64,0.16)] transition-colors hover:bg-[#1B3D31]" onclick="openTaskModal()" type="button">
+<iconify-icon icon="solar:add-circle-linear" width="16"></iconify-icon>
+<span>新建待办</span>
+</button>
+</div>
+<div class="mt-4 flex h-[44px] items-center gap-2 rounded-xl border border-[#DDD9CC] bg-[#FBFAF6] px-3 transition-colors focus-within:border-[#8FAA9A] focus-within:bg-white">
+<iconify-icon class="shrink-0 text-[#8A978F]" icon="solar:add-circle-linear" width="17"></iconify-icon>
+<input aria-label="快速记录" autocomplete="off" class="min-w-0 flex-1 bg-transparent text-[12px] text-[#2C3A32] outline-none placeholder:text-[#A1A8A3]" id="quickInput" placeholder="有什么想做的，先记下来…" type="text"/>
+<div class="hidden shrink-0 items-center gap-1" id="quickActions">
+<button class="rounded-lg bg-[#E7EFE7] px-2 py-1.5 text-[10px] font-medium text-[#3F5E4C] transition-colors hover:bg-[#DCE9DE]" onclick="saveQuick('todo')" type="button">存为待办</button>
+<button class="rounded-lg bg-[#F8EFD7] px-2 py-1.5 text-[10px] font-medium text-[#725D32] transition-colors hover:bg-[#F3E5C4]" onclick="saveQuick('note')" type="button">存为笔记</button>
+</div>
+</div>
+</section>
+<section class="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#C7DADF] bg-[#DCEFF4] p-4 text-[#25464B] shadow-[0_4px_18px_rgba(58,104,112,0.08)]">
+<svg aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full" preserveaspectratio="xMidYMax slice" viewbox="0 0 700 280">
+<defs>
+<lineargradient id="weatherSky" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#CFE8F0"></stop>
+<stop offset="62%" stop-color="#E5F2EF"></stop>
+<stop offset="100%" stop-color="#D7E8E4"></stop>
+</lineargradient>
+<lineargradient id="weatherLake" x1="0" x2="1" y1="0" y2="1">
+<stop offset="0%" stop-color="#BEDDE0"></stop>
+<stop offset="100%" stop-color="#A7CDD2"></stop>
+</lineargradient>
+</defs>
+<rect fill="url(#weatherSky)" height="280" width="700"></rect>
+<circle cx="568" cy="62" fill="#F5D98A" opacity="0.22" r="44"></circle>
+<circle cx="568" cy="62" fill="#F3CF72" r="26"></circle>
+<g fill="#FFFFFF" opacity="0.82">
+<ellipse cx="470" cy="76" rx="33" ry="13"></ellipse>
+<ellipse cx="498" cy="70" rx="22" ry="11"></ellipse>
+<ellipse cx="442" cy="71" rx="17" ry="9"></ellipse>
+</g>
+<path d="M0 176 C90 140 146 158 202 168 C280 181 318 143 390 158 C458 172 520 150 700 166 L700 280 L0 280 Z" fill="#AECDBB" opacity="0.58"></path>
+<path d="M0 196 C92 169 172 186 250 192 C338 198 386 169 470 183 C548 196 620 186 700 189 L700 280 L0 280 Z" fill="#91B8A9" opacity="0.5"></path>
+<rect fill="url(#weatherLake)" height="78" width="700" y="202"></rect>
+<g opacity="0.45" stroke="#FFFFFF" stroke-linecap="round" stroke-width="1.5">
+<path d="M30 224 C58 220 76 228 104 224"></path>
+<path d="M430 219 C460 215 482 224 512 218"></path>
+<path d="M520 246 C550 242 580 251 614 244"></path>
+<path d="M150 255 C176 251 198 259 226 254"></path>
+</g>
+<g fill="#FFFFFF" opacity="0.6">
+<circle cx="623" cy="44" r="2"></circle>
+<circle cx="640" cy="58" r="1.2"></circle>
+</g>
+</svg>
+<div class="relative z-10 flex items-start justify-between gap-3">
+<button aria-label="切换天气城市" class="flex items-center gap-1.5 rounded-full border border-white/60 bg-white/60 px-2.5 py-1 text-[11px] font-medium text-[#25464B] transition-colors hover:bg-white/90" onclick="openCityModal()" type="button">
+<iconify-icon icon="solar:map-point-linear" width="13"></iconify-icon>
+<span id="weatherCity">南京</span>
+<iconify-icon class="opacity-70" icon="solar:alt-arrow-down-linear" width="12"></iconify-icon>
+</button>
+<span class="rounded-full border border-white/50 bg-white/[0.45] px-2.5 py-1 text-[9px] font-medium text-[#376066]" id="weatherAQI">空气优</span>
+</div>
+<div class="relative z-10 mt-1">
+<div class="flex items-start gap-2">
+<span class="text-[42px] font-semibold leading-none tracking-[-0.06em]" id="weatherTemp">23°</span>
+<div class="pt-1">
+<p class="text-[12px] font-medium" id="weatherCondition">晴间多云</p>
+<p class="mt-1 text-[10px] text-[#56777B]"><span id="weatherRange">18°/25°</span><span class="mx-1.5">·</span><span id="weatherTip">适合出门走走</span></p>
+</div>
+</div>
+</div>
+<div class="relative z-10 mt-3 grid grid-cols-4 gap-1.5 rounded-xl border border-white/[0.45] bg-white/[0.55] p-1.5">
+<div class="flex flex-col items-center gap-0.5 rounded-lg bg-white/[0.55] px-1 py-1 text-[#31555A]">
+<span class="text-[9px] opacity-75">现在</span>
+<span class="text-[12px] font-semibold" data-weather-temp="">23°</span>
+</div>
+<div class="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[#31555A]">
+<span class="text-[9px] opacity-65">12 时</span>
+<span class="text-[12px] font-semibold" data-weather-temp="">25°</span>
+</div>
+<div class="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[#31555A]">
+<span class="text-[9px] opacity-65">15 时</span>
+<span class="text-[12px] font-semibold" data-weather-temp="">24°</span>
+</div>
+<div class="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[#31555A]">
+<span class="text-[9px] opacity-65">18 时</span>
+<span class="text-[12px] font-semibold" data-weather-temp="">21°</span>
+</div>
+</div>
+</section>
+</div>
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+<section class="flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)] xl:p-5" id="todoCard">
+<div class="flex flex-wrap items-center justify-between gap-2.5">
+<div class="flex items-center gap-2">
+<h2 class="text-[16px] font-semibold tracking-[-0.01em] text-[#25362D]">今日待办</h2>
+<span class="grid h-[20px] min-w-[20px] place-items-center rounded-full bg-[#E8EFE7] px-1.5 text-[10px] font-semibold text-[#466453]" id="todoBadge">3</span>
+</div>
+<div class="flex items-center gap-2">
+<div aria-label="任务筛选" class="flex items-center gap-0.5 rounded-lg bg-[#F4F3ED] p-0.5" role="group">
+<button class="rounded-md bg-white px-2.5 py-1 text-[10.5px] font-medium text-[#244C40] shadow-sm transition-colors" data-filter="all" type="button">全部</button>
+<button class="rounded-md px-2.5 py-1 text-[10.5px] font-medium text-[#7C8780] transition-colors hover:text-[#244C40]" data-filter="active" type="button">进行中</button>
+<button class="rounded-md px-2.5 py-1 text-[10.5px] font-medium text-[#7C8780] transition-colors hover:text-[#244C40]" data-filter="done" type="button">已完成</button>
+</div>
+<button class="flex items-center gap-1 rounded-lg border border-[#D8DDD4] bg-white px-2.5 py-1.5 text-[10.5px] font-medium text-[#466453] transition-colors hover:border-[#A8BEAF] hover:bg-[#F3F7F2]" onclick="openTaskModal()" type="button">
+<iconify-icon icon="solar:add-circle-linear" width="14"></iconify-icon>
+<span>添加</span>
+</button>
+</div>
+</div>
+<div class="mt-2.5 min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden" id="taskList"></div>
+<div class="mt-2 border-t border-[#EFEDE5] pt-2.5">
+<div class="flex items-center gap-3">
+<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[#ECEDE6]">
+<div class="h-full rounded-full bg-[#8FAD9C] transition-[width] duration-300" id="progressBar" style="width: 25%"></div>
+</div>
+<span class="shrink-0 text-[10px] text-[#87918B]" id="progressText">今日已完成 1 / 4</span>
+</div>
+</div>
+</section>
+<section class="flex flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<h2 class="text-[16px] font-semibold tracking-[-0.01em] text-[#2A352F]">网络梗词小报</h2>
+<span class="rounded-full border border-[#E8DCCB] bg-[#FAF4EC] px-2 py-0.5 text-[9px] text-[#9A7A5D]">示例</span>
+</div>
+<button class="flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-[#85796C] transition-colors hover:bg-[#F8F2E9] hover:text-[#5B4636]" onclick="refreshMeme()" type="button">
+<iconify-icon icon="solar:refresh-linear" width="14"></iconify-icon>
+<span>换一批</span>
+</button>
+</div>
+<button aria-label="查看今日热梗解释" class="group mt-2.5 flex h-[96px] w-full shrink-0 items-stretch justify-between gap-3 overflow-hidden rounded-xl border border-[#ECDCC9] bg-[#F7E8D8] p-3.5 text-left transition-colors hover:bg-[#F5E2CF]" id="memeFeatured" type="button">
+<div class="min-w-0">
+<span class="inline-flex rounded-md bg-white/60 px-2 py-0.5 text-[9px] font-medium text-[#9A6A4A]">今日解梗</span>
+<p class="mt-1.5 text-[21px] font-semibold leading-none tracking-wide text-[#5A3D2D]" id="memeWord">班味</p>
+<p class="mt-1.5 line-clamp-2 max-h-[30px] overflow-hidden text-[10.5px] leading-[1.5] text-[#8D6D58]" id="memeDesc">一种上完班后，连周末都想静音的气质。</p>
+</div>
+<div class="relative flex h-[68px] w-[78px] shrink-0 items-center justify-center rounded-2xl border border-[#DFC5AC] bg-[#FBF2E8] text-[#A37A5C]">
+<span class="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-[#D5A77F]"></span>
+<iconify-icon class="translate-x-[-5px] translate-y-[3px]" icon="solar:cup-hot-linear" width="34"></iconify-icon>
+<iconify-icon class="absolute bottom-2 right-3 translate-y-[-1px] text-[#8D735F]" icon="solar:bag-4-linear" width="26"></iconify-icon>
+<span class="absolute bottom-3 left-3 h-px w-7 bg-[#D8BFA8]"></span>
+</div>
+</button>
+<div class="mt-1 flex min-h-0 flex-1 flex-col justify-center divide-y divide-[#F0E9DF]" id="memeList"></div>
+<button class="mt-2 flex h-[32px] w-full shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#E9E1D6] bg-[#FCF9F4] text-[10.5px] font-medium text-[#7D6C5D] transition-colors hover:border-[#D8C8B8] hover:bg-[#F8F2E9]" onclick="showToast('正在打开「大家都在聊什么」')" type="button">
+<span>看看大家都在聊什么</span>
+<iconify-icon icon="solar:arrow-up-right-linear" width="13"></iconify-icon>
+</button>
+</section>
+</div>
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+<section class="flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]">
+<div class="flex items-center justify-between">
+<h2 class="text-[15px] font-semibold tracking-[-0.01em] text-[#2A382F]">常用入口</h2>
+<span class="text-[9px] text-[#A0A7A1]">6 个入口</span>
+</div>
+<div class="mt-3 grid min-h-0 flex-1 grid-cols-3 grid-rows-2 gap-2">
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「项目目录」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:folder-2-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">项目目录</span>
+</button>
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「常用工具」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:widget-4-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">常用工具</span>
+</button>
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「GitHub」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:code-square-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">GitHub</span>
+</button>
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「AI 助手」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:magic-stick-3-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">AI 助手</span>
+</button>
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「学习资料」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:book-2-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">学习资料</span>
+</button>
+<button class="flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]" onclick="showToast('正在打开「全部收藏」')" type="button">
+<iconify-icon class="text-[#607F6C]" icon="solar:bookmark-opened-linear" width="19"></iconify-icon>
+<span class="text-[10.5px] font-medium">全部收藏</span>
+</button>
+</div>
+</section>
+<section class="flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]" id="calendarCard">
+<div class="flex items-center justify-between gap-2">
+<h2 class="text-[15px] font-semibold tracking-[-0.01em] text-[#2A382F]">接下来</h2>
+<button class="flex items-center gap-1 text-[10px] text-[#8A938D] transition-colors hover:text-[#244C40]" onclick="showToast('完整日历将在后续页面中开放')" type="button">
+<span>查看日历</span>
+<iconify-icon icon="solar:arrow-right-linear" width="13"></iconify-icon>
+</button>
+</div>
+<div class="mt-2.5 grid grid-cols-7 gap-0.5" id="dayStrip"></div>
+<div class="mt-2 flex min-h-0 flex-1 flex-col">
+<div class="flex items-center justify-between">
+<p class="text-[9.5px] font-medium text-[#8D968F]" id="scheduleDateLabel">10 月 17 日 · 2 项日程</p>
+<span class="h-px flex-1 bg-[#EFEDE4] ml-2"></span>
+</div>
+<div class="mt-1 min-h-0 flex-1" id="scheduleList"></div>
+</div>
+</section>
+<section class="relative flex flex-col overflow-hidden rounded-2xl border border-[#EDE1BD] bg-[#FBF3D9] p-4 shadow-[0_4px_18px_rgba(123,99,46,0.05)]" id="scratchCard">
+<span class="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full border border-[#EADDAF]"></span>
+<span class="pointer-events-none absolute bottom-12 right-5 h-1 w-1 rounded-full bg-[#D5C289]"></span>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-[10px] font-medium tracking-wide text-[#9B8656]">
+<iconify-icon icon="solar:notebook-linear" width="14"></iconify-icon>
+<span>随手记</span>
+</div>
+<button aria-label="编辑随手记" class="grid h-7 w-7 place-items-center rounded-lg text-[#9D895D] transition-colors hover:bg-[#F4E8C4] hover:text-[#6D5A32]" onclick="enterNoteEdit()" type="button">
+<iconify-icon icon="solar:pen-new-square-linear" width="16"></iconify-icon>
+</button>
+</div>
+<h2 class="mt-1.5 text-[15px] font-semibold text-[#5D4D2D]">首页想法</h2>
+<div class="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto text-[11px] leading-[1.65] text-[#7B6840] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden" id="noteDisplay"></div>
+<div class="mt-2 hidden min-h-0 flex-1 flex-col" id="noteEditor">
+<textarea aria-label="随手记内容" class="min-h-[62px] flex-1 resize-none rounded-lg border border-[#E4D4A6] bg-[#FFFDF5] px-2.5 py-2 text-[11px] leading-[1.65] text-[#5F4F2F] outline-none focus:border-[#B7A15F]" id="noteTextarea"></textarea>
+<div class="mt-1.5 flex justify-end gap-1.5">
+<button class="rounded-md px-2 py-1 text-[10px] text-[#8C7950] transition-colors hover:bg-[#F4E8C4]" onclick="cancelNoteEdit()" type="button">取消</button>
+<button class="rounded-md bg-[#66542E] px-2.5 py-1 text-[10px] font-medium text-white transition-colors hover:bg-[#554525]" onclick="saveNote()" type="button">保存</button>
+</div>
+</div>
+<button class="mt-2 flex h-[30px] w-full shrink-0 items-center justify-center gap-1 rounded-lg border border-[#E3D3A6] bg-[#FCF6E3] text-[10px] font-medium text-[#7C693C] transition-colors hover:border-[#D4BF86] hover:bg-[#F9EFD3]" id="noteAddBtn" onclick="enterNoteEdit()" type="button">
+<iconify-icon icon="solar:add-circle-linear" width="13"></iconify-icon>
+<span>记录一个想法</span>
+</button>
+</section>
+</div>
+</div>
+<p class="mt-2.5 pb-0.5 text-center text-[9.5px] tracking-wide text-[#9A9F9A]">天气与热梗内容为示例</p>
+</div>
+</main>
+</div>
+</div>
+<div aria-labelledby="taskModalTitle" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-[#15241E]/45 p-4" id="taskModal" role="dialog">
+<div class="w-full max-w-[520px] rounded-2xl border border-[#E5E1D6] bg-[#FEFDF9] p-6 shadow-2xl">
+<div class="flex items-start justify-between gap-4">
+<div>
+<h2 class="text-[18px] font-semibold text-[#23342B]" id="taskModalTitle">新建待办</h2>
+<p class="mt-1 text-[11px] text-[#8D958F]">把此刻想起的事放进今天，稍后慢慢完成。</p>
+</div>
+<button aria-label="关闭新建待办弹窗" class="grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] transition-colors hover:bg-[#F2F2EC] hover:text-[#244C40]" onclick="closeTaskModal()" type="button">
+<iconify-icon icon="solar:close-circle-linear" width="19"></iconify-icon>
+</button>
+</div>
+<form class="mt-5 space-y-4" id="taskForm">
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="taskName">任务名称</label>
+<input autocomplete="off" class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors placeholder:text-[#A4AAA5] focus:border-[#8DAA99] focus:bg-white" id="taskName" name="taskName" placeholder="例如：整理下周的阅读清单" required="" type="text"/>
+</div>
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="taskProject">所属项目</label>
+<select class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="taskProject" name="taskProject">
+<option>个人项目</option>
+<option>毕业设计</option>
+<option>个人成长</option>
+<option>收藏导航</option>
+<option>其他</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="taskTime">时间</label>
+<input class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="taskTime" name="taskTime" type="time" value="16:00"/>
+</div>
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="taskPriority">优先级</label>
+<select class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="taskPriority" name="taskPriority">
+<option value="高">高</option>
+<option selected="" value="中">中</option>
+<option value="低">低</option>
+</select>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 border-t border-[#EFEDE5] pt-4">
+<button class="rounded-xl px-4 py-2.5 text-[12px] font-medium text-[#6E7872] transition-colors hover:bg-[#F2F2EC]" onclick="closeTaskModal()" type="button">取消</button>
+<button class="rounded-xl bg-[#244C40] px-4 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[#1B3D31]" type="submit">保存待办</button>
+</div>
+</form>
+</div>
+</div>
+<div aria-labelledby="cityModalTitle" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-[#15241E]/45 p-4" id="cityModal" role="dialog">
+<div class="w-full max-w-[460px] rounded-2xl border border-[#E5E1D6] bg-[#FEFDF9] p-6 shadow-2xl">
+<div class="flex items-start justify-between gap-4">
+<div>
+<h2 class="text-[18px] font-semibold text-[#23342B]" id="cityModalTitle">切换城市</h2>
+<p class="mt-1 text-[11px] text-[#8D958F]">选择一个城市，查看今天的天气与出行提示。</p>
+</div>
+<button aria-label="关闭城市选择弹窗" class="grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] transition-colors hover:bg-[#F2F2EC] hover:text-[#244C40]" onclick="closeCityModal()" type="button">
+<iconify-icon icon="solar:close-circle-linear" width="19"></iconify-icon>
+</button>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-2.5" id="cityOptions"></div>
+<p class="mt-4 text-center text-[9.5px] text-[#A0A6A1]">天气为演示示例，不构成出行建议</p>
+</div>
+</div>
+<div aria-labelledby="memeModalTitle" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-[#15241E]/45 p-4" id="memeModal" role="dialog">
+<div class="w-full max-w-[470px] rounded-2xl border border-[#E9DED0] bg-[#FEFDF9] p-6 shadow-2xl">
+<div class="flex items-start justify-between gap-4">
+<span class="rounded-full border border-[#EADAC7] bg-[#F8EBDC] px-2.5 py-1 text-[9.5px] font-medium text-[#976C4D]">网络梗词小报</span>
+<button aria-label="关闭热梗解释弹窗" class="grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] transition-colors hover:bg-[#F2F2EC] hover:text-[#244C40]" onclick="closeMemeModal()" type="button">
+<iconify-icon icon="solar:close-circle-linear" width="19"></iconify-icon>
+</button>
+</div>
+<h2 class="mt-4 text-[30px] font-semibold tracking-wide text-[#533A2A]" id="memeModalTitle">班味</h2>
+<p class="mt-2 text-[13px] leading-6 text-[#7D6656]" id="memeModalDesc">一种上完班后，连周末都想静音的气质。</p>
+<div class="mt-4 rounded-xl border border-[#F0E6D9] bg-[#FCF6EE] p-3">
+<p class="text-[9.5px] font-medium tracking-wide text-[#A28770]">使用场景</p>
+<p class="mt-1.5 text-[11px] leading-5 text-[#776250]" id="memeModalUsage">周六醒来，看到工作群消息，整个人突然就有了班味。</p>
+</div>
+<div class="mt-4 flex justify-end">
+<button class="rounded-xl bg-[#244C40] px-4 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[#1B3D31]" onclick="closeMemeModal()" type="button">知道了</button>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="fixed inset-0 z-40 hidden bg-[#15241E]/35" id="drawerBackdrop"></div>
+<aside aria-hidden="true" aria-labelledby="drawerHeading" class="fixed inset-y-0 right-0 z-50 flex w-full max-w-[420px] translate-x-full flex-col border-l border-[#E2DED2] bg-[#FEFDF9] shadow-2xl transition-transform duration-300" id="taskDrawer">
+<div class="flex shrink-0 items-center justify-between border-b border-[#ECE9DF] px-5 py-4">
+<div>
+<p class="text-[9px] font-medium uppercase tracking-[0.16em] text-[#9CA39D]">Task detail</p>
+<h2 class="mt-0.5 text-[16px] font-semibold text-[#25362D]" id="drawerHeading">任务详情</h2>
+</div>
+<button aria-label="关闭任务详情侧栏" class="grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] transition-colors hover:bg-[#F2F2EC] hover:text-[#244C40]" onclick="closeTaskDrawer()" type="button">
+<iconify-icon icon="solar:close-circle-linear" width="19"></iconify-icon>
+</button>
+</div>
+<form class="flex min-h-0 flex-1 flex-col" id="drawerForm">
+<div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="drawerTitle">任务名称</label>
+<input class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="drawerTitle" required="" type="text"/>
+</div>
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="drawerProject">所属项目</label>
+<select class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="drawerProject">
+<option>个人项目</option>
+<option>毕业设计</option>
+<option>个人成长</option>
+<option>收藏导航</option>
+<option>其他</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="drawerTime">时间</label>
+<input class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="drawerTime" type="time"/>
+</div>
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="drawerPriority">优先级</label>
+<select class="w-full rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8DAA99] focus:bg-white" id="drawerPriority">
+<option value="高">高</option>
+<option value="中">中</option>
+<option value="低">低</option>
+</select>
+</div>
+</div>
+<div>
+<label class="mb-1.5 block text-[11px] font-medium text-[#57645C]" for="drawerNote">备注</label>
+<textarea class="w-full resize-none rounded-xl border border-[#DDDACD] bg-[#FBFAF6] px-3.5 py-2.5 text-[12px] leading-5 text-[#2C3A32] outline-none transition-colors placeholder:text-[#A4AAA5] focus:border-[#8DAA99] focus:bg-white" id="drawerNote" placeholder="为这件事补一点上下文…" rows="5"></textarea>
+</div>
+<label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-[#E7E8DF] bg-[#F7F8F3] px-3.5 py-3 text-[11px] text-[#56645C]">
+<input class="h-4 w-4 accent-[#244C40]" id="drawerDone" type="checkbox"/>
+<span>将任务标记为已完成</span>
+</label>
+</div>
+<div class="flex shrink-0 items-center justify-end gap-2 border-t border-[#ECE9DF] px-5 py-4">
+<button class="rounded-xl px-4 py-2.5 text-[12px] font-medium text-[#6E7872] transition-colors hover:bg-[#F2F2EC]" onclick="closeTaskDrawer()" type="button">取消</button>
+<button class="rounded-xl bg-[#244C40] px-4 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[#1B3D31]" type="submit">保存修改</button>
+</div>
+</form>
+</aside>
+<div class="fixed inset-0 z-[75] hidden" id="mobileNav">
+<button aria-label="关闭导航" class="absolute inset-0 bg-[#15241E]/45" onclick="closeMobileNav()" type="button"></button>
+<aside class="relative flex h-full w-[272px] flex-col bg-[#244C40] text-white shadow-2xl">
+<div class="flex h-[64px] shrink-0 items-center justify-between border-b border-white/10 px-4">
+<div class="flex items-center gap-2.5">
+<div class="grid h-8 w-8 place-items-center rounded-lg border border-white/25 bg-white/10">
+<iconify-icon icon="solar:widget-5-linear" width="17"></iconify-icon>
+</div>
+<span class="text-sm font-semibold">个人工作台</span>
+</div>
+<button aria-label="关闭导航" class="grid h-8 w-8 place-items-center rounded-lg text-[#C8D8CF] transition-colors hover:bg-white/10" onclick="closeMobileNav()" type="button">
+<iconify-icon icon="solar:close-circle-linear" width="19"></iconify-icon>
+</button>
+</div>
+<nav aria-label="移动端导航" class="flex-1 space-y-1 overflow-y-auto px-3 py-5">
+<button class="flex w-full items-center gap-3 rounded-xl bg-[#779A86] px-3 py-2.5 text-left text-[13px] font-medium text-white" onclick="handleNav('今日总览')" type="button">
+<iconify-icon icon="solar:home-smile-linear" width="18"></iconify-icon>
+<span>今日总览</span>
+</button>
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('待办清单')" type="button">
+<iconify-icon icon="solar:checklist-minimalistic-linear" width="18"></iconify-icon>
+<span>待办清单</span>
+</button>
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('日历日程')" type="button">
+<iconify-icon icon="solar:calendar-linear" width="18"></iconify-icon>
+<span>日历日程</span>
+</button>
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('项目空间')" type="button">
+<iconify-icon icon="solar:folder-with-files-linear" width="18"></iconify-icon>
+<span>项目空间</span>
+</button>
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('收藏导航')" type="button">
+<iconify-icon icon="solar:star-linear" width="18"></iconify-icon>
+<span>收藏导航</span>
+</button>
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#C8D8CF] transition-colors hover:bg-white/10 hover:text-white" onclick="handleNav('随手笔记')" type="button">
+<iconify-icon icon="solar:notebook-linear" width="18"></iconify-icon>
+<span>随手笔记</span>
+</button>
+</nav>
+<div class="shrink-0 border-t border-white/10 p-3">
+<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] text-[#C8D8CF] transition-colors hover:bg-white/10" onclick="showToast('个性化设置将在完整版中开放')" type="button">
+<iconify-icon icon="solar:settings-linear" width="17"></iconify-icon>
+<span>个性化设置</span>
+</button>
+<button class="mt-1 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-white/10" onclick="showToast('正在进入「我的空间」')" type="button">
+<span class="grid h-9 w-9 place-items-center rounded-full bg-[#D9B982] text-[12px] font-semibold text-[#244C40]">林</span>
+<span class="min-w-0 flex-1">
+<span class="block text-[12px] font-medium text-white">我的空间</span>
+<span class="mt-0.5 block text-[10px] text-[#AFC4B8]">林同学 · 个人版</span>
+</span>
+<iconify-icon class="text-[#AFC4B8]" icon="solar:alt-arrow-down-linear" width="15"></iconify-icon>
+</button>
+</div>
+</aside>
+</div>
+<div aria-live="polite" class="fixed bottom-6 left-1/2 z-[90] hidden -translate-x-1/2 items-center rounded-full bg-[#244C40] px-4 py-2 text-[11px] font-medium text-white shadow-[0_10px_30px_rgba(20,36,30,0.24)]" id="toast" role="status"></div>
+<script>
+    const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (character) => {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return map[character];
+    });
+
+    const state = {
+      tasks: [
+        {
+          id: 1,
+          title: '完善个人工作台首页原型',
+          project: '个人项目',
+          time: '10:00',
+          priority: '高',
+          done: false,
+          accent: true,
+          note: '确认暖白与墨绿的主视觉，检查三排布局的对齐关系，并走一遍新建、完成和筛选任务的核心路径。'
+        },
+        {
+          id: 2,
+          title: '整理毕业设计需求文档',
+          project: '毕业设计',
+          time: '14:00',
+          priority: '中',
+          done: false,
+          accent: false,
+          note: '把访谈记录里的关键诉求整理成功能清单，补充优先级和验收标准。'
+        },
+        {
+          id: 3,
+          title: '阅读 20 分钟',
+          project: '个人成长',
+          time: '20:30',
+          priority: '低',
+          done: false,
+          accent: false,
+          note: '继续读床头那本散文集，不做笔记，只留一段安静的时间。'
+        },
+        {
+          id: 4,
+          title: '整理本周收藏的工具',
+          project: '收藏导航',
+          time: '',
+          priority: '中',
+          done: true,
+          accent: false,
+          note: '已经归档三个设计工具和一个写作插件，周末再统一补充标签。'
+        }
+      ],
+      nextTaskId: 5,
+      filter: 'all',
+      activeTaskId: null,
+      selectedDay: 17,
+      city: '南京',
+      memeIndex: 0,
+      noteLines: [
+        '天气、热梗、待办都放在一屏。',
+        '少一点切换，多一点顺手。'
+      ],
+      memes: [
+        {
+          word: '班味',
+          desc: '一种上完班后，连周末都想静音的气质。',
+          usage: '周六醒来，看到工作群消息，整个人突然就有了班味。',
+          items: [
+            { word: '情绪价值', desc: '为情绪买单，也愿意为情绪充电。' },
+            { word: '松弛感', desc: '不慌不忙，允许一切发生。' }
+          ]
+        },
+        {
+          word: '电子榨菜',
+          desc: '吃饭时必不可少的下饭视频，没它饭都不香。',
+          usage: '午饭准备好了，先打开收藏夹挑一集电子榨菜。',
+          items: [
+            { word: '赛博散步', desc: '不设目的地，在网页和地图里随便走走。' },
+            { word: '低电量社交', desc: '只参加不用努力找话题的见面。' }
+          ]
+        },
+        {
+          word: '淡人',
+          desc: '情绪稳定、欲望不高，对很多事都可以。',
+          usage: '问他周末去哪，他说都行，典型淡人发言。',
+          items: [
+            { word: '轻断网', desc: '主动离开消息流几个小时，让注意力回神。' },
+            { word: '微退休', desc: '在忙碌日常里，给自己安排一小段空白。' }
+          ]
+        }
+      ]
+    };
+
+    const cities = {
+      '南京': {
+        temp: 23,
+        condition: '晴间多云',
+        low: 18,
+        high: 25,
+        aqi: '空气优',
+        tip: '适合出门走走',
+        forecast: [23, 25, 24, 21]
+      },
+      '杭州': {
+        temp: 24,
+        condition: '多云',
+        low: 19,
+        high: 27,
+        aqi: '空气良',
+        tip: '湖边风正舒服',
+        forecast: [24, 27, 26, 22]
+      },
+      '苏州': {
+        temp: 22,
+        condition: '晴',
+        low: 17,
+        high: 24,
+        aqi: '空气优',
+        tip: '适合慢走',
+        forecast: [22, 24, 23, 20]
+      },
+      '上海': {
+        temp: 25,
+        condition: '晴间多云',
+        low: 21,
+        high: 28,
+        aqi: '空气优',
+        tip: '江风正好',
+        forecast: [25, 28, 27, 23]
+      }
+    };
+
+    const calendarDays = [
+      { day: 12, label: '周一' },
+      { day: 13, label: '周二' },
+      { day: 14, label: '周三' },
+      { day: 15, label: '周四' },
+      { day: 16, label: '周五' },
+      { day: 17, label: '周六' },
+      { day: 18, label: '周日' }
+    ];
+
+    const schedules = {
+      12: [
+        { time: '09:30', title: '一周计划同步', place: '线上会议' },
+        { time: '16:00', title: '需求资料整理', place: '个人项目' }
+      ],
+      13: [
+        { time: '10:00', title: '界面设计评审', place: '设计小组' },
+        { time: '19:30', title: '阅读与摘录', place: '家中' }
+      ],
+      14: [
+        { time: '09:00', title: '用户访谈', place: '线上会议' },
+        { time: '15:00', title: '写作时间', place: '个人成长' }
+      ],
+      15: [
+        { time: '11:00', title: '项目进度对接', place: '项目空间' },
+        { time: '19:00', title: '晚间运动', place: '附近公园' }
+      ],
+      16: [
+        { time: '14:00', title: '本周复盘', place: '个人项目' },
+        { time: '18:30', title: '采购日用品', place: '社区超市' }
+      ],
+      17: [
+        { time: '14:00', title: '毕设小组讨论', place: '线上会议' },
+        { time: '18:30', title: '晚间散步', place: '玄武湖畔' }
+      ],
+      18: [
+        { time: '10:00', title: '慢慢吃个早餐', place: '家中' },
+        { time: '16:00', title: '整理房间', place: '生活' }
+      ]
+    };
+
+    const searchData = {
+      projects: [
+        { name: '个人工作台首页原型', meta: '项目 · 最近编辑' },
+        { name: '毕业设计需求文档', meta: '项目 · 昨天更新' },
+        { name: '2026 秋季旅行计划', meta: '项目 · 10 月 12 日' }
+      ],
+      tools: [
+        { name: 'Figma', meta: '设计工具' },
+        { name: 'Notion', meta: '知识整理' },
+        { name: 'GitHub', meta: '代码与项目' }
+      ],
+      notes: [
+        { name: '首页想法', meta: '随手记 · 今天' },
+        { name: '本周效率复盘', meta: '笔记 · 10 月 16 日' },
+        { name: '书单摘录', meta: '笔记 · 10 月 9 日' }
+      ]
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2200);
+    }
+
+    function openOverlay(id) {
+      const overlay = document.getElementById(id);
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function closeOverlay(id) {
+      const overlay = document.getElementById(id);
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function openTaskModal() {
+      const form = document.getElementById('taskForm');
+      form.reset();
+      document.getElementById('taskPriority').value = '中';
+      document.getElementById('taskTime').value = '16:00';
+      document.getElementById('taskProject').value = '个人项目';
+      openOverlay('taskModal');
+      window.setTimeout(() => document.getElementById('taskName').focus(), 60);
+    }
+
+    function closeTaskModal() {
+      closeOverlay('taskModal');
+    }
+
+    function updateFilterButtons() {
+      document.querySelectorAll('[data-filter]').forEach((button) => {
+        const active = button.dataset.filter === state.filter;
+        button.className = 'rounded-md px-2.5 py-1 text-[10.5px] font-medium transition-colors ' + (active ? 'bg-white text-[#244C40] shadow-sm' : 'text-[#7C8780] hover:text-[#244C40]');
+        button.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    function updateMetrics() {
+      const unfinished = state.tasks.filter((task) => !task.done).length;
+      const completed = state.tasks.length - unfinished;
+      document.getElementById('todoBadge').textContent = unfinished;
+      document.getElementById('heroSummary').textContent = unfinished + ' 件待办，2 项日程，给今天留一点从容。';
+      document.getElementById('progressText').textContent = '今日已完成 ' + completed + ' / ' + state.tasks.length;
+      const progress = state.tasks.length ? Math.round((completed / state.tasks.length) * 100) : 0;
+      document.getElementById('progressBar').style.width = progress + '%';
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      const filtered = state.tasks.filter((task) => {
+        if (state.filter === 'active') return !task.done;
+        if (state.filter === 'done') return task.done;
+        return true;
+      });
+
+      if (!filtered.length) {
+        const emptyText = state.filter === 'done' ? '还没有完成的任务' : state.filter === 'active' ? '进行中的任务已经清空' : '今天还没有待办';
+        taskList.innerHTML = '<div class="flex h-full min-h-[118px] flex-col items-center justify-center text-center">'
+          + '<span class="grid h-9 w-9 place-items-center rounded-full bg-[#F0F3EC] text-[#7F9486]"><iconify-icon icon="solar:checklist-minimalistic-linear" width="19"></iconify-icon></span>'
+          + '<p class="mt-2 text-[11.5px] font-medium text-[#627168]">' + emptyText + '</p>'
+          + '<p class="mt-1 text-[9.5px] text-[#A0A7A1]">换个筛选，或添加一件新待办。</p>'
+          + '</div>';
+      } else {
+        taskList.innerHTML = filtered.map((task) => {
+          const highlight = task.accent && !task.done;
+          const rowTone = highlight ? 'border-[#E8F0E4] bg-[#EDF3EA] shadow-[inset_3px_0_0_#8FAD9C] hover:bg-[#E7EFE3]' : 'border-[#EFEDE5] hover:bg-[#F7F7F2]';
+          const titleTone = task.done ? 'text-[#A0A6A1] line-through decoration-[#C2C6C2]' : 'text-[#2D3932] group-hover:text-[#244C40]';
+          const priority = task.priority === '高' && !task.done ? '<span class="ml-1 shrink-0 rounded-md bg-[#DCE8DB] px-1.5 py-0.5 text-[8.5px] font-semibold text-[#456552]">优先</span>' : '';
+          return '<div class="group flex items-center gap-2.5 rounded-lg border-b px-2 py-1.5 transition-colors ' + rowTone + '">'
+            + '<button type="button" onclick="toggleTask(' + task.id + ')" class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#9AA49E] transition-colors hover:bg-[#EAF0E8] hover:text-[#244C40]" aria-label="' + (task.done ? '标记为未完成' : '标记为完成') + '：' + escapeHTML(task.title) + '">'
+            + '<iconify-icon icon="' + (task.done ? 'solar:check-circle-bold' : 'solar:circle-linear') + '" width="18" class="' + (task.done ? 'text-[#73927F]' : '') + '"></iconify-icon>'
+            + '</button>'
+            + '<div class="min-w-0 flex-1">'
+            + '<div class="flex items-center gap-1.5">'
+            + '<button type="button" onclick="openTaskDrawer(' + task.id + ')" class="truncate text-left text-[12.5px] font-medium ' + titleTone + '">' + escapeHTML(task.title) + '</button>'
+            + priority
+            + '</div>'
+            + '<div class="mt-0.5 flex items-center gap-1.5 text-[9.5px] text-[#949C97]">'
+            + '<span class="truncate">' + escapeHTML(task.project) + '</span>'
+            + '<span>·</span>'
+            + '<span class="shrink-0">' + escapeHTML(task.time || '待安排') + '</span>'
+            + '</div>'
+            + '</div>'
+            + '<button type="button" onclick="openTaskDrawer(' + task.id + ')" class="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[#B1B7B2] opacity-0 transition-all hover:bg-[#F1F3ED] hover:text-[#244C40] group-hover:opacity-100" aria-label="查看任务详情">'
+            + '<iconify-icon icon="solar:alt-arrow-right-linear" width="14"></iconify-icon>'
+            + '</button>'
+            + '</div>';
+        }).join('');
+      }
+
+      updateFilterButtons();
+      updateMetrics();
+    }
+
+    function toggleTask(id) {
+      const task = state.tasks.find((item) => item.id === id);
+      if (!task) return;
+      task.done = !task.done;
+      renderTasks();
+      showToast(task.done ? '已完成：' + task.title : '已恢复：' + task.title);
+    }
+
+    document.querySelectorAll('[data-filter]').forEach((button) => {
+      button.addEventListener('click', () => {
+        state.filter = button.dataset.filter;
+        renderTasks();
+      });
+    });
+
+    document.getElementById('taskForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const title = document.getElementById('taskName').value.trim();
+      if (!title) {
+        showToast('请先填写任务名称');
+        return;
+      }
+      const task = {
+        id: state.nextTaskId++,
+        title,
+        project: document.getElementById('taskProject').value,
+        time: document.getElementById('taskTime').value || '待安排',
+        priority: document.getElementById('taskPriority').value,
+        done: false,
+        accent: false,
+        note: '从新建待办表单添加，可以点击任务标题继续补充上下文。'
+      };
+      state.tasks.unshift(task);
+      state.filter = 'all';
+      renderTasks();
+      closeTaskModal();
+      showToast('已加入今日待办');
+    });
+
+    function openTaskDrawer(id) {
+      const task = state.tasks.find((item) => item.id === id);
+      if (!task) return;
+      state.activeTaskId = id;
+      document.getElementById('drawerTitle').value = task.title;
+      document.getElementById('drawerProject').value = task.project;
+      document.getElementById('drawerTime').value = task.time && task.time !== '待安排' ? task.time : '';
+      document.getElementById('drawerPriority').value = task.priority;
+      document.getElementById('drawerNote').value = task.note || '';
+      document.getElementById('drawerDone').checked = task.done;
+      document.getElementById('drawerBackdrop').classList.remove('hidden');
+      const drawer = document.getElementById('taskDrawer');
+      drawer.classList.remove('translate-x-full');
+      drawer.classList.add('translate-x-0');
+      drawer.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeTaskDrawer() {
+      document.getElementById('drawerBackdrop').classList.add('hidden');
+      const drawer = document.getElementById('taskDrawer');
+      drawer.classList.add('translate-x-full');
+      drawer.classList.remove('translate-x-0');
+      drawer.setAttribute('aria-hidden', 'true');
+      state.activeTaskId = null;
+    }
+
+    document.getElementById('drawerBackdrop').addEventListener('click', closeTaskDrawer);
+
+    document.getElementById('drawerForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const task = state.tasks.find((item) => item.id === state.activeTaskId);
+      if (!task) return;
+      const title = document.getElementById('drawerTitle').value.trim();
+      if (!title) {
+        showToast('任务名称不能为空');
+        return;
+      }
+      task.title = title;
+      task.project = document.getElementById('drawerProject').value;
+      task.time = document.getElementById('drawerTime').value || '待安排';
+      task.priority = document.getElementById('drawerPriority').value;
+      task.note = document.getElementById('drawerNote').value.trim();
+      task.done = document.getElementById('drawerDone').checked;
+      renderTasks();
+      closeTaskDrawer();
+      showToast('任务详情已保存');
+    });
+
+    const quickInput = document.getElementById('quickInput');
+    const quickActions = document.getElementById('quickActions');
+
+    function updateQuickActions() {
+      const hasContent = quickInput.value.trim().length > 0;
+      quickActions.classList.toggle('hidden', !hasContent);
+      quickActions.classList.toggle('flex', hasContent);
+    }
+
+    quickInput.addEventListener('input', updateQuickActions);
+    quickInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveQuick('todo');
+      }
+    });
+
+    function saveQuick(type) {
+      const value = quickInput.value.trim();
+      if (!value) {
+        quickInput.focus();
+        return;
+      }
+      if (type === 'todo') {
+        state.tasks.unshift({
+          id: state.nextTaskId++,
+          title: value,
+          project: '个人项目',
+          time: '待安排',
+          priority: '中',
+          done: false,
+          accent: false,
+          note: '通过首页快速输入添加。'
+        });
+        state.filter = 'all';
+        renderTasks();
+        showToast('已存为待办');
+      } else {
+        state.noteLines.push(value);
+        renderNoteDisplay();
+        showToast('已存入随手记');
+      }
+      quickInput.value = '';
+      updateQuickActions();
+    }
+
+    function renderNoteDisplay() {
+      document.getElementById('noteDisplay').innerHTML = state.noteLines.map((line) => '<p>' + escapeHTML(line) + '</p>').join('');
+    }
+
+    function enterNoteEdit() {
+      document.getElementById('noteDisplay').classList.add('hidden');
+      document.getElementById('noteAddBtn').classList.add('hidden');
+      const editor = document.getElementById('noteEditor');
+      editor.classList.remove('hidden');
+      editor.classList.add('flex');
+      document.getElementById('noteTextarea').value = state.noteLines.join('\n');
+      window.setTimeout(() => document.getElementById('noteTextarea').focus(), 40);
+    }
+
+    function exitNoteEdit() {
+      const editor = document.getElementById('noteEditor');
+      editor.classList.add('hidden');
+      editor.classList.remove('flex');
+      document.getElementById('noteDisplay').classList.remove('hidden');
+      document.getElementById('noteAddBtn').classList.remove('hidden');
+    }
+
+    function cancelNoteEdit() {
+      exitNoteEdit();
+    }
+
+    function saveNote() {
+      const lines = document.getElementById('noteTextarea').value.split('\n').map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) {
+        showToast('写点什么再保存吧');
+        return;
+      }
+      state.noteLines = lines;
+      renderNoteDisplay();
+      exitNoteEdit();
+      showToast('随手记已更新');
+    }
+
+    function renderMeme() {
+      const meme = state.memes[state.memeIndex];
+      document.getElementById('memeWord').textContent = meme.word;
+      document.getElementById('memeDesc').textContent = meme.desc;
+      document.getElementById('memeList').innerHTML = meme.items.map((item, index) => {
+        return '<button type="button" data-meme-item="' + index + '" class="group flex min-h-[33px] w-full items-center justify-between gap-3 py-1.5 text-left transition-colors hover:text-[#5B4636]">'
+          + '<span class="flex min-w-0 items-center gap-2">'
+          + '<span class="shrink-0 text-[11px] font-semibold text-[#5D4B3D]">' + escapeHTML(item.word) + '</span>'
+          + '<span class="truncate text-[9.5px] text-[#9B8B7D]">' + escapeHTML(item.desc) + '</span>'
+          + '</span>'
+          + '<iconify-icon icon="solar:alt-arrow-right-linear" width="13" class="shrink-0 text-[#B5A79A] transition-transform group-hover:translate-x-0.5"></iconify-icon>'
+          + '</button>';
+      }).join('');
+    }
+
+    function refreshMeme() {
+      state.memeIndex = (state.memeIndex + 1) % state.memes.length;
+      renderMeme();
+      showToast('换了一批新鲜热梗');
+    }
+
+    document.getElementById('memeFeatured').addEventListener('click', () => {
+      const meme = state.memes[state.memeIndex];
+      openMemeDetail(meme.word, meme.desc, meme.usage);
+    });
+
+    document.getElementById('memeList').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-meme-item]');
+      if (!button) return;
+      const meme = state.memes[state.memeIndex];
+      const item = meme.items[Number(button.dataset.memeItem)];
+      if (!item) return;
+      openMemeDetail(item.word, item.desc, '在日常聊天里，人们常用「' + item.word + '」形容一种熟悉又微妙的生活状态。');
+    });
+
+    function openMemeDetail(word, desc, usage) {
+      document.getElementById('memeModalTitle').textContent = word;
+      document.getElementById('memeModalDesc').textContent = desc;
+      document.getElementById('memeModalUsage').textContent = usage;
+      openOverlay('memeModal');
+    }
+
+    function closeMemeModal() {
+      closeOverlay('memeModal');
+    }
+
+    function renderCityOptions() {
+      document.getElementById('cityOptions').innerHTML = Object.keys(cities).map((name) => {
+        const city = cities[name];
+        const active = state.city === name;
+        const classes = active
+          ? 'border-[#244C40] bg-[#EDF3EA]'
+          : 'border-[#E4E1D6] bg-[#FBFAF6] hover:border-[#B7C9BC] hover:bg-[#F7F9F4]';
+        return '<button type="button" onclick="selectCity(\'' + name + '\')" class="flex items-center justify-between rounded-xl border px-3.5 py-3 text-left transition-colors ' + classes + '">'
+          + '<span class="flex items-center gap-2">'
+          + '<span class="grid h-7 w-7 place-items-center rounded-lg bg-white/70 text-[#6C8B79]"><iconify-icon icon="solar:cloud-sun-2-linear" width="17"></iconify-icon></span>'
+          + '<span class="text-[12px] font-medium text-[#34453B]">' + name + '</span>'
+          + '</span>'
+          + '<span class="text-[13px] font-semibold text-[#4A5E52]">' + city.temp + '°</span>'
+          + '</button>';
+      }).join('');
+    }
+
+    function openCityModal() {
+      renderCityOptions();
+      openOverlay('cityModal');
+    }
+
+    function closeCityModal() {
+      closeOverlay('cityModal');
+    }
+
+    function selectCity(name) {
+      const city = cities[name];
+      if (!city) return;
+      state.city = name;
+      document.getElementById('weatherCity').textContent = name;
+      document.getElementById('weatherTemp').textContent = city.temp + '°';
+      document.getElementById('weatherCondition').textContent = city.condition;
+      document.getElementById('weatherRange').textContent = city.low + '°/' + city.high + '°';
+      document.getElementById('weatherAQI').textContent = city.aqi;
+      document.getElementById('weatherTip').textContent = city.tip;
+      document.querySelectorAll('[data-weather-temp]').forEach((item, index) => {
+        item.textContent = city.forecast[index] + '°';
+      });
+      renderCityOptions();
+      closeCityModal();
+      showToast('已切换到 ' + name);
+    }
+
+    function renderDayStrip() {
+      const strip = document.getElementById('dayStrip');
+      strip.innerHTML = calendarDays.map((item) => {
+        const active = item.day === state.selectedDay;
+        const buttonTone = active ? 'bg-[#EFF3ED] text-[#244C40]' : 'text-[#909A94] hover:bg-[#F4F5F0] hover:text-[#244C40]';
+        const pillTone = active ? 'bg-[#244C40] text-white shadow-sm' : 'bg-transparent group-hover:bg-[#E8ECE4]';
+        return '<button type="button" data-day="' + item.day + '" class="group flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors ' + buttonTone + '" aria-label="10 月 ' + item.day + ' 日 ' + item.label + '">'
+          + '<span class="text-[9px]">' + item.label + '</span>'
+          + '<span class="flex h-[26px] w-[26px] items-center justify-center rounded-full text-[11px] font-medium transition-colors ' + pillTone + '">' + item.day + '</span>'
+          + '</button>';
+      }).join('');
+    }
+
+    function renderSchedule() {
+      const list = schedules[state.selectedDay] || [];
+      document.getElementById('scheduleDateLabel').textContent = '10 月 ' + state.selectedDay + ' 日 · ' + list.length + ' 项日程';
+      document.getElementById('scheduleList').innerHTML = list.map((item, index) => {
+        return '<button type="button" data-schedule="' + escapeHTML(item.title) + '" class="group relative flex w-full items-start gap-2.5 rounded-lg py-1.5 pl-4 pr-1 text-left transition-colors hover:bg-[#F7F7F2]">'
+          + '<span class="absolute left-[3px] top-[9px] h-2 w-2 rounded-full border-2 border-[#91AE9D] bg-white"></span>'
+          + (index < list.length - 1 ? '<span class="absolute left-[6px] top-[19px] h-[18px] w-px bg-[#E3E7DE]"></span>' : '')
+          + '<span class="min-w-0 flex-1">'
+          + '<span class="flex items-center justify-between gap-2">'
+          + '<span class="truncate text-[11px] font-medium text-[#3F4E44] group-hover:text-[#244C40]">' + escapeHTML(item.title) + '</span>'
+          + '<span class="shrink-0 text-[9.5px] font-medium text-[#8B958F]">' + escapeHTML(item.time) + '</span>'
+          + '</span>'
+          + '<span class="mt-0.5 block truncate text-[9px] text-[#A0A7A1]">' + escapeHTML(item.place) + '</span>'
+          + '</span>'
+          + '</button>';
+      }).join('');
+
+      document.querySelectorAll('#scheduleList [data-schedule]').forEach((button) => {
+        button.addEventListener('click', () => showToast('已选中日程：' + button.dataset.schedule));
+      });
+    }
+
+    document.getElementById('dayStrip').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-day]');
+      if (!button) return;
+      state.selectedDay = Number(button.dataset.day);
+      renderDayStrip();
+      renderSchedule();
+      showToast('已查看 10 月 ' + state.selectedDay + ' 日日程');
+    });
+
+    const searchInput = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    function hideSearchResults() {
+      searchResults.classList.add('hidden');
+      searchResults.classList.remove('block');
+    }
+
+    function renderSearchResults() {
+      const term = searchInput.value.trim().toLowerCase();
+      if (!term) {
+        hideSearchResults();
+        return;
+      }
+
+      const groups = [
+        {
+          label: '项目',
+          icon: 'solar:folder-2-linear',
+          items: searchData.projects.filter((item) => item.name.toLowerCase().includes(term) || item.meta.toLowerCase().includes(term))
+        },
+        {
+          label: '工具',
+          icon: 'solar:widget-4-linear',
+          items: searchData.tools.filter((item) => item.name.toLowerCase().includes(term) || item.meta.toLowerCase().includes(term))
+        },
+        {
+          label: '笔记',
+          icon: 'solar:notebook-linear',
+          items: searchData.notes.filter((item) => item.name.toLowerCase().includes(term) || item.meta.toLowerCase().includes(term))
+        }
+      ].filter((group) => group.items.length > 0);
+
+      if (!groups.length) {
+        searchResults.innerHTML = '<div class="flex flex-col items-center justify-center px-4 py-8 text-center">'
+          + '<span class="grid h-9 w-9 place-items-center rounded-full bg-[#F0F3EC] text-[#84988A]"><iconify-icon icon="solar:magnifer-linear" width="18"></iconify-icon></span>'
+          + '<p class="mt-2 text-[11px] font-medium text-[#607067]">没有找到相关内容</p>'
+          + '<p class="mt-1 text-[9.5px] text-[#A0A7A1]">试试搜索「工作台」或「笔记」</p>'
+          + '</div>';
+      } else {
+        searchResults.innerHTML = groups.map((group) => {
+          return '<div class="border-b border-[#F0EDE5] py-1.5 last:border-b-0">'
+            + '<p class="flex items-center gap-1.5 px-3 pb-1 pt-1 text-[9px] font-semibold tracking-[0.12em] text-[#9AA19C]"><iconify-icon icon="' + group.icon + '" width="12"></iconify-icon>' + group.label + '</p>'
+            + group.items.map((item) => {
+              return '<button type="button" data-result="' + escapeHTML(item.name) + '" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#F4F6F0]">'
+                + '<span class="min-w-0 truncate text-[11px] font-medium text-[#3F4E44]">' + escapeHTML(item.name) + '</span>'
+                + '<span class="shrink-0 text-[9px] text-[#A0A7A1]">' + escapeHTML(item.meta) + '</span>'
+                + '</button>';
+            }).join('')
+            + '</div>';
+        }).join('');
+      }
+
+      searchResults.classList.remove('hidden');
+      searchResults.classList.add('block');
+    }
+
+    searchInput.addEventListener('input', renderSearchResults);
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim()) renderSearchResults();
+    });
+
+    searchResults.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-result]');
+      if (!button) return;
+      showToast('已打开「' + button.dataset.result + '」');
+      hideSearchResults();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!document.getElementById('searchWrap').contains(event.target)) {
+        hideSearchResults();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+      if (event.key === 'Escape') {
+        hideSearchResults();
+        closeTaskModal();
+        closeCityModal();
+        closeMemeModal();
+        closeTaskDrawer();
+        closeMobileNav();
+      }
+    });
+
+    ['taskModal', 'cityModal', 'memeModal'].forEach((id) => {
+      const overlay = document.getElementById(id);
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closeOverlay(id);
+      });
+    });
+
+    function openMobileNav() {
+      document.getElementById('mobileNav').classList.remove('hidden');
+    }
+
+    function closeMobileNav() {
+      document.getElementById('mobileNav').classList.add('hidden');
+    }
+
+    function handleNav(name) {
+      closeMobileNav();
+      if (name === '今日总览') {
+        showToast('现在就在今日总览');
+        return;
+      }
+      const targets = {
+        '待办清单': 'todoCard',
+        '日历日程': 'calendarCard',
+        '随手笔记': 'scratchCard'
+      };
+      const targetId = targets[name];
+      if (targetId) {
+        const target = document.getElementById(targetId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('已定位到「' + name + '」');
+        return;
+      }
+      showToast('「' + name + '」将在完整版中开放');
+    }
+
+    renderTasks();
+    renderMeme();
+    renderDayStrip();
+    renderSchedule();
+    renderNoteDisplay();
+    updateQuickActions();
+  </script>
+</body>
+</html>
