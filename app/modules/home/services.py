@@ -1,10 +1,9 @@
-"""首页数据服务：真实天气、每日段子（AI 生成）、随手记落盘。
+"""首页数据服务：真实天气与随手记落盘。
 
 这些是首页专用服务，不对应导航模块：ModuleDefinition 的 route 为 None，
 外壳导航会跳过「可用但无路由」的模块，因此只暴露 /api/v1/* 接口。
 
 天气：Open-Meteo（免密钥），按城市查询当前天气与逐小时温度，进程内缓存 10 分钟。
-段子：DeepSeek flash 生成，按自然日缓存到 <data_dir>/home/joke.json，「换一条」强制刷新。
 随手记：<data_dir>/home/notes.json，GET 读取、PUT 覆盖。
 """
 
@@ -183,55 +182,6 @@ def fetch_weather(city: str) -> dict[str, Any]:
     with _weather_lock:
         _weather_cache[city] = (now, result)
     return result
-
-
-# ---------------------------------------------------------------- 每日段子
-
-
-JOKE_PROMPT = """你是个人工作台的「每日段子」编辑。请写一条适合放在工作台首页的短段子。
-要求：
-- 中文，45–90 字，一到三句话，读起来轻松自然；
-- 内容健康，不涉及政治、宗教、地域歧视、性别歧视、低俗或冒犯性内容；
-- 可以写生活观察、上班/学习日常的温和自嘲，不要编造真实新闻或真实人物；
-- 只输出段子正文，不要标题、引号、解释或任何前后缀。"""
-
-
-class JokeModelError(Exception):
-    """模型不可用/输出不合法。"""
-
-
-def _call_joke_model(model: Any) -> str:
-    """model 需提供 generate(now_iso) -> str；生产实现见 app.modules.home.joke_model。"""
-    return model.generate(datetime.now(SHANGHAI).isoformat(timespec="seconds"))
-
-
-def get_daily_joke(data_dir: Path, refresh: bool, model: Any) -> dict[str, Any]:
-    today = datetime.now(SHANGHAI).date().isoformat()
-    path = _home_dir(data_dir) / "joke.json"
-    cached = _read_json(path)
-    if (
-        not refresh
-        and cached
-        and cached.get("date") == today
-        and isinstance(cached.get("joke"), str)
-        and cached["joke"].strip()
-    ):
-        return {**cached, "cached": True}
-
-    try:
-        joke = _call_joke_model(model).strip()
-    except JokeModelError as exc:
-        raise HomeServiceError("joke_unavailable", str(exc), 503) from exc
-    if not joke:
-        raise HomeServiceError("joke_unavailable", "段子生成结果为空。", 503)
-    joke = " ".join(line.strip() for line in joke.splitlines() if line.strip())
-    payload = {
-        "date": today,
-        "joke": joke[:200],
-        "generatedAt": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
-    }
-    _write_json(path, payload)
-    return {**payload, "cached": False}
 
 
 # ---------------------------------------------------------------- 随手记

@@ -4,7 +4,7 @@ import {icon} from '../core/icons.js';
 /* 今日总览仪表盘。
    - 待办：接待办模块真实数据（今天到期 + 逾期；无日期不上首页）
    - 天气：接工作台 /api/v1/weather（Open-Meteo，服务端代理，免密钥）
-   - 每日段子：接 /api/v1/daily-joke（DeepSeek flash 生成，按日缓存，可刷新）
+   - 世界快讯：接 /api/v1/world-news（真实 RSS + AI 筛选解读，可换一批）
    - 日程：暂无数据源，先展示空状态
    - 随手记：接 /api/v1/notes 落盘
    - 常用入口：接 bootstrap modules 真实数据 */
@@ -216,25 +216,46 @@ export function mount(container,context){
     loadWeather(city);
   }
 
-  /* ===== 每日段子（AI 生成，可刷新） ===== */
-  let jokeTextEl,jokeMetaEl,jokeRefreshBtn,jokeErrorEl,jokeLoading=false;
-  async function loadJoke(refresh){
-    if(jokeLoading)return;
-    jokeLoading=true;
-    jokeRefreshBtn.disabled=true;
-    jokeErrorEl.hidden=true;
-    jokeMetaEl.textContent='正在生成…';
+  /* ===== 世界快讯（真实 RSS + AI 筛选解读） ===== */
+  let newsListEl,newsMetaEl,newsRefreshBtn,newsErrorEl,newsLoading=false;
+  const NEWS_FALLBACK='暂时无法获取新闻源，请稍后再试。';
+  function newsItemNode(item){
+    const tag=el('span',{class:'shrink-0 rounded-md bg-[#EAF0E8] px-1.5 py-0.5 text-[8.5px] font-medium text-[#4C6B57]'},item.category||'资讯');
+    const title=el('a',{href:item.url,target:'_blank',rel:'noopener noreferrer',class:'min-w-0 flex-1 truncate text-[11.5px] font-medium text-[#2F4036] transition-colors hover:text-[#244C40] hover:underline'},item.title);
+    const meta=el('p',{class:'mt-0.5 truncate text-[9px] text-[#A0A7A1]'},item.source+(item.publishedAt?(' · '+fmtNewsTime(item.publishedAt)):''));
+    const rows=[el('div',{class:'flex items-start gap-1.5'},tag,title),meta];
+    if(item.summary)rows.push(el('p',{class:'mt-0.5 text-[10px] leading-4 text-[#7A6A55]'},item.summary));
+    return el('div',{class:'rounded-lg border-b border-[#F0EDE5] px-1 py-1.5 last:border-b-0'},...rows);
+  }
+  function fmtNewsTime(value){
     try{
-      const data=await context.api.request('/daily-joke'+(refresh?'?refresh=1':''));
-      jokeTextEl.textContent=data.joke;
-      jokeMetaEl.textContent=data.cached?'今日段子 · 已缓存':'今日段子 · 刚刚生成';
+      const d=new Date(value);
+      if(Number.isNaN(d.getTime()))return value;
+      const sameDay=d.toDateString()===new Date().toDateString();
+      return sameDay?('今天 '+pad(d.getHours())+':'+pad(d.getMinutes())):((d.getMonth()+1)+'/'+d.getDate());
+    }catch(e){return value;}
+  }
+  async function loadNews(refresh){
+    if(newsLoading)return;
+    newsLoading=true;
+    newsRefreshBtn.disabled=true;
+    newsErrorEl.hidden=true;
+    newsMetaEl.textContent='正在获取全球新闻…';
+    newsListEl.replaceChildren(el('p',{class:'py-6 text-center text-[10.5px] text-[#A0A7A1]'},'正在读取新闻源…'));
+    try{
+      const data=await context.api.request('/world-news'+(refresh?'?refresh=1':''));
+      const items=data.items||[];
+      newsListEl.replaceChildren(...items.map(newsItemNode));
+      const stamp=data.aiUsed?'AI 精选 · 实时抓取':'最新标题 · 实时抓取';
+      newsMetaEl.textContent=stamp+'（'+(data.sourceCount||0)+' 个来源 / '+(data.totalFetched||items.length)+' 条）';
     }catch(e){
-      jokeErrorEl.textContent=e.message||'段子生成失败';
-      jokeErrorEl.hidden=false;
-      jokeMetaEl.textContent='每日段子';
+      newsListEl.replaceChildren();
+      newsErrorEl.textContent=e.message||NEWS_FALLBACK;
+      newsErrorEl.hidden=false;
+      newsMetaEl.textContent='世界快讯';
     }finally{
-      jokeLoading=false;
-      jokeRefreshBtn.disabled=false;
+      newsLoading=false;
+      newsRefreshBtn.disabled=false;
     }
   }
 
@@ -445,20 +466,19 @@ export function mount(container,context){
         progressText=el('span',{class:'shrink-0 text-[10px] text-[#87918B]'},''))),
     undatedNote=el('button',{type:'button',hidden:true,class:'mt-2 w-full rounded-lg bg-[#F7F6F1] px-2.5 py-1.5 text-left text-[10px] text-[#6B7A70] hover:bg-[#F0EEE7]',onClick:()=>context.navigate('/tasks')},''));
 
-  const jokeCard=el('section',{class:'flex flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5'},
+  const newsCard=el('section',{class:'flex min-h-0 flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5',id:'newsCard'},
     el('div',{class:'flex items-center justify-between gap-2'},
       el('div',{class:'flex items-center gap-2'},
-        el('h2',{class:'text-[16px] font-semibold tracking-[-0.01em] text-[#2A352F]'},'每日段子'),
-        el('span',{class:'rounded-full border border-[#E8DCCB] bg-[#FAF4EC] px-2 py-0.5 text-[9px] text-[#9A7A5D]'},'AI 生成')),
-      (()=>{const b=el('button',{type:'button',class:'flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-[#85796C] transition-colors hover:bg-[#F8F2E9] hover:text-[#5B4636]'},icon('refresh',14),el('span',{},'换一条'));
-        b.addEventListener('click',()=>loadJoke(true));
-        jokeRefreshBtn=b;return b;})()),
-    el('div',{class:'mt-2.5 flex min-h-[118px] flex-1 flex-col justify-start rounded-xl border border-[#ECDCC9] bg-[#F7E8D8] p-4'},
-      jokeTextEl=el('p',{class:'text-[13px] leading-[1.75] text-[#5A3D2D]'},'正在生成今天的段子…'),
-      jokeErrorEl=el('p',{class:'mt-2 hidden text-[10.5px] text-[#B4543B]','role':'alert'},'')),
-    el('p',{class:'mt-2 text-[9px] tracking-wide text-[#A0A7A1]'},
-      jokeMetaEl=el('span',{},'每日段子'),
-      el('span',{},' · 由 DeepSeek 生成，可随时换一条')));
+        el('h2',{class:'text-[16px] font-semibold tracking-[-0.01em] text-[#2A352F]'},'世界快讯'),
+        el('span',{class:'rounded-full border border-[#D8E4DA] bg-[#EDF3EA] px-2 py-0.5 text-[9px] text-[#4C6B57]'},'AI 精选')),
+      (()=>{const b=el('button',{type:'button',class:'flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-[#85796C] transition-colors hover:bg-[#F8F2E9] hover:text-[#5B4636]'},icon('refresh',14),el('span',{},'换一批'));
+        b.addEventListener('click',()=>loadNews(true));
+        newsRefreshBtn=b;return b;})()),
+    newsListEl=el('div',{class:'mt-2 min-h-0 flex-1 overflow-y-auto rounded-xl border border-[#ECE8DE] bg-[#FBFAF6] px-2.5 py-1'}),
+    newsErrorEl=el('p',{class:'mt-2 hidden text-[10px] text-[#B4543B]','role':'alert'},''),
+    el('p',{class:'mt-2 text-[9px] leading-4 tracking-wide text-[#A0A7A1]'},
+      newsMetaEl=el('span',{},'世界快讯'),
+      el('span',{},' · 新闻来自公开 RSS，AI 只做筛选与解读，点击标题看原文')));
 
   const calendarCard=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]',id:'calendarCard'},
     el('div',{class:'flex items-center justify-between gap-2'},
@@ -491,7 +511,7 @@ export function mount(container,context){
       noteAddBtn.addEventListener('click',enterNoteEdit);return noteAddBtn;})());
 
   const row1=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},heroCard,weatherCard);
-  const row2=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},todoCard,jokeCard);
+  const row2=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},todoCard,newsCard);
   const row3=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-3'},entries,calendarCard,scratchCard);
   const foot=el('p',{class:'mt-2.5 pb-0.5 text-center text-[9.5px] tracking-wide text-[#9A9F9A]'},'天气来自 Open-Meteo · 段子与规划由 AI 生成，请自行判断');
 
@@ -501,7 +521,7 @@ export function mount(container,context){
       foot));
 
   renderTasks();renderDayStrip();renderSchedule();renderNoteDisplay();
-  loadTasks();loadWeather(state.city);loadJoke(false);loadNotes();
+  loadTasks();loadWeather(state.city);loadNews(false);loadNotes();
   draw(context.modules);
   const stopPoll=poll(async()=>{draw((await context.api.bootstrap(context.signal)).modules);await loadTasks();},context.signal);
   return stopPoll;

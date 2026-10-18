@@ -8,8 +8,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.modules.home.joke_model import MockJokeModel
-from app.modules.home.services import JokeModelError
 
 
 @pytest.fixture
@@ -65,57 +63,6 @@ def test_weather_failure_maps_to_503(client: TestClient, monkeypatch):
     response = client.get("/api/v1/weather?city=南京", headers=headers(client))
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "weather_unavailable"
-
-
-def test_daily_joke_is_cached_per_day_and_refresh_forces_new(tmp_path):
-    app = create_app(tmp_path / "data")
-    client = TestClient(app, base_url="http://127.0.0.1:17843")
-    model = MockJokeModel(joke="第一天：办公室里最忙的人，是打印机。")
-    app.state.joke_model = model
-
-    first = client.get("/api/v1/daily-joke", headers=headers(client))
-    assert first.status_code == 200
-    assert first.json()["cached"] is False
-    assert "打印机" in first.json()["joke"]
-    assert len(model.calls) == 1
-
-    second = client.get("/api/v1/daily-joke", headers=headers(client))
-    assert second.json()["cached"] is True
-    assert len(model.calls) == 1  # 同一天命中缓存，不再调模型
-
-    model.joke = "第二天：我的待办列表学会了自我繁殖。"
-    refreshed = client.get("/api/v1/daily-joke?refresh=1", headers=headers(client))
-    assert refreshed.status_code == 200
-    assert "自我繁殖" in refreshed.json()["joke"]
-    assert len(model.calls) == 2
-    assert refreshed.json()["cached"] is False
-
-
-def test_daily_joke_survives_restart(tmp_path):
-    root = tmp_path / "data"
-    first_app = create_app(root)
-    first = TestClient(first_app, base_url="http://127.0.0.1:17843")
-    first_app.state.joke_model = MockJokeModel(joke="重启也还在的段子。")
-    assert first.get("/api/v1/daily-joke", headers=headers(first)).status_code == 200
-
-    second_app = create_app(root)
-    second = TestClient(second_app, base_url="http://127.0.0.1:17843")
-    model = MockJokeModel(joke="不该被调用。")
-    second_app.state.joke_model = model
-    cached = second.get("/api/v1/daily-joke", headers=headers(second))
-    assert cached.status_code == 200
-    assert cached.json()["cached"] is True
-    assert cached.json()["joke"] == "重启也还在的段子。"
-    assert model.calls == []
-
-
-def test_daily_joke_model_error_maps_to_503(tmp_path):
-    app = create_app(tmp_path / "data")
-    client = TestClient(app, base_url="http://127.0.0.1:17843")
-    app.state.joke_model = MockJokeModel(error=JokeModelError("未配置模型密钥，无法生成段子。"))
-    response = client.get("/api/v1/daily-joke", headers=headers(client))
-    assert response.status_code == 503
-    assert response.json()["error"]["code"] == "joke_unavailable"
 
 
 def test_notes_roundtrip_and_persist(tmp_path):

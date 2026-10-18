@@ -12,7 +12,9 @@ import {el,button} from './dom.js';
 import {icon} from './icons.js';
 
 const STORE_PREFIX = 'wb.rem.';
+const SESSION_KEY = 'wb.rem.session';
 const FALLBACK_INTERVAL = 5;
+const SESSION_TTL_MS = 60 * 60 * 1000;
 
 function memoryStore() {
   const mem = new Map();
@@ -31,6 +33,51 @@ function dedupeStore() {
 }
 const itemKey = item => `${item.taskId}:${item.reminderVersion}`;
 
+/* 提醒会话在标签页之间共享：两个标签各自开会话会互相 supersede，导致 409 循环。 */
+function sessionStore() {
+  const mem = new Map();
+  const fallback = {get: k => (mem.has(k) ? mem.get(k) : null), set: (k, v) => mem.set(k, v), remove: k => mem.delete(k)};
+  try {
+    if (typeof localStorage === 'undefined' || !localStorage) return fallback;
+    return {
+      get: k => localStorage.getItem(k),
+      set: (k, v) => localStorage.setItem(k, v),
+      remove: k => localStorage.removeItem(k),
+    };
+  } catch (e) {
+    return fallback;
+  }
+}
+const sharedSessions = sessionStore();
+function readSharedSession() {
+  try {
+    const raw = sharedSessions.get(SESSION_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.sessionId || !payload.at) return null;
+    if (Date.now() - Number(payload.at) > SESSION_TTL_MS) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+function writeSharedSession(sessionId, interval) {
+  try {
+    sharedSessions.set(SESSION_KEY, JSON.stringify({sessionId, interval, at: Date.now()}));
+  } catch (e) {
+    /* 隐私模式：忽略，退回内存级 */
+  }
+}
+function clearSharedSession(sessionId) {
+  const current = readSharedSession();
+  if (current && sessionId && current.sessionId !== sessionId) return;
+  try {
+    sharedSessions.remove(SESSION_KEY);
+  } catch (e) {
+    /* 忽略 */
+  }
+}
+
 function readableTime(value) {
   if (!value) return '';
   const d = new Date(value);
@@ -42,7 +89,9 @@ function readableTime(value) {
 
 export function startReminders({api, navigate, onAck}) {
   const store = dedupeStore();
-  const state = {stopped: false, sessionId: null, timer: null, queue: [], busy: false, interval: FALLBACK_INTERVAL};
+  const shared = readSharedSession();
+  const state = {stopped: false, sessionId: shared ? shared.sessionId : null, timer: null, queue: [], busy: false,
+    interval: shared && Number(shared.interval) > 0 ? Number(shared.interval) : FALLBACK_INTERVAL};
   let layer = null;
   let cardHost = null;
 
@@ -144,10 +193,21 @@ export function startReminders({api, navigate, onAck}) {
   }
 
   async function openSession() {
+    // 已有其它标签页共享的会话：直接复用，避免互相 supersede。
+    const existing = readSharedSession();
+    if (existing) {
+      state.sessionId = existing.sessionId;
+      state.interval = Number(existing.interval) > 0 ? Number(existing.interval) : FALLBACK_INTERVAL;
+      return true;
+    }
     try {
       const res = await api.request('/reminder-sessions', {method: 'POST', body: {}});
-      state.sessionId = res.sessionId;
-      state.interval = Number(res.intervalSeconds) > 0 ? Number(res.intervalSeconds) : FALLBACK_INTERVAL;
+      const interval = Number(res.intervalSeconds) > 0 ? Number(res.intervalSeconds) : FALLBACK_INTERVAL;
+      writeSharedSession(res.sessionId, interval);
+      // 并发开会话时以最后写入共享存储的为准，避免两个标签互顶。
+      const winner = readSharedSession();
+      state.sessionId = winner ? winner.sessionId : res.sessionId;
+      state.interval = winner && Number(winner.interval) > 0 ? Number(winner.interval) : interval;
       return true;
     } catch (e) {
       state.sessionId = null;
@@ -172,6 +232,7 @@ export function startReminders({api, navigate, onAck}) {
       // 会话失效（服务重启）：下次 tick 重新开会话
       const code = e && e.code;
       if (code === 'reminder_session_not_found' || code === 'reminder_session_superseded' || (e && e.status === 404)) {
+        clearSharedSession(state.sessionId);
         state.sessionId = null;
       }
     } finally {

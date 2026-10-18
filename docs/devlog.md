@@ -264,3 +264,22 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
   重启 launcher → 冒烟（模块、天气真实、项目 6 个保留、待办库为空）。
 - **测试隔离**：浏览器回归 fixture 注入 Mock 段子模型并桩掉天气请求，避免测试访问外网/调用真实模型；
   Windows 实例测试放宽等待时间（断言不变）。
+
+
+## 2026-10-18：每日段子改为「世界快讯」（真实新闻 + AI 筛选）
+
+- **原则**：不让模型凭记忆生成新闻。新闻标题与链接必须来自真实 RSS/API，模型只负责挑选与一句话解读；
+  抓取失败时回退上一次成功缓存，模型失败时退回纯标题，**绝不编造**。
+- 后端 `app/modules/home/news.py`：并发抓取 8 个公开 RSS（BBC 中文、中国新闻网、界面新闻、澎湃要闻、
+  InfoQ、少数派、Hacker News、MIT Tech Review），RSS 2.0/Atom 命名空间兼容解析，标题去重、按时间倒序、
+  最多 24 条候选；内存缓存 30 分钟并持久化到 `<data_dir>/home/news.json`。
+- AI 筛选 `news_model.py`：`deepseek-flash` 从真实标题中选 5 条并写 ≤40 字解读，严格 JSON；
+  索引越界/重复/解析失败一律视为无效并降级为纯标题。
+- 接口 `GET /api/v1/world-news?refresh=1` → `{items, fetchedAt, aiUsed, aiError, sourceCount, totalFetched}`；
+  每次刷新重抓 RSS 并重新筛选。
+- 前端「世界快讯」卡片：5 条真实标题（新窗口打开原文）+ 分类标签 + 来源与时间 + AI 解读，底部注明
+  「新闻来自公开 RSS，AI 只做筛选与解读」。
+- 提醒会话改为 localStorage 共享：多标签页复用同一会话，避免互相 supersede 产生 409。
+- 新增 `tests/unit/test_home_news.py`（8 例：RSS/Atom 解析、AI 选中、模型失败降级、非法索引、缓存复用、
+  令牌边界、无源 503），浏览器 fixture 桩掉新闻抓取与模型。
+- 实测：40 条来自 6 个源，AI 选出 5 条（Cloudflare 跨租户数据泄露、AI 终端落地、上合总理会议等）。

@@ -303,3 +303,15 @@
 | 数据备份 | 升级前备份 `%LOCALAPPDATA%\\PersonalWorkbench-backup-20261018-1619` |
 | 依赖 | `wb-stable/.venv` 用 uv 安装 requirements.lock 新增包（certifi/httpcore/httpx/python-multipart） |
 | 测试隔离 | 浏览器回归不再访问外网/真实模型；全量 812 passed / 3 skipped |
+
+
+## 2026-10-18 世界快讯（替换每日段子）
+
+| 检查 | 实际结果 |
+|---|---|
+| 真实来源 | 并发抓取 8 个公开 RSS，实测 40 条来自 6 个可用源（BBC 中文、中新网、界面、澎湃、InfoQ、Hacker News 等） |
+| AI 筛选 | deepseek-flash 从真实标题中选 5 条并生成一句话解读；标题/链接原样保留，附原文跳转 |
+| 降级 | 模型失败/输出非法 → 退回纯标题（aiUsed=false）；全部源失败 → 回退上次缓存；无缓存 → 503 |
+| UI | 卡片显示 5 条真实新闻（分类、来源、时间、解读），「换一批」重新抓取；点击新窗口打开原文 |
+| 多标签 | 提醒会话写入 localStorage 共享，两个标签页复用同一会话，无 409 |
+| 测试 | 新增 8 个新闻测试；全量 817 passed / 3 skipped |

@@ -8,9 +8,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.core.security import error_response
+from app.modules.home import news as news_service
 from app.modules.home import search as search_service
 from app.modules.home import services
-from app.modules.home.joke_model import DeepSeekJokeModel
+from app.modules.home.news_model import DeepSeekNewsCurator
 
 router = APIRouter(prefix="/api/v1")
 
@@ -40,13 +41,17 @@ def get_weather(request: Request, city: str = "南京") -> JSONResponse:
     return JSONResponse(status_code=200, content=payload)
 
 
-@router.get("/daily-joke")
-def get_daily_joke(request: Request, refresh: str = "0") -> JSONResponse:
+@router.get("/world-news")
+def world_news(request: Request, refresh: str = "0") -> JSONResponse:
     want_refresh = refresh in ("1", "true", "yes")
+    model = getattr(request.app.state, "news_model", None)
+    if model is None:
+        model = DeepSeekNewsCurator()
+        request.app.state.news_model = model
     try:
-        payload = services.get_daily_joke(_data_dir(request), want_refresh, _joke_model(request))
-    except services.HomeServiceError as exc:
-        return _failure(exc)
+        payload = news_service.build_briefing(_data_dir(request), want_refresh, model)
+    except news_service.NewsError as exc:
+        return error_response("news_unavailable", exc.message, 503)
     return JSONResponse(status_code=200, content=payload)
 
 
