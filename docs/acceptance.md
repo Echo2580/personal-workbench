@@ -371,3 +371,40 @@
 | 校验 | 非法 JSON、错误 format、超版本、坏 TOML、坏任务快照分别返回 400/422，失败不改动现有数据 |
 | 安全 | 未带令牌访问 export/info/restore 均 403 |
 | 测试 | 新增 6 个备份测试；全量 838 passed / 3 skipped |
+
+
+## 2026-10-18 自动识别覆盖率 + 首页可编辑大字/「我的空间」
+
+### 自动识别（隔离夹具 + 本机真实目录样本）
+
+| 检查 | 实际结果 |
+|---|---|
+| 夹具识别（4 个合成项目） | Go（go.mod+main.go）→ go / run-go；Rust（Cargo.toml+src/main.rs）→ rust / run-rust；单页 landing.html → web / open-web；run.py main guard → python / run-python |
+| 真实样本（11 个非文档目录，期望由目录内事实证据定义） | 类型识别：**8/11 → 11/11**；有可执行主配方：**7/11（63.6%）→ 9/11（81.8%）**；未识别项为 0（基线漏识别：最终原型单页、截图转代办 requirements 项目、WorkBuddy2API Go 项目） |
+| 真实扫描根（只读） | 识别项目 10 → 25（新增 Go 项目、截图转代办、ch01–ch16/util/scripts 等练习/工具目录；容器目录被正确识别后，内部 panel/backups/web 不再被误当独立项目）。新增项目中多入口/仅依赖清单的目录只给 open-directory，需人工选入口，因此按全部检测项目统计的可执行主配方比例不适用历史 6 项样本口径 |
+| 配方与安全 | 非 index 单页生成静态 url 配方；服务端校验目标 resolve 后仍位于项目根目录内、后缀 .html 且存在，项目外 html 被拒（单测覆盖）；静态 url 不再仅限 index.html，`01-spec.md` §5.1 已同步。Go 仅有 go.mod、无 package main 时不建项目（单测覆盖）；report/test/coverage 类 HTML 不建 web 项目（单测覆盖）。配方指纹/批准流程未改：未审批 409、篡改指纹 409。 |
+| 扫描边界 | 扫描根仅命中弱证据（顶层 html/无 package.json 的 Node 单入口/普通 Python 入口）时继续下钻：夹具（根 index.html + 子 Go/Node 项目）得到 3 个项目而非 1 个；requirements+README 根仍按项目边界（夹具验证不展开内部子目录）。真实扫描根 10 → 25 个项目，未出现扫描根整体坍缩。 |
+| 基准脚本 | 新增 `tools/detection_report.py`（只读，支持 --data-dir/--roots/--json），本次 before/after 数据存 `gpt/.planning/2026-10-18-recognition/` |
+
+### 首页大字与「我的空间」（隔离实例 + Playwright）
+
+| 检查 | 实际结果 |
+|---|---|
+| 大字编辑 | 默认「把今天，安排清楚。」；编辑为「把日子，过成作品。」后 Enter 保存，刷新仍在；1440 字号 34px、390 字号 28px，编辑框与标题同字号；清空保存恢复默认、Esc 取消（由新增浏览器用例覆盖） |
+| 我的空间面板 | 点击右上头像打开；340×234.9px，1440 位置 (989,70)、390 位置 (34,124) 均在视口内；显示资料与今日概览（待办 0/0、笔记 0、项目 4/运行 0）；编辑显示名后头像首字与面板同步；Esc 关闭 |
+| 偏好 API | GET 返回 city/quickEntries/heroHeadline/profile 默认值；PUT（带 token+Origin）200 且持久化 heroHeadline 与 profile.displayName；旧文件缺字段读默认；未知字段/超长/控制字符 422（单测 50 例覆盖） |
+| 项目页 | 类型筛选含 Python/Node/网页/Go/Rust/其他；选 Go 后仅显示 Go 卡片（1 张）；Go/Rust 卡片类型标签正常 |
+| 移动端 | 390×844：`document.scrollWidth=390` 无横向溢出，面板完整在视口内，移动端头像首字随资料变化 |
+| 全量回归 | **977 passed / 4 skipped**（319.37s）；新增/扩充单测 34+9+12+50 与浏览器用例 14（含失焦不抢焦点、输入法 Enter 不保存、390 面板不溢出）；4 项跳过 = 原 3 项规则 + 符号链接权限 1 项 |
+| 静态检查 | compileall 通过；ruff F,E9 对本次改动文件 0 新增（仓库既有 41 项历史告警未在本次范围） |
+| 独立复核 | 只读 verifier 复核（未发现阻塞项）：确认 preferences 契约/旧数据兼容/指纹与批准链路/既有选择器未被破坏；指出的弱边界、Go 无 main、报告 HTML 误报、失焦抢焦点、IME Enter 均在提交前修复并补回归；剩余项见「已知限制」 |
+
+### 已知限制（本轮）
+
+- 本机未安装 Go/Rust 工具链：Go/Rust 配方可识别、可通过模型与路径校验，但实际启动会提示「找不到程序」；需安装或用编辑器改配方。
+- 非 index 单页改为静态 url 配方（项目目录内 .html，双重校验）；本次未真实弹出浏览器窗口验证该动作，仅覆盖模型/服务校验与 mock 打开路径。
+- 识别规则放宽后真实扫描根项目数由 10 增至 25，练习/工具目录会出现在项目页；可用「移除/设置恢复」管理，后续可考虑增加「仅显示有可运行配方」筛选。
+- 弱边界修复只覆盖「扫描根目录」场景；普通嵌套目录中先命中的项目（无论强弱）仍不继续拆子项目（例如 requirements+README 的父目录会保留为其内部 web/tests 的边界），需要时把子目录另加为扫描根或手动添加。
+- 「我的空间」面板为非模态 popover（无 focus trap）；320px 以下视口未单独验证；首页 h1 的 aria-label 仍为「我的一天」以兼容既有测试，读屏不读自定义文案。
+- 数据兼容：旧 preferences.json 自动补默认；识别/配方变化可能导致既有项目首次执行时需重新确认配方指纹（预期行为）。
+- 本轮改动未 commit/push；另有并行会话对 `app/web/modules/tasks/app.js`、`app/web/modules/tasks/view.html`、`tests/tasks/test_frontend_manual_task_payload.py`、`tests/browser/test_manual_task.py` 的未提交修改，不属于本记录范围，提交时需与本轮改动分开。

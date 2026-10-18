@@ -361,3 +361,18 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
   自动备份列表与数据目录显示；恢复成功后提示并刷新页面。
 - 测试：新增 `tests/unit/test_backup.py`（6 例）；端到端验收 13/14（409 为跨浏览器提醒会话竞争）。
 - 全量回归 **838 passed / 3 skipped**。
+
+
+## 2026-10-18：项目识别覆盖率扩展 + 首页可编辑大字与「我的空间」
+
+- 识别（`app/modules/projects/detectors.py`、`recipes.py`、`models.py`；新增 `tools/detection_report.py`）：
+  - 检测优先级：`package.json` → `go.mod` → `Cargo.toml`+`src/main.rs` → python → 无 manifest 纯 Node → 顶层 HTML；同一目录只返回一个 Detection。
+  - Python：任意顶层 `*.py` 只要有 AST main guard 即候选（不再要求 README/pyproject/main.py/app.py），排除 `test_*`、`*_test.py`、`conftest.py`、`setup.py`、符号链接、>1MiB；已知入口名（main/app/run/server/start/bot/cli/manage）优先排序，多候选仍只给 open-directory。新增 Django（顶层 `manage.py` 且可判定 Django → `manage.py runserver`）与 requirements+README 兜底（仅让项目出现、入口待选）；venv 优先 `.venv`、其次 `venv`。
+  - Node：脚本优先级 dev > start > serve > preview；无脚本时依次框架推断（vite/next/nuxt/astro/svelte/angular 配置 → `npm exec …`）、`package.json main` 字段、单一入口（server.mjs/server.js/app.js/index.js/main.js）；无 package.json 时单入口兜底（有顶层 html 仍优先 web）。
+  - Web：任意顶层 html 都识别；多个时优先 index.html，否则按名排序；测试/覆盖率报告类文件名（report/test/coverage/result/summary 等）不作为项目。非 index 单页生成静态 url 配方：服务端把静态 url 限制由「仅 index.html」调整为「项目目录内已存在的 .html」（resolve 后必须仍在项目根内），`01-spec.md` §5.1 已同步。
+  - 新增 Go（`go.mod` 且根或 `cmd/<sub>` 下有 package main → `go run`；仅有 go.mod 的库不建项目）与 Rust（`Cargo.toml`+`src/main.rs` → `cargo run`）；项目页类型筛选增加 Go/Rust，未知类型归「其他」。
+  - 扫描边界：扫描根目录若只命中弱证据（顶层 html / 无 package.json 的 Node 单入口 / 普通 Python 入口）继续下钻，避免整个根被单个文件坍缩；requirements+README 包目录仍按项目边界处理（避免展开 tests/.planning 等内部目录）。
+- 首页大字可编辑：`preferences` 新增 `heroHeadline`（默认 "" 表示使用「把今天，安排清楚。」，max 30、单行）；点击标题或铅笔进入编辑，Enter/失焦保存、Esc 取消、清空保存恢复默认，失败回退；失焦保存不抢焦点，编辑框与资料编辑均忽略输入法 composition 期间的 Enter。
+- 「我的空间」：`preferences` 新增 `profile{displayName 1-20, signature 0-40}`（字段级部分更新）；右上头像/移动端头像打开面板，含头像首字、资料内联编辑、今日待办/笔记/项目概览、设置与退出；Esc/点外/再点关闭，失败项显示「暂不可用」；资料编辑结束焦点回到对应按钮。
+- 测试：全量 **977 passed / 4 skipped**（319.37s）；识别单测 34+9+12、偏好单测 50、浏览器用例 14；4 项跳过 = 原 3 项规则 + Windows 非开发者模式无法创建文件符号链接 1 项。compileall 通过；ruff F,E9 对本次改动文件 0 新增（仓库原有 41 项历史告警不在本次范围）。
+- 说明：识别规则变化会改变既有自动项目的类型/配方（例如 Go 项目内部 panel 不再被当作独立 web 项目），首次执行新配方仍需按配方指纹确认；覆盖率样本口径与已知限制见同日验收记录。独立复核（只读）发现的弱边界、Go 无 main、报告 HTML 误报、失焦抢焦点、输入法 Enter 等问题已在提交前修复并补回归。
