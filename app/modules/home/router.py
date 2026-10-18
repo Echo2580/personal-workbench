@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.core.security import error_response
+from app.modules.home import search as search_service
 from app.modules.home import services
 from app.modules.home.joke_model import DeepSeekJokeModel
 
@@ -74,4 +75,27 @@ async def put_notes(request: Request) -> JSONResponse:
         payload = services.write_notes(_data_dir(request), body.get("lines"))
     except services.HomeServiceError as exc:
         return _failure(exc)
+    return JSONResponse(status_code=200, content=payload)
+
+
+@router.get("/search")
+def global_search(request: Request, q: str = "") -> JSONResponse:
+    """全局搜索：项目 / 待办 / 长期任务。"""
+    query = (q or "").strip()
+    if not query:
+        return JSONResponse(status_code=200, content={"query": "", "groups": [], "total": 0})
+    if len(query) > 50:
+        return error_response("invalid_request", "搜索词不能超过 50 字。", 422)
+    projects = None
+    service = getattr(request.app.state, "projects", None)
+    if service is not None:
+        try:
+            projects = service.snapshot().get("projects")
+        except Exception:  # noqa: BLE001 - 搜索不应因子系统异常整体失败
+            projects = None
+    payload = search_service.search(
+        query,
+        Path(request.app.state.data_root),
+        projects_snapshot=projects,
+    )
     return JSONResponse(status_code=200, content=payload)

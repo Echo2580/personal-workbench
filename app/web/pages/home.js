@@ -13,11 +13,6 @@ const state={
   filter:'all',selectedDay:18,city:'南京',noteLines:[],
 };
 const CITY_LIST=['南京','杭州','苏州','上海'];
-const searchData={
-  projects:[{name:'个人工作台首页原型',meta:'项目 · 最近编辑'},{name:'毕业设计需求文档',meta:'项目 · 昨天更新'}],
-  tools:[{name:'Figma',meta:'设计工具'},{name:'Notion',meta:'知识整理'},{name:'GitHub',meta:'代码与项目'}],
-  notes:[{name:'首页想法',meta:'随手记 · 今天'},{name:'本周效率复盘',meta:'笔记 · 10 月 16 日'}],
-};
 
 function toast(msg){
   const t=document.querySelector('#toast');if(!t)return;
@@ -282,37 +277,54 @@ export function mount(container,context){
     noteDisplay.classList.remove('hidden');noteAddBtn.classList.remove('hidden');
   }
 
-  /* ===== 全局搜索 ===== */
+  /* ===== 全局搜索（真实数据：项目 / 待办 / 长期任务） ===== */
   const searchInput=document.querySelector('#globalSearch');
   const searchResults=document.querySelector('#searchResults');
+  const searchGroupMeta={projects:{label:'项目',iconName:'folder-2'},tasks:{label:'待办',iconName:'checklist'},goals:{label:'长期任务',iconName:'star'}};
+  let searchSeq=0,searchTimer=null;
   function hideSearch(){searchResults.classList.add('hidden');searchResults.classList.remove('block');}
-  function renderSearch(){
-    const term=searchInput.value.trim().toLowerCase();
-    if(!term){hideSearch();return;}
-    const groups=[
-      {label:'项目',iconName:'folder-2',items:searchData.projects.filter(x=>x.name.toLowerCase().includes(term)||x.meta.toLowerCase().includes(term))},
-      {label:'工具',iconName:'widget-4',items:searchData.tools.filter(x=>x.name.toLowerCase().includes(term)||x.meta.toLowerCase().includes(term))},
-      {label:'笔记',iconName:'notebook',items:searchData.notes.filter(x=>x.name.toLowerCase().includes(term)||x.meta.toLowerCase().includes(term))},
-    ].filter(g=>g.items.length);
-    if(!groups.length){
-      searchResults.replaceChildren(el('div',{class:'flex flex-col items-center justify-center px-4 py-8 text-center'},
-        el('span',{class:'grid h-9 w-9 place-items-center rounded-full bg-[#F0F3EC] text-[#84988A]'},icon('magnifer',18)),
-        el('p',{class:'mt-2 text-[11px] font-medium text-[#607067]'},'没有找到相关内容'),
-        el('p',{class:'mt-1 text-[9.5px] text-[#A0A7A1]'},'试试搜索「工作台」或「笔记」')));
-    }else{
-      searchResults.replaceChildren(...groups.map(g=>el('div',{class:'border-b border-[#F0EDE5] py-1.5 last:border-b-0'},
-        el('p',{class:'flex items-center gap-1.5 px-3 pb-1 pt-1 text-[9px] font-semibold tracking-[0.12em] text-[#9AA19C]'},icon(g.iconName,12),g.label),
-        ...g.items.map(item=>{
-          const b=el('button',{type:'button',class:'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#F4F6F0]'},
-            el('span',{class:'min-w-0 truncate text-[11px] font-medium text-[#3F4E44]'},item.name),
-            el('span',{class:'shrink-0 text-[9px] text-[#A0A7A1]'},item.meta));
-          b.addEventListener('click',()=>{toast('已打开「'+item.name+'」');hideSearch();});
-          return b;
-        }))));
-    }
-    searchResults.classList.remove('hidden');searchResults.classList.add('block');
+  function showSearch(){searchResults.classList.remove('hidden');searchResults.classList.add('block');}
+  function searchMessage(title,detail){
+    searchResults.replaceChildren(el('div',{class:'flex flex-col items-center justify-center px-4 py-8 text-center'},
+      el('span',{class:'grid h-9 w-9 place-items-center rounded-full bg-[#F0F3EC] text-[#84988A]'},icon('magnifer',18)),
+      el('p',{class:'mt-2 text-[11px] font-medium text-[#607067]'},title),
+      detail?el('p',{class:'mt-1 text-[9.5px] text-[#A0A7A1]'},detail):null));
+    showSearch();
   }
-  searchInput.addEventListener('input',renderSearch);
+  function searchGroupNode(group){
+    const meta=searchGroupMeta[group.key]||{label:group.label||group.key,iconName:'magnifer'};
+    const rows=group.items.map(item=>{
+      const suffix=[item.badge,item.subtitle].filter(Boolean).join(' · ');
+      const buttonEl=el('button',{type:'button',class:'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#F4F6F0]'},
+        el('span',{class:'min-w-0 flex-1 truncate text-[11px] font-medium text-[#3F4E44]'},item.title),
+        el('span',{class:'shrink-0 text-[9px] text-[#A0A7A1]'},suffix));
+      buttonEl.addEventListener('click',()=>{hideSearch();searchInput.blur();context.navigate(item.route||'/');});
+      return buttonEl;
+    });
+    const header=el('p',{class:'flex items-center gap-1.5 px-3 pb-1 pt-1 text-[9px] font-semibold tracking-[0.12em] text-[#9AA19C]'},icon(meta.iconName,12),meta.label);
+    return el('div',{class:'border-b border-[#F0EDE5] py-1.5 last:border-b-0'},header,...rows);
+  }
+  async function renderSearch(){
+    const term=searchInput.value.trim();
+    if(!term){hideSearch();return;}
+    const seq=++searchSeq;
+    searchMessage('搜索中…','');
+    try{
+      const data=await context.api.request('/search?q='+encodeURIComponent(term));
+      if(seq!==searchSeq)return;
+      const groups=(data.groups||[]).filter(group=>group.items&&group.items.length);
+      if(!groups.length){
+        searchMessage('没有找到「'+term+'」','试试项目名、待办标题或长期任务名称');
+        return;
+      }
+      searchResults.replaceChildren(...groups.map(searchGroupNode));
+      showSearch();
+    }catch(e){
+      if(seq!==searchSeq)return;
+      searchMessage('搜索失败',e.message||'请稍后再试');
+    }
+  }
+  searchInput.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(renderSearch,220);});
   searchInput.addEventListener('focus',()=>{if(searchInput.value.trim())renderSearch();});
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();searchInput.focus();searchInput.select();}

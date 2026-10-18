@@ -17,7 +17,6 @@ def test_extension_and_duplicate_routes():
     )
     assert [m.id for m in r.list_modules()] == [
         "projects",
-        "navigation",
         "tasks",
         "notes",
     ]

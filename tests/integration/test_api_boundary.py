@@ -9,7 +9,7 @@ def test_security_and_errors(tmp_path):
         assert "token" not in str(health) and str(tmp_path) not in str(health)
         b = c.get("/api/v1/bootstrap").json()
         module_ids = [m["id"] for m in b["modules"]]
-        assert module_ids == ["projects", "navigation", "tasks", "home"]
+        assert module_ids == ["projects", "tasks", "home"]
         # 首页数据服务是 API-only 模块：可用但没有导航路由
         home = next(m for m in b["modules"] if m["id"] == "home")
         assert home["route"] is None and home["status"] == "available"

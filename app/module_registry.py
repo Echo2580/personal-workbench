@@ -58,15 +58,5 @@ def default_registry(project_definition=None, tasks_definition=None):
             settings_route="/settings",
         )
     )
-    registry.register(
-        ModuleDefinition(
-            "navigation",
-            "快捷导航",
-            "把常用网站与工具放在手边。",
-            "link",
-            None,
-            "planned",
-        )
-    )
     registry.register(tasks_definition or _tasks_definition())
     return registry

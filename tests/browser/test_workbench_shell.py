@@ -4,7 +4,7 @@ from playwright.sync_api import expect
 def test_home_routes_planned_keyboard_and_layout(ui):
     page, app, root = ui
     expect(page.get_by_role("heading", name="我的一天", exact=True)).to_be_visible()
-    expect(page.get_by_role("button", name="快捷导航 规划中")).to_be_disabled()
+    expect(page.get_by_role("button", name="待办清单", exact=True)).to_be_enabled()
     page.get_by_role("button", name="进入项目启动器").click()
     page.reload()
     expect(page.get_by_role("heading", name="项目启动器", exact=True)).to_be_visible()
