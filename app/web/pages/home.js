@@ -9,8 +9,10 @@ import {icon} from '../core/icons.js';
    - 随手记：接 /api/v1/notes 落盘
    - 常用入口：接 bootstrap modules 真实数据 */
 
+const CITY_CACHE_KEY='wb.weather.city';
+const cachedCity=(()=>{try{return localStorage.getItem(CITY_CACHE_KEY)||'';}catch(e){return '';}})();
 const state={
-  filter:'all',selectedDay:18,city:'南京',noteLines:[],
+  filter:'all',selectedDay:18,city:cachedCity||'南京',noteLines:[],
 };
 const CITY_LIST=['南京','杭州','苏州','上海'];
 
@@ -177,6 +179,18 @@ export function mount(container,context){
       return b;
     }));
   }
+  async function loadPreferences(){
+    try{
+      const data=await context.api.request('/preferences');
+      const city=(data&&data.city||'').trim();
+      if(city){
+        state.city=city;
+        weatherCityEl.textContent=city;
+        try{localStorage.setItem(CITY_CACHE_KEY,city);}catch(e){}
+      }
+    }catch(e){/* 偏好读取失败时沿用本地缓存/默认城市 */}
+    loadWeather(state.city);
+  }
   async function loadWeather(city){
     const seq=++weatherSeq;
     weatherErrorEl.hidden=true;
@@ -187,6 +201,8 @@ export function mount(container,context){
       if(seq!==weatherSeq)return;
       state.city=data.city||city;
       weatherCityEl.textContent=state.city;
+      try{localStorage.setItem(CITY_CACHE_KEY,state.city);}catch(e){}
+      context.api.request('/preferences',{method:'PUT',body:{city:state.city}}).catch(()=>{});
       weatherTempEl.textContent=data.temperature+'°';
       weatherConditionEl.textContent=data.condition||'—';
       weatherRangeEl.textContent=(data.low??'—')+'°/ '+(data.high??'—')+'°';
@@ -521,7 +537,7 @@ export function mount(container,context){
       foot));
 
   renderTasks();renderDayStrip();renderSchedule();renderNoteDisplay();
-  loadTasks();loadWeather(state.city);loadNews(false);loadNotes();
+  loadTasks();loadPreferences();loadNews(false);loadNotes();
   draw(context.modules);
   const stopPoll=poll(async()=>{draw((await context.api.bootstrap(context.signal)).modules);await loadTasks();},context.signal);
   return stopPoll;

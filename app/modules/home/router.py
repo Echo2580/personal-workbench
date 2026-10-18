@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.security import error_response
 from app.modules.home import news as news_service
+from app.modules.home import preferences as preferences_service
 from app.modules.home import search as search_service
 from app.modules.home import services
 from app.modules.home.news_model import DeepSeekNewsCurator
@@ -103,4 +104,32 @@ def global_search(request: Request, q: str = "") -> JSONResponse:
         Path(request.app.state.data_root),
         projects_snapshot=projects,
     )
+    return JSONResponse(status_code=200, content=payload)
+
+
+@router.get("/preferences")
+def get_preferences(request: Request) -> JSONResponse:
+    return JSONResponse(status_code=200, content=preferences_service.read_preferences(_data_dir(request)))
+
+
+@router.put("/preferences")
+async def put_preferences(request: Request) -> JSONResponse:
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return error_response("invalid_request", "请求体必须是合法 JSON。", 400)
+    if not isinstance(body, dict) or not body:
+        return error_response("invalid_request", "请求体必须是非空 JSON 对象。", 400)
+    unknown = [key for key in body if key != "city"]
+    if unknown:
+        return error_response(
+            "invalid_request",
+            "包含未知字段。",
+            400,
+            details=[{"field": key, "code": "unknown_field", "message": "该字段不可写。"} for key in unknown],
+        )
+    try:
+        payload = preferences_service.write_preferences(_data_dir(request), body)
+    except ValueError:
+        return error_response("invalid_request", "city 必须是非空字符串。", 422)
     return JSONResponse(status_code=200, content=payload)
