@@ -75,6 +75,8 @@ async function start(){try{
    continue;
   }
   const planned=m.status!=='available';
+  /* 可用但没有导航路由的模块（如首页数据服务）只提供 API，不出现在侧栏。 */
+  if(!planned&&!m.route)continue;
   navigation.append(navItem(NAV_LABELS[m.id]||m.title,planned?null:m.route,{iconName:m.icon,disabled:planned,planned}));
  }
  createRouter(async(path,params,signal)=>{

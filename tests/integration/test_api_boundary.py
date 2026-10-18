@@ -8,7 +8,11 @@ def test_security_and_errors(tmp_path):
         assert health["service"] == "personal-workbench"
         assert "token" not in str(health) and str(tmp_path) not in str(health)
         b = c.get("/api/v1/bootstrap").json()
-        assert len(b["modules"]) == 3
+        module_ids = [m["id"] for m in b["modules"]]
+        assert module_ids == ["projects", "navigation", "tasks", "home"]
+        # 首页数据服务是 API-only 模块：可用但没有导航路由
+        home = next(m for m in b["modules"] if m["id"] == "home")
+        assert home["route"] is None and home["status"] == "available"
         assert c.post("/api/v1/projects/scan").status_code == 403
         h = {"X-Workbench-Token": b["token"], "Origin": "http://127.0.0.1:17843"}
         assert c.post("/api/v1/projects/scan", headers=h).status_code == 202

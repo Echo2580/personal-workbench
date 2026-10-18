@@ -226,3 +226,15 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
 - `tests/tasks` **725 passed / 3 skipped**。
 
 未提交、未推送。
+
+
+## 2026-10-18：首页四块接入真实数据
+
+- **天气**：新增 `app/modules/home`（API-only 模块，无导航路由）提供 `/api/v1/weather?city=`，服务端代理 Open-Meteo（免密钥），返回当前温度/天气/最高最低/湿度/未来 4 小时；进程内缓存 10 分钟；失败返回 503 `weather_unavailable`。
+- **每日段子**：`/api/v1/daily-joke`，DeepSeek flash 生成（推理模型，`max_tokens` 需给足否则思考过程会吃光预算导致正文为空），按自然日缓存到 `<data_dir>/home/joke.json`；`?refresh=1` 强制换一条；失败 503 `joke_unavailable`。
+- **随手记**：`GET/PUT /api/v1/notes` 落盘到 `<data_dir>/home/notes.json`，最多 50 行、单行 200 字。
+- **日程**：暂无数据源，改为空状态（不再显示演示日程），入口指向待办清单的月历。
+- 前端首页改为真实数据：天气卡支持城市切换与加载/失败态；梗词小报替换为「每日段子（AI 生成，换一条）」；随手记加载/保存走接口。
+- 外壳导航跳过「可用但没有路由」的模块，避免 API-only 模块出现在侧栏。
+- 新增 `tests/unit/test_home_services.py`（9 例：模块注册、天气规范化/失败、段子缓存与刷新/重启持久化/错误、随手记往返与校验、令牌边界）。
+- 真实调用验证：南京 21°/阴/湿度 80%、杭州 29°/晴间多云；段子首次生成约 4.5 秒、换一条生效；随手记保存后刷新仍在。
