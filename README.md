@@ -48,6 +48,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 
 个人配置和运行数据保存在本机 `%LOCALAPPDATA%\PersonalWorkbench\`，不进仓库；服务只绑定 `127.0.0.1`，在 17843–17852 中选可用端口。更多细节见[交接说明](docs/交接/2026-10-16-项目交接说明.md)。
 
+## 稳定版与开发版
+
+- `wb`（主仓库 `main`）：**开发版**，功能与修复先在这里完成并通过回归。
+- `wb-stable`（独立 worktree）：**稳定版**，日常运行的是它（端口 17843），开发过程中不直接改动。
+- 每次把开发版迁移到稳定版时，都会给对应提交打 Git tag（如 `v0.2.0`）。
+- 发布/回滚流程与目录职责见 [docs/release.md](docs/release.md)。
+
 ## 目前进展
 
 - **工作台外壳**：独立首页、统一导航、模块摘要、断连恢复——已完成；界面按最终原型重做，整站统一为暖白/墨绿。
