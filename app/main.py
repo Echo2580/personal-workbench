@@ -33,6 +33,9 @@ def create_app(data_dir=None, extra_modules=()):
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = resolve_data_dir(data_dir)
+    # 待办模块（Snap2Todo 原生模块）的数据根：<工作台数据目录>/tasks。
+    # 目录不预创建，模块首次成功写入时才落盘。
+    app.state.data_root = app.state.data_dir / "tasks"
     app.state.token = create_session_token()
     app.state.instance_id = service.instance_id
     app.state.projects = service

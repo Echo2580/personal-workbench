@@ -22,7 +22,29 @@ class ModuleRegistry:
         return list(self._modules)
 
 
-def default_registry(project_definition=None):
+def _tasks_definition():
+    """待办模块（Snap2Todo 原生模块）。
+
+    仅在依赖缺失（未按 requirements.lock 安装 httpx / python-multipart）时降级为
+    「规划中」占位，避免旧安装升级后整个工作台起不来；其余导入异常仍应抛出，
+    否则真实缺陷会被静默吞掉。
+    """
+    try:
+        from .modules.tasks.module import definition
+
+        return definition()
+    except ImportError:  # pragma: no cover - 依赖缺失时的降级路径
+        return ModuleDefinition(
+            "tasks",
+            "待办清单",
+            "把通知截图整理成待办。",
+            "checklist",
+            None,
+            "planned",
+        )
+
+
+def default_registry(project_definition=None, tasks_definition=None):
     registry = ModuleRegistry()
     registry.register(
         project_definition
@@ -46,14 +68,5 @@ def default_registry(project_definition=None):
             "planned",
         )
     )
-    registry.register(
-        ModuleDefinition(
-            "tasks",
-            "待办与日历",
-            "集中安排待办事项与日程提醒。",
-            "calendar",
-            None,
-            "planned",
-        )
-    )
+    registry.register(tasks_definition or _tasks_definition())
     return registry

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f4f5f7"><meta name="application-name" content="Snap2Todo"><title>待办捕手 · 本地个人版</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body>
+<svg class="icon-defs" aria-hidden="true">
+<symbol id="i-checklist" viewBox="0 0 24 24"><path d="m4 6 1.5 1.5L8 5m3 2h9M4 12l1.5 1.5L8 11m3 2h9M4 18l1.5 1.5L8 17m3 2h9"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="8" cy="9" r="1.5"/><path d="m3 16 5-4 4 3 4-5 5 6"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8m-8 4h5"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+</svg>
+<a class="skip-link" href="#app">跳到工作区</a>
+<div class="shell">
+<aside class="sidebar">
+<a class="brand" href="#/import" aria-label="待办捕手首页"><span class="brand-icon"><svg class="icon" aria-hidden="true"><use href="#i-checklist"/></svg></span><span><strong>待办捕手</strong><small>本地个人版</small></span></a>
+<nav class="side-nav" aria-label="工作区"><p class="nav-label">工作区</p><a href="#/import" class="nav-link" data-nav="import"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>导入通知</a><a href="#/tasks" class="nav-link" data-nav="list"><svg class="icon" aria-hidden="true"><use href="#i-checklist"/></svg>我的待办<span id="nav-count" class="nav-count">0</span></a></nav>
+<div class="sidebar-bottom"><div class="reminder-info"><strong><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>提醒说明</strong><p>提醒仅在工具打开期间生效。电脑正常运行时检查提醒，关闭后不会补发历史提醒。</p></div><p class="local-caption">主动导入 · 数据保存在本机</p></div>
+</aside>
+<div class="workspace">
+<header class="topbar"><nav class="steps" aria-label="整理进度"><span id="step-import">导入通知</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg><span id="step-review">核对任务</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg><span id="step-save">保存完成</span></nav><div class="topbar-right"><span class="local-status"><svg class="icon" aria-hidden="true"><use href="#i-monitor"/></svg>本地运行中 · 数据保存在本机</span><span class="avatar">我</span></div></header>
+<div id="error-panel" class="error-panel" role="alert" hidden></div>
+<main id="app">
+<section id="view-import" class="page import-page" hidden aria-labelledby="import-title">
+<div class="page-heading"><h1 id="import-title">把通知变成待办</h1><p>上传截图或粘贴文字，整理需要完成的事。</p></div>
+<div class="import-layout">
+<form id="import-form" class="panel import-panel" onsubmit="return false">
+<div class="import-tabs" role="tablist" aria-label="导入方式"><button type="button" id="tab-shot" class="import-tab is-active" role="tab" aria-selected="true" aria-controls="panel-shot"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>上传截图</button><button type="button" id="tab-text" class="import-tab" role="tab" aria-selected="false" aria-controls="panel-text"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>粘贴文字</button></div>
+<div class="import-body">
+<div id="panel-shot" role="tabpanel" aria-labelledby="tab-shot">
+<label class="dropzone" id="dropzone" for="import-file"><span class="upload-icon"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg></span><strong>点击选择、拖拽或 Ctrl+V 粘贴截图</strong><span>支持 PNG / JPEG，单张图片，最大 20 MiB</span><span class="drop-tip">建议包含完整通知内容</span><input id="import-file" class="file-input" type="file" accept="image/png,image/jpeg" aria-label="选择截图"></label>
+<div class="paste-actions"><button type="button" id="btn-paste-image" class="btn btn-secondary btn-small">粘贴剪贴板图片</button><span class="hint">剪贴板刚截好的图，可直接按 Ctrl+V，或点此按钮粘贴。</span></div>
+<div id="import-preview" class="import-preview" hidden></div><div id="file-actions" class="file-actions" hidden><button type="button" id="btn-change-file" class="btn btn-secondary btn-small">更换图片</button><button type="button" id="btn-clear-file" class="btn btn-secondary btn-small">清除截图</button></div>
+</div>
+<div id="panel-text" role="tabpanel" aria-labelledby="tab-text" hidden><label class="field-label" for="import-text">通知原文</label><textarea id="import-text" rows="9" placeholder="把微信、QQ、学习平台或邮件里的通知文字粘贴到这里…"></textarea><div class="input-caption"><span>保留原文表达，不编造时间信息。</span><span id="text-count">0 字</span></div></div>
+<p id="import-mode" class="notice" hidden aria-live="polite"></p>
+<div class="import-metadata"><div><label class="field-label" for="import-date">消息发送日期</label><input id="import-date" type="date"><p class="hint">默认今天，用于理解“明天、周五”等表达；旧通知请改为原消息日期。</p></div><div class="privacy-note"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg><div><strong>只处理你主动导入的内容</strong><p>不会读取聊天记录。点击提取后，通知内容会发送至模型服务。</p></div></div></div>
+<div id="extract-loading" class="notice notice-info" hidden role="status"><span class="spinner"></span><div><strong>正在识别通知内容…</strong><p>整理时间、行动事项和执行要求，请稍候。</p></div></div>
+<p id="import-notice" class="notice" hidden role="status"></p>
+<div class="import-actions"><span id="import-hint" class="hint">请先上传截图或粘贴通知文字。</span><button type="button" id="btn-extract" class="btn btn-primary">提取待办</button></div>
+</div></form>
+<aside class="import-guide"><section class="panel guide-panel"><h2><svg class="icon" aria-hidden="true"><use href="#i-checklist"/></svg>使用流程</h2><ol class="workflow"><li><span>1</span><div><strong>导入通知</strong><p>上传截图或粘贴文字，补充消息日期。</p></div></li><li><span>2</span><div><strong>核对任务</strong><p>逐条确认标题、时间、执行要求与提醒。</p></div></li><li><span>3</span><div><strong>保存待办</strong><p>保存后可查看来源，管理任务和提醒。</p></div></li></ol></section><section class="panel guide-panel"><h2>时间和提醒，自动安排</h2><p>有具体时间自动填写；没有开始时间时默认今天。有具体时刻提前 30 分钟提醒，没有时刻则保存 1 小时后提醒。</p><div class="guide-callout">默认安排可以修改。原文时间或适用条件尚不明确时，仍会提示核对。</div></section><div class="guide-footnote"><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg><p>整理后仍需你检查。提醒仅在工具打开、电脑正常运行期间生效。</p></div></aside>
+</div></section>
+<section id="view-review" class="page review-page" hidden aria-labelledby="review-title">
+<div class="page-heading review-heading"><div><h1 id="review-title">核对任务</h1><p>对照原始通知，确认要做的事和执行要求。</p></div><span id="review-count" class="badge">0 条任务</span></div>
+<div class="review-layout"><aside class="panel review-source"><div class="panel-heading"><h2><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>原始通知</h2><span id="review-source-kind" class="source-tag"></span></div><div id="review-original" class="review-original"></div><div class="source-footer"><p id="review-meta" class="source-meta"></p><span class="hint">只保留你主动导入的内容</span></div></aside><div id="draft-list" class="draft-list"></div></div>
+<div class="review-actions"><button type="button" id="btn-back-import" class="btn btn-secondary">返回修改</button><span id="review-summary" class="hint"></span><button type="button" id="btn-confirm-drafts" class="btn btn-primary">保存这些任务</button></div></section>
+<section id="view-list" class="page list-page" aria-labelledby="list-title">
+<div class="page-heading list-heading"><div><h1 id="list-title">我的待办</h1><p id="list-summary">查看通知整理出的任务与执行要求。</p></div><a class="btn btn-primary" href="#/import"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>导入通知</a></div>
+<div class="list-toolbar"><div class="filters" role="tablist" aria-label="任务状态"><button type="button" data-filter="all" class="filter-btn" role="tab">全部</button><button type="button" data-filter="open" class="filter-btn" role="tab">未完成</button><button type="button" data-filter="completed" class="filter-btn" role="tab">已完成</button></div><label class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="task-search" type="search" placeholder="搜索任务标题…" aria-label="搜索任务标题"></label><button type="button" id="btn-reload" class="btn btn-secondary">刷新</button><div class="list-legend"><span class="dot dot-warn"></span>待补充<span class="dot dot-danger"></span>逾期<span class="dot dot-ok"></span>已完成</div></div>
+<div id="task-list" class="task-list"></div></section>
+<section id="view-detail" class="detail-drawer" hidden aria-labelledby="detail-title">
+<div class="detail-header"><div><h1 id="detail-title">待办详情</h1><p id="source-meta" class="source-meta"></p></div><button type="button" id="btn-back" class="icon-button" aria-label="关闭详情"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+<div class="detail-body"><p id="reminder-meta" class="reminder-meta"></p><form id="task-form" onsubmit="return false">
+<label>任务标题<input id="f-title" type="text" required></label><div class="time-grid"><fieldset class="time-editor"><legend>开始时间</legend><label class="inline"><input id="f-start-enabled" type="checkbox">设置开始时间</label><input id="f-start-resolved" type="datetime-local" step="any" aria-label="开始时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-start-raw" type="text"></label><label>时间精度<select id="f-start-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-start-needs" type="checkbox">时间仍待核对</label></details></fieldset><fieldset class="time-editor"><legend>截止时间</legend><label class="inline"><input id="f-due-enabled" type="checkbox">设置截止时间</label><input id="f-due-resolved" type="datetime-local" step="any" aria-label="截止时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-due-raw" type="text"></label><label>时间精度<select id="f-due-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-due-needs" type="checkbox">时间仍待核对</label></details></fieldset></div>
+<label>执行要求（每行一条）<textarea id="f-requirements" rows="3"></textarea></label>
+<label>适用条件<input id="f-app-text" type="text" placeholder="例如：仅限本班同学；没有则留空"></label><label>条件核对<select id="f-app-status"><option value="not_stated">原文未限定</option><option value="confirmed">已确认适用于我</option><option value="needs_confirmation">还需要确认</option></select></label>
+<label>对应原文<textarea id="f-excerpt" rows="2"></textarea></label>
+<fieldset class="reminder-editor"><legend>提醒设置</legend><label>提醒方式<select id="f-rem-mode"><option value="none">不提醒</option><option value="manual">指定时间</option><option value="relative">提前提醒</option></select></label><label id="manual-reminder-field">提醒时间<input id="f-rem-requested" type="datetime-local" step="any"></label><div id="relative-reminder-fields" class="two-fields"><label>相对时间<select id="f-rem-relative-to"><option value="">请选择</option><option value="start">开始时间</option><option value="due">截止时间</option></select></label><label>提前分钟数<input id="f-rem-offset" type="number" min="1"></label></div><p class="hint">提醒仅在工具打开期间生效。</p></fieldset>
+<label>任务状态<select id="f-status"><option value="open">未完成</option><option value="completed">已完成</option></select></label>
+<div class="form-actions"><button type="button" id="btn-save" class="btn btn-primary">保存修改</button><button type="button" id="btn-toggle-status" class="btn btn-secondary">完成/重开</button><button type="button" id="btn-delete" class="btn btn-danger">删除</button><button type="button" id="btn-show-source" class="btn btn-secondary">查看原文</button></div>
+</form><div id="delete-confirm" class="confirm-box" hidden><p>确定删除该待办？此操作不可撤销（来源记录保留）。</p><button type="button" id="btn-delete-confirm" class="btn btn-danger">确认删除</button><button type="button" id="btn-delete-cancel" class="btn btn-secondary">取消</button></div><div id="source-content" class="source-content"></div></div>
+</section></main></div>
+<div id="reminder-layer" class="reminder-layer" hidden aria-live="polite"><div class="reminder-head"><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>待办提醒</div><div id="reminder-items"></div><p class="reminder-note">提醒仅在工具打开期间生效</p></div>
+</div><script src="/static/app.js"></script>
+</body></html>

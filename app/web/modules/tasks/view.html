@@ -1,0 +1,145 @@
+<!-- 待办模块视图模板：完整移植自 Snap2Todo web/index.html 的 .workspace 部分。
+     - 去掉了源侧栏 .sidebar 与品牌区（由工作台外壳导航承担）
+     - 四个视图 section（导入 / 核对 / 列表 / 详情）、错误面板、提醒弹层全部保留
+     - 图标 symbol 统一加 t- 前缀，避免与 core/icons.js 的 #i-* sprite 冲突
+     - 源内联 onsubmit 已移除（CSP: script-src 'self'） -->
+<svg class="icon-defs" aria-hidden="true">
+<symbol id="t-i-checklist" viewBox="0 0 24 24"><path d="m4 6 1.5 1.5L8 5m3 2h9M4 12l1.5 1.5L8 11m3 2h9M4 18l1.5 1.5L8 17m3 2h9"/></symbol>
+<symbol id="t-i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="8" cy="9" r="1.5"/><path d="m3 16 5-4 4 3 4-5 5 6"/></symbol>
+<symbol id="t-i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8m-8 4h5"/></symbol>
+<symbol id="t-i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></symbol>
+<symbol id="t-i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+<symbol id="t-i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+<symbol id="t-i-add-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+<symbol id="t-i-monitor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/></symbol>
+<symbol id="t-i-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="t-i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+<symbol id="t-i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></symbol>
+<symbol id="t-i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+<symbol id="t-i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4Z"/><path d="M18.5 14.5 19.4 17l2.6.9-2.6.9-.9 2.5-.9-2.5-2.6-.9 2.6-.9Z"/></symbol>
+<symbol id="t-i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4.5" rx="1.5"/><path d="M5 8.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5M10 13h4"/></symbol>
+</svg>
+<div class="workspace"><header class="topbar"><nav class="steps" aria-label="整理进度"><span id="step-import">导入通知</span><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg><span id="step-review">核对任务</span><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg><span id="step-save">保存完成</span></nav><div class="topbar-right"><button type="button" id="btn-open-list" class="btn btn-secondary btn-small">待办清单</button></div></header>
+<div id="error-panel" class="error-panel" role="alert" hidden></div>
+<div id="app">
+<section id="view-import" class="page import-page" hidden aria-labelledby="import-title">
+<div class="page-heading"><h1 id="import-title">把通知变成待办</h1><p>上传截图或粘贴文字，整理需要完成的事。</p></div>
+<div class="import-layout">
+<form id="import-form" class="panel import-panel">
+<div class="import-tabs" role="tablist" aria-label="导入方式"><button type="button" id="tab-shot" class="import-tab is-active" role="tab" aria-selected="true" aria-controls="panel-shot"><svg class="icon" aria-hidden="true"><use href="#t-i-image"/></svg>上传截图</button><button type="button" id="tab-text" class="import-tab" role="tab" aria-selected="false" aria-controls="panel-text"><svg class="icon" aria-hidden="true"><use href="#t-i-file"/></svg>粘贴文字</button></div>
+<div class="import-body">
+<div id="panel-shot" role="tabpanel" aria-labelledby="tab-shot">
+<label class="dropzone" id="dropzone" for="import-file"><span class="upload-icon"><svg class="icon" aria-hidden="true"><use href="#t-i-upload"/></svg></span><strong>点击选择、拖拽或 Ctrl+V 粘贴截图</strong><span>支持 PNG / JPEG，单张图片，最大 20 MiB</span><span class="drop-tip">建议包含完整通知内容</span><input id="import-file" class="file-input" type="file" accept="image/png,image/jpeg" aria-label="选择截图"></label>
+<div class="paste-actions"><button type="button" id="btn-paste-image" class="btn btn-secondary btn-small">粘贴剪贴板图片</button><span class="hint">剪贴板刚截好的图，可直接按 Ctrl+V，或点此按钮粘贴。</span></div>
+<div id="import-preview" class="import-preview" hidden></div><div id="file-actions" class="file-actions" hidden><button type="button" id="btn-change-file" class="btn btn-secondary btn-small">更换图片</button><button type="button" id="btn-clear-file" class="btn btn-secondary btn-small">清除截图</button></div>
+</div>
+<div id="panel-text" role="tabpanel" aria-labelledby="tab-text" hidden><label class="field-label" for="import-text">通知原文</label><textarea id="import-text" rows="9" placeholder="把微信、QQ、学习平台或邮件里的通知文字粘贴到这里…"></textarea><div class="input-caption"><span>保留原文表达，不编造时间信息。</span><span id="text-count">0 字</span></div></div>
+<p id="import-mode" class="notice" hidden aria-live="polite"></p>
+<div class="import-metadata"><div><label class="field-label" for="import-date">消息发送日期</label><input id="import-date" type="date"><p class="hint">默认今天，用于理解“明天、周五”等表达；旧通知请改为原消息日期。</p></div><div class="privacy-note"><svg class="icon" aria-hidden="true"><use href="#t-i-file"/></svg><div><strong>只处理你主动导入的内容</strong><p>不会读取聊天记录。点击提取后，通知内容会发送至模型服务。</p></div></div></div>
+<div id="extract-loading" class="notice notice-info" hidden role="status"><span class="spinner"></span><div><strong>正在识别通知内容…</strong><p>整理时间、行动事项和执行要求，请稍候。</p></div></div>
+<p id="import-notice" class="notice" hidden role="status"></p>
+<div class="import-actions"><span id="import-hint" class="hint">请先上传截图或粘贴通知文字。</span><button type="button" id="btn-extract" class="btn btn-primary">提取待办</button></div>
+</div></form>
+<aside class="import-guide"><section class="panel guide-panel"><h2><svg class="icon" aria-hidden="true"><use href="#t-i-checklist"/></svg>使用流程</h2><ol class="workflow"><li><span>1</span><div><strong>导入通知</strong><p>上传截图或粘贴文字，补充消息日期。</p></div></li><li><span>2</span><div><strong>核对任务</strong><p>逐条确认标题、时间、执行要求与提醒。</p></div></li><li><span>3</span><div><strong>保存待办</strong><p>保存后可查看来源，管理任务和提醒。</p></div></li></ol></section><section class="panel guide-panel"><h2>时间和提醒，自动安排</h2><p>有具体时间自动填写；没有开始时间时默认今天。有具体时刻提前 30 分钟提醒，没有时刻则保存 1 小时后提醒。</p><div class="guide-callout">默认安排可以修改。原文时间或适用条件尚不明确时，仍会提示核对。</div></section><div class="guide-footnote"><svg class="icon" aria-hidden="true"><use href="#t-i-bell"/></svg><p>整理后仍需你检查。提醒仅在工具打开、电脑正常运行期间生效。</p></div></aside>
+</div></section>
+<section id="view-review" class="page review-page" hidden aria-labelledby="review-title">
+<div class="page-heading review-heading"><div><h1 id="review-title">核对任务</h1><p>对照原始通知，确认要做的事和执行要求。</p></div><span id="review-count" class="badge">0 条任务</span></div>
+<div class="review-layout"><aside class="panel review-source"><div class="panel-heading"><h2><svg class="icon" aria-hidden="true"><use href="#t-i-file"/></svg>原始通知</h2><span id="review-source-kind" class="source-tag"></span></div><div id="review-original" class="review-original"></div><div class="source-footer"><p id="review-meta" class="source-meta"></p><span class="hint">只保留你主动导入的内容</span></div></aside><div id="draft-list" class="draft-list"></div></div>
+<div class="review-actions"><button type="button" id="btn-back-import" class="btn btn-secondary">返回修改</button><span id="review-summary" class="hint"></span><button type="button" id="btn-confirm-drafts" class="btn btn-primary">保存这些任务</button></div></section>
+<section id="view-list" class="page list-page" aria-labelledby="list-title">
+<div class="page-heading list-heading"><div><h1 id="list-title">待办清单</h1><p id="list-summary">查看通知整理出的任务与执行要求。</p></div><div class="heading-actions"><button type="button" id="btn-new-task" class="btn btn-secondary"><svg class="icon" aria-hidden="true"><use href="#t-i-add-circle"/></svg>新建待办</button><a class="btn btn-primary" href="#/import"><svg class="icon" aria-hidden="true"><use href="#t-i-image"/></svg>导入通知</a></div></div>
+<div class="calendar-layout">
+<section class="calendar-panel" aria-labelledby="cal-title">
+<div class="calendar-head"><h2 id="cal-title" class="calendar-title">月历</h2><div class="calendar-nav"><button type="button" id="cal-prev" class="calendar-nav-btn is-prev" aria-label="上一个月"><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg></button><button type="button" id="cal-today" class="btn btn-secondary btn-small" aria-label="回到今天">今天</button><button type="button" id="cal-next" class="calendar-nav-btn" aria-label="下一个月"><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg></button></div></div>
+<p id="cal-summary" class="calendar-summary"></p>
+<div class="calendar-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+<div id="cal-grid" class="calendar-grid" role="group" aria-label="月历，点击日期筛选下方任务"></div>
+</section>
+<div class="list-column">
+<div class="calendar-filterbar"><div class="filters calendar-scope" role="tablist" aria-label="日期范围"><button type="button" data-cal-scope="all" class="filter-btn" role="tab" aria-selected="true">全部日期</button><button type="button" data-cal-scope="unscheduled" class="filter-btn" role="tab" aria-selected="false">未安排</button></div><p id="cal-selection" class="calendar-selection" aria-live="polite">当前：全部任务</p></div>
+<div class="list-toolbar"><div class="filters" role="tablist" aria-label="任务状态"><button type="button" data-filter="all" class="filter-btn" role="tab">全部</button><button type="button" data-filter="open" class="filter-btn" role="tab">未完成</button><button type="button" data-filter="completed" class="filter-btn" role="tab">已完成</button></div><label class="search-box"><svg class="icon" aria-hidden="true"><use href="#t-i-search"/></svg><input id="task-search" type="search" placeholder="搜索任务标题…" aria-label="搜索任务标题"></label><button type="button" id="btn-reload" class="btn btn-secondary">刷新</button><div class="list-legend"><span class="dot dot-warn"></span>待补充<span class="dot dot-danger"></span>逾期<span class="dot dot-ok"></span>已完成</div></div>
+<div id="task-list" class="task-list"></div>
+</div>
+</div>
+<section class="goals-section" aria-labelledby="goals-title">
+<div class="goals-heading"><div><h2 id="goals-title">长期任务</h2><p id="goals-summary" class="goals-summary">把需要多天推进的计划和每天重复的习惯放在这里，按目标跟踪进度。</p></div><div class="goals-actions"><button type="button" id="btn-new-plan" class="btn btn-secondary btn-small"><svg class="icon" aria-hidden="true"><use href="#t-i-target"/></svg>新建计划</button><button type="button" id="btn-new-habit" class="btn btn-secondary btn-small"><svg class="icon" aria-hidden="true"><use href="#t-i-repeat"/></svg>新建习惯</button></div></div>
+<div id="goal-list" class="goal-list" aria-live="polite"></div>
+</section>
+</section>
+
+<dialog id="new-task-dialog" class="task-dialog" aria-labelledby="new-task-title">
+<form id="new-task-form" method="dialog" novalidate>
+<h2 id="new-task-title">新建待办</h2>
+<p class="dialog-note">手动建一条不会经过模型识别，直接保存到待办清单。</p>
+<label class="field"><span class="field-label">任务名称</span>
+<input id="nt-title" type="text" maxlength="200" required placeholder="例如：周五前交实验报告" /></label>
+<div class="dialog-row">
+<label class="field"><span class="field-label">截止日期</span><input id="nt-date" type="date" /></label>
+<label class="field"><span class="field-label">截止时间</span><input id="nt-time" type="time" /></label>
+</div>
+<label class="field"><span class="field-label">执行要求（每行一条）</span>
+<textarea id="nt-requirements" rows="3" placeholder="例如：只收 PDF&#10;提交到学习平台"></textarea></label>
+<label class="field"><span class="field-label">提醒</span>
+<select id="nt-reminder">
+<option value="none">不提醒</option>
+<option value="30" selected>提前 30 分钟</option>
+<option value="60">提前 1 小时</option>
+<option value="1440">提前 1 天</option>
+</select></label>
+<p id="nt-error" class="dialog-error" role="alert" hidden></p>
+<div class="dialog-actions">
+<button type="button" class="btn btn-secondary" id="nt-cancel">取消</button>
+<button type="submit" class="btn btn-primary" id="nt-submit">保存待办</button>
+</div>
+</form>
+</dialog>
+
+<dialog id="new-plan-dialog" class="task-dialog goal-dialog" aria-labelledby="new-plan-title">
+<form id="new-plan-form" method="dialog" novalidate>
+<h2 id="new-plan-title">新建计划</h2>
+<p class="dialog-note">计划有明确的目标日期，保存后可用「AI 规划」按每天容量补全目标区间内的待办。</p>
+<label class="field"><span class="field-label">目标名称</span><input id="np-title" type="text" maxlength="200" required placeholder="例如：三个月完成机器学习课程" /></label>
+<label class="field"><span class="field-label">描述（可选）</span><textarea id="np-description" rows="2" placeholder="补充背景、验收标准…"></textarea></label>
+<div class="dialog-row"><label class="field"><span class="field-label">开始日期</span><input id="np-start" type="date" required /></label><label class="field"><span class="field-label">目标日期</span><input id="np-target" type="date" required /></label></div>
+<label class="field"><span class="field-label">每天安排几条</span><select id="np-capacity" aria-label="每天安排几条"><option value="1">1 条</option><option value="2">2 条</option><option value="3" selected>3 条</option><option value="4">4 条</option><option value="5">5 条</option></select></label>
+<p id="np-error" class="dialog-error" role="alert" hidden></p>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="np-cancel">取消</button><button type="submit" class="btn btn-primary" id="np-submit">保存计划</button></div>
+</form>
+</dialog>
+
+<dialog id="new-habit-dialog" class="task-dialog goal-dialog" aria-labelledby="new-habit-title">
+<form id="new-habit-form" method="dialog" novalidate>
+<h2 id="new-habit-title">新建习惯</h2>
+<p class="dialog-note">习惯每天或每周重复，可设置固定时间与时长；保存后可「生成未来 14 天」的实例。</p>
+<label class="field"><span class="field-label">习惯名称</span><input id="nh-title" type="text" maxlength="200" required placeholder="例如：每天背 20 个单词" /></label>
+<label class="field"><span class="field-label">描述（可选）</span><textarea id="nh-description" rows="2" placeholder="补充做法、打卡标准…"></textarea></label>
+<div class="dialog-row"><label class="field"><span class="field-label">开始日期</span><input id="nh-start" type="date" required /></label><label class="field"><span class="field-label">重复方式</span><select id="nh-freq" aria-label="重复方式"><option value="daily" selected>每天</option><option value="weekly">每周</option></select></label></div>
+<fieldset id="nh-weekdays" class="habit-weekdays" hidden><legend>每周安排哪几天</legend><div class="weekday-picker"><label class="weekday-chip"><input type="checkbox" value="1" data-habit-weekday aria-label="周一" />一</label><label class="weekday-chip"><input type="checkbox" value="2" data-habit-weekday aria-label="周二" />二</label><label class="weekday-chip"><input type="checkbox" value="3" data-habit-weekday aria-label="周三" />三</label><label class="weekday-chip"><input type="checkbox" value="4" data-habit-weekday aria-label="周四" />四</label><label class="weekday-chip"><input type="checkbox" value="5" data-habit-weekday aria-label="周五" />五</label><label class="weekday-chip"><input type="checkbox" value="6" data-habit-weekday aria-label="周六" />六</label><label class="weekday-chip"><input type="checkbox" value="7" data-habit-weekday aria-label="周日" />日</label></div></fieldset>
+<div class="dialog-row"><label class="field"><span class="field-label">时间（可选）</span><input id="nh-time" type="time" /></label><label class="field"><span class="field-label">时长分钟（可选）</span><input id="nh-duration" type="number" min="1" max="600" placeholder="30" /></label></div>
+<p id="nh-error" class="dialog-error" role="alert" hidden></p>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="nh-cancel">取消</button><button type="submit" class="btn btn-primary" id="nh-submit">保存习惯</button></div>
+</form>
+</dialog>
+
+<section id="view-detail" class="detail-drawer" hidden aria-labelledby="detail-title">
+<div class="detail-header"><div><h1 id="detail-title">待办详情</h1><p id="source-meta" class="source-meta"></p></div><button type="button" id="btn-back" class="icon-button" aria-label="关闭详情"><svg class="icon" aria-hidden="true"><use href="#t-i-close"/></svg></button></div>
+<div class="detail-body"><p id="reminder-meta" class="reminder-meta"></p><form id="task-form">
+<label>任务标题<input id="f-title" type="text" required></label><div class="time-grid"><fieldset class="time-editor"><legend>开始时间</legend><label class="inline"><input id="f-start-enabled" type="checkbox">设置开始时间</label><input id="f-start-resolved" type="datetime-local" step="any" aria-label="开始时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-start-raw" type="text"></label><label>时间精度<select id="f-start-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-start-needs" type="checkbox">时间仍待核对</label></details></fieldset><fieldset class="time-editor"><legend>截止时间</legend><label class="inline"><input id="f-due-enabled" type="checkbox">设置截止时间</label><input id="f-due-resolved" type="datetime-local" step="any" aria-label="截止时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-due-raw" type="text"></label><label>时间精度<select id="f-due-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-due-needs" type="checkbox">时间仍待核对</label></details></fieldset></div>
+<label>执行要求（每行一条）<textarea id="f-requirements" rows="3"></textarea></label>
+<label>适用条件<input id="f-app-text" type="text" placeholder="例如：仅限本班同学；没有则留空"></label><label>条件核对<select id="f-app-status"><option value="not_stated">原文未限定</option><option value="confirmed">已确认适用于我</option><option value="needs_confirmation">还需要确认</option></select></label>
+<label>对应原文<textarea id="f-excerpt" rows="2"></textarea></label>
+<fieldset class="reminder-editor"><legend>提醒设置</legend><label>提醒方式<select id="f-rem-mode"><option value="none">不提醒</option><option value="manual">指定时间</option><option value="relative">提前提醒</option></select></label><label id="manual-reminder-field">提醒时间<input id="f-rem-requested" type="datetime-local" step="any"></label><div id="relative-reminder-fields" class="two-fields"><label>相对时间<select id="f-rem-relative-to"><option value="">请选择</option><option value="start">开始时间</option><option value="due">截止时间</option></select></label><label>提前分钟数<input id="f-rem-offset" type="number" min="1"></label></div><p class="hint">提醒仅在工具打开期间生效。</p></fieldset>
+<label>任务状态<select id="f-status"><option value="open">未完成</option><option value="completed">已完成</option></select></label>
+<div class="form-actions"><button type="button" id="btn-save" class="btn btn-primary">保存修改</button><button type="button" id="btn-toggle-status" class="btn btn-secondary">完成/重开</button><button type="button" id="btn-delete" class="btn btn-danger">删除</button><button type="button" id="btn-show-source" class="btn btn-secondary">查看原文</button></div>
+</form><div id="delete-confirm" class="confirm-box" hidden><p>确定删除该待办？此操作不可撤销（来源记录保留）。</p><button type="button" id="btn-delete-confirm" class="btn btn-danger">确认删除</button><button type="button" id="btn-delete-cancel" class="btn btn-secondary">取消</button></div><div id="source-content" class="source-content"></div></div>
+</section></div></div>
+
+<section id="goal-drawer" class="goal-drawer" hidden aria-labelledby="goal-drawer-title" role="dialog">
+<div class="detail-header"><div class="goal-drawer-heading"><span id="goal-drawer-kind" class="goal-kind"></span><h1 id="goal-drawer-title">长期任务详情</h1><p id="goal-drawer-meta" class="source-meta"></p></div><button type="button" id="btn-goal-close" class="icon-button" aria-label="关闭长期任务详情"><svg class="icon" aria-hidden="true"><use href="#t-i-close"/></svg></button></div>
+<div class="detail-body"><div id="goal-detail-content"></div></div>
+<div class="goal-drawer-actions"><button type="button" id="btn-goal-occurrences" class="btn btn-secondary" hidden><svg class="icon" aria-hidden="true"><use href="#t-i-repeat"/></svg>生成未来 14 天</button><button type="button" id="btn-goal-ai" class="btn btn-secondary" hidden><svg class="icon" aria-hidden="true"><use href="#t-i-sparkles"/></svg>AI 规划</button><button type="button" id="btn-goal-archive" class="btn btn-danger"><svg class="icon" aria-hidden="true"><use href="#t-i-archive"/></svg>归档</button></div>
+</section>
+
+<div id="tasks-toast" class="tasks-toast" role="status" aria-live="polite" hidden></div>
+
+<div id="reminder-layer" class="reminder-layer" hidden aria-live="polite"><div class="reminder-head"><svg class="icon" aria-hidden="true"><use href="#t-i-bell"/></svg>待办提醒</div><div id="reminder-items"></div><p class="reminder-note">提醒仅在工具打开期间生效</p></div>
