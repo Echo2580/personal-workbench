@@ -97,3 +97,132 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
 - **todo-cli SQLite 部分通过**：在临时副本上完成 增/标记完成/删 CRUD 全流程通过；但生产 todo.db 当前写入报 "attempt to write a readonly database"，文件只读属性和 ACL 均正常，原因未查明（疑似外部进程持有只读句柄或其他锁定）。需用户确认后排查；未修改生产数据库任何字节。
 
 环境观察：本轮 PowerShell 以 [System.Diagnostics.Process] 启动的子进程会随命令结束被终止，周测5.1 改用后台 cmd 方式验证。未提交、未推送，全部既有未跟踪文件保留。
+
+## 2026-10-18：外壳按最终原型重做 + Snap2Todo 并入为原生模块（阶段 1、2）
+
+用户提供 `最终原型/personal-workbench_home.html` 作为设计参考，要求"按原型重新生成首页"而不是简化版；随后要求把独立项目 Snap2Todo（`D:\AI实训project\截图转代办`）作为工作台原生模块并入，而不是两个壳子。
+
+**阶段 1（外壳）**：
+- 顶部/侧栏/首页三行仪表盘按原型重建：今日总览、天气卡（城市切换/逐时温度/湖面插画）、今日待办（筛选、进度条、侧滑详情）、网络梗词小报（换一批/弹窗）、常用入口、接下来（7 天日期条+日程）、随手记（内联编辑）、全局搜索（Ctrl+K）、新建待办弹窗、toast。
+- 原型依赖 Tailwind CDN + Iconify。CSP（`script-src 'self'; style-src 'self'`）下不可用，故本地化：`tools/tailwind/`（构建输入）+ 提交 `app/web/styles/tailwind.css`（运行时零依赖），`app/web/core/icons.js` 提供 31 个内联 SVG 图标。禁用 preflight 后需手动补 transform 变量默认值与 `border-style`，否则抽屉不滑出、细线全部消失（已修）。
+- 保留全部既有测试契约：可访问名称、`#content`/`#navigation` 等挂点、`moduleLoaders` 注入方式；4 处断言随 H1 改为「我的一天」同步更新。
+- 独立核验智能体对照原型指出内容列被旧 `main{margin:0 auto}` 压缩（956→1220px）、根字号 14px 致 rem 缩水、600 下侧栏无关闭入口，均已修（`:root{font-size:16px}` + `body{font-size:14px}` 保持旧页面字号）。
+
+**阶段 2（模块并入）**：
+- `app/modules/tasks/` 承接 Snap2Todo 的 api/domain/services/storage（20 个上游文件逐字等价，仅 `app.` → `app.modules.tasks.`）；`module.py` 组合三组路由为无前缀 router，注册为 `tasks / 待办清单 / /tasks / available`。
+- 数据根：`create_app` 注入 `app.state.data_root = <数据目录>/tasks`，模块首次写入才建目录。按用户决定**不迁移**源项目旧数据（源目录零写入，审计以时间戳验证）。
+- 依赖：`requirements.lock` 增补 `httpx`/`httpcore`/`certifi`（model_adapter 模块级依赖）与 `python-multipart==0.0.20`（截图上传）；已安装进 .venv，`pip check` 干净。
+- 测试：27 个测试文件迁入 `tests/tasks/`，node id 集合与源项目完全一致（469），断言零删弱；3 个 skip（1 个沿用源 skipif，2 个依赖源仓库路径并注明理由）。`pytest tests/tasks` = 466 passed/3 skipped；`pytest -q` 全量 = **537 passed/3 skipped**。
+- 前端最小版 `app/web/modules/tasks/page.js`：列表/筛选/完成重开/删除/空状态/错误态；因上游无 `POST /api/v1/tasks`，创建只能走导入链路（阶段 4）。`core/api.js` 补 204 无内容响应处理。
+- 独立验收审计：源项目零写入、数据隔离、9 条路由与 token 边界、依赖与 lock 一致、测试真实性均通过，**P0=0，条件通过**。已知 P1：未提交；老安装不重跑 `install.cmd` 会缺新依赖导致模块降级为「规划中」；源项目旧待办无迁移方案；新页面缺浏览器测试；首页 mock「今日待办」与真实模块待阶段 3 统一。
+
+未提交、未推送；生产服务 17843 未重启，仍运行旧代码。
+
+## 2026-10-18：首页「今日待办」接真实模块数据（阶段 3）
+
+- 首页待办卡片从演示数据改为读 `/api/v1/tasks?status=all`：显示真实标题、截止/开始时间、执行要求条数、「待确认」标记；勾选完成走 `PATCH /api/v1/tasks/{id}` 并刷新，徽标、进度条、头部摘要随之更新。
+- 首页不再自带「新建待办」表单和详情抽屉（编辑统一在模块页）：新建/添加按钮跳转 `/tasks`；快速输入「存为待办」把文本写入 `sessionStorage` 并在导入页自动预填到「粘贴文字」页签。
+- 空状态区分「全部/进行中/已完成」，并提供「去导入通知」入口；读取失败有重试。
+- 新增回归 `tests/browser/test_home_tasks.py`：注入 Mock 模型 → 走提取+确认建真实待办 → 首页断言标题/要求数/进度 → 勾选后徽标与进度同步。
+- 全量回归 **538 passed / 3 skipped**（原 537 + 新增 1）。
+- 已知边界：日程/梗词/天气/随手记仍是占位；提醒仍只在待办模块页打开期间有效（外壳层提醒未做）。
+
+未提交、未推送。
+
+## 2026-10-18：外壳层提醒（提醒从模块页上移到工作台）
+
+- 新增 `app/web/core/reminders.js`：由工作台外壳发起提醒会话并每 5 秒轮询到期提醒，**任意页面都生效**；右下角固定卡片显示标题与提醒时间，提供「确认 / 稍后 / 查看待办」。
+- 会话与去重：整个工作台只开一个 `POST /api/v1/reminder-sessions`；去重键用 `wb.` 前缀写 sessionStorage（与模块内原 `s2t:` 前缀区分）；服务重启导致会话失效时自动重开。
+- 待办模块不再自己轮询：`createTasksApp(scope,{reminders:false})`，避免同一工作台开两个会话、弹两次提醒。
+- 退出工作台时停掉轮询。
+- 语义沿用源产品：提醒只在工作台打开期间有效；**会话开始前已到点的提醒不补发**（本轮实测踩到过一次，属契约行为，非缺陷）。
+- 新增回归 `tests/browser/test_shell_reminders.py`：首页加载只发起 1 次会话，进入待办页后仍为 1 次。
+- 全量回归 **539 passed / 3 skipped**。
+
+未提交、未推送。
+
+## 2026-10-18：整站视觉与信息架构统一
+
+- 三套配色合一：`styles/tokens.css` 全局换成暖白/墨绿（项目页、设置页随之统一）；`modules/tasks/styles.css` 的 9 个主题变量重映射并替换硬编码蓝，待办页与外框一致。
+- 页面骨架去重：待办页去掉自带顶栏里与外框重复的「本地运行中」状态和头像，只保留轻量步骤条并与内容区左对齐。
+- 按键层级统一为规则：页面主操作=右上实心墨绿；次级=描边；辅助/破坏性=文字链接。移除首页卡片里与「新建待办」重复的「添加」按钮；列表视图自动隐藏「待办清单」按钮。
+- 身份统一：侧栏/顶栏/移动端头像统一为「林」，窄屏隐藏重复头像。
+- 验证：539 passed / 3 skipped；1440 与 600 无横向溢出、无 console 错误。
+
+未提交、未推送。
+
+## 2026-10-18：期 0 模型统一 + 期 1 手动新建待办
+
+**期 0（模型）**：文字链路从 `deepseek-chat` 切到 `deepseek-flash`（图片本来就是 flash）。真实 A/B（同一段社会实践通知）：两者都识别出 1 条、截止 `2026-10-19T12:00`、5 条要求、适用性 needs_confirmation；flash 的标题更完整，但**耗时 10.3s vs chat 2.2s**。3 条上游测试断言随决策更新为 flash（断言未删弱）。
+
+**期 1（手动新建）**：
+- 领域：`Source.kind` 增加 `manual`（原文必填、无图片路径），复用 text 的 mime 约束。
+- 服务 `app/modules/tasks/services/manual.py`：复用确认链路的 DTO 校验与提醒解析，生成 manual 来源 + Task 后原子提交；manual 任务的 `sourceExcerpt` 取用户输入（否则会误触发「缺少可核对原文」的待确认标记）。
+- 接口 `POST /api/v1/tasks`：201 返回 `{task, source}`；空标题 422、未知字段 400、提醒时刻已过 422。
+- 前端：清单页头部新增「新建待办」按钮 + 原生 `<dialog>` 表单（名称/截止日期/截止时间/执行要求/提醒），保存后回到清单并刷新；样式沿用作用域化的模块样式。
+- 测试：新增 `tests/tasks/test_api_manual_task.py`（7 例：创建与来源、重启持久化、空标题、未知字段、相对提醒、过去提醒、完成筛选）。`tests/tasks` **473 passed / 3 skipped**。
+
+未提交、未推送。
+
+
+## 2026-10-18：期 2 长期任务实体 + 期 6-A 日历
+
+**期 2（后端，Goal 与 schema v2；期 3 随后升到 v3，见下节）**
+- 新增 `domain/goals.py`：`Goal`（kind=plan|habit，字段互斥由 model_validator 严格约束）与 `Recurrence`。
+- `storage/state_store.py` 升 schema v2：`Snapshot.goals`；**读 v1 允许（goals={}），只有写盘时才升级版本**；损坏/未知版本仍走原错误路径。迁移测试 24 例。
+- `api/goals.py`：POST 201 / GET 列表（status、kind 过滤）/ GET{id} / PATCH（kind 只读）/ DELETE=归档（不删任务）。
+- `GET /tasks` 增加 `from`/`to`/`goalId` 过滤（日期按 dueTime 优先、其次 startTime，含边界）。
+- 连带修复：`services/reminder_runtime.py` 重建快照时保留 goals（否则开/确认提醒会丢目标）。
+- `tests/tasks` 602 passed / 3 skipped（新增 129 例：54 领域 + 24 迁移 + 51 接口）。
+
+**期 6-A（前端，日历）**
+- 待办清单页新增月历：周一起始 42 格、上下月/回到今天、日期格显示任务点（>3 显示 +N）、逾期红点、今天高亮；点日期筛选列表、再点取消；「全部/未安排」切换。
+- 桌面端左月历右列表两栏、≤900px 堆叠、≤640px 紧凑；全部样式作用域到 `.tasks-scope`，无内联事件/样式。
+- 实测：切月、点日、未安排、今天、空日期、+N、600px 与 7 档宽度均无横向溢出，console/CSP 违规 0。
+
+**首页口径（期 6 的一部分，Lead 实现）**
+- 「今日待办」改为：今天到期 + 逾期未完成；无日期任务不上首页，改为卡片底部「另有 N 条未安排日期的待办 · 去清单安排」。
+- 同步修正 `tests/browser/test_home_tasks.py` 的种子任务为"今天到期"。
+
+全量回归 **675 passed / 3 skipped**。未提交、未推送。
+
+
+## 2026-10-18：期 3/4/5（AI 规划闭环）与期 3.x 修正
+
+- **模型**：新增 `GoalPlanningModel` 协议、`DeepSeekGoalPlanner`（deepseek-flash）与 `MockGoalPlanner`；抽出 `_post_chat_json`，让提取 / 视觉 / 规划三链路共用同一 HTTP 客户端与错误分型（503/504/502）。
+- **规划服务** `services/planner.py`：缺口计算（due 优先、其次 start；跳过已有该目标任务的日期与不可用日期；60 天滚动视界）、草稿校验（plannedDate 必填、每日容量、120 条上限）、习惯实例构造、`manual` 来源构造、进度统计。
+- **接口**：
+  - `POST /goals/{id}/plan`：只返回草稿、不落库；无缺口不调模型；成功且有草稿才 `planRevision+1`；模型返回但全被过滤 → **502 `plan_validation_failed`**（不再伪装成"无缺口"）；响应带 `rawCount`/`dropped`。
+  - `POST /goals/{id}/tasks`：批量确认落库，带 goalId/planRevision，按 draftId 幂等。
+  - `POST /goals/{id}/occurrences`：习惯未来 14 天实例，按 (goalId, 自然日) 幂等，时间取 `recurrence.time` 或 20:00。
+  - `GET /goals/{id}`：增加 `progress={total,completed,overdue}`。
+- **计划任务补时刻**：模型只给日期时统一补 `dueTime=plannedDate 20:00 +08:00`，首页与日历归类稳定。
+- **schema v3**：Task 新增 `goalId`/`occurrenceOf`/`planRevision` 后把存储版本升到 3；读取兼容 v1/v2/v3，写盘统一 v3，`.bak` 为升级前原文（字节级测试）。
+- **真实 flash 验证**：15 天窗口 / 每天 2 条 → `rawCount=21 / drafts=21 / dropped=0`；两周目标 → 26 条草稿全部带日期与 20:00 截止，落库 26 条、重放幂等。
+- `tests/tasks` **719 passed / 3 skipped**（新增 129 + 88 + 15 + 11 等）。
+
+未提交、未推送。
+
+## 2026-10-18：期 6（日历 / 长期任务 UI / AI 规划预览 / 首页口径）
+
+- **日历**：清单页月历（周一起始 42 格、上下月/回到今天、每格任务点与 +N、逾期红点、今天高亮）；点日期筛选、再点取消；「全部日期 / 未安排」切换；桌面双栏、窄屏堆叠。
+- **长期任务区**：计划/习惯卡片（进度、剩余天数、周期与时长）、新建计划/习惯对话框、目标详情抽屉（进度、元信息、关联待办可跳转、AI 规划、归档）。
+- **AI 规划 UI**：点击后加载态（10–30 秒提示）→ 规划预览（可逐条移除）→「保存这些任务」落库并刷新列表/日历/进度；无缺口、503/504/502 分别给中文提示；规划结果独立于抽屉，重开不重复调模型。
+- **习惯**：目标卡片/详情「生成未来 14 天」，幂等时提示 0 条。
+- **首页口径**：今天到期 + 逾期未完成进入「今日待办」；无日期任务不上首页，卡片底部给「另有 N 条未安排日期的待办 · 去清单安排」。
+- 修正：日历「全部」与状态筛选「全部」重名 → 改为「全部日期」。
+- 全量回归 **792 passed / 3 skipped**。
+
+未提交、未推送；生产 17843 未重启。
+
+- **页面拆分**：「待办」拆成两个独立导航入口——`/tasks/import` 截图转待办（导入/核对）、`/tasks` 待办清单（日历/列表/长期任务）；首页「新建待办」「去导入通知」指向截图页，任务标题与「未安排」入口指向清单页。
+- **修复**：首页「另有 N 条未安排日期的待办」入口因类名写死 `hidden` 实际不可见（验收 P1），改为 `hidden` 属性控制；`tests/browser/test_shell_reminders.py` 同步适配清单页默认视图。
+
+### 最终验收后修正（期 3.4）
+
+- `/goals/{id}/plan` 与 `/goals/{id}/occurrences` 对 archived/done 目标返回 409 `goal_not_active`：校验在模型调用与写盘之前，不消耗模型调用、不改变 revision。
+- `/goals/{id}/tasks` 的 `planRevision` 改为服务端权威：忽略客户端传值，一律使用保存时目标的当前值；字段仍保留以兼容旧前端。
+- 文档修正：README 回归数字从 71 更新为 792（待办 719）；期 2 的 schema v2 表述标注为当时版本，现行版本为 v3。
+- `tests/tasks` **725 passed / 3 skipped**。
+
+未提交、未推送。
