@@ -321,3 +321,14 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
   列表内部滚动；首页内容总高 1242px → 1053px。
 - 测试更新：`tests/unit/test_home_news.py` 覆盖首次抓取、当天缓存（不抓不调模型）、
   换一批、重启后仍缓存、失败回退、AI 降级；新增 10 例。
+
+
+## 2026-10-18：发布 v0.3.0 到稳定版
+
+- 迁移流程按 `docs/release.md` 执行：备份数据 → 精确停止 `wb-stable` launcher（先子后父）→
+  `git reset --hard origin/main`（`76fb7c6`）→ uv 同步依赖 → 启动 → 冒烟。
+- 数据备份：`%LOCALAPPDATA%\PersonalWorkbench-backup-20261018-1755`。
+- 冒烟结果：17843 health 200；模块 projects/tasks/home；项目 6 个；城市偏好（洛阳）保留；
+  世界快讯首次 22.6s（生成当日存档）、再次 32ms（cached）；首页卡片 380px、总高 1053px；
+  第二次进入新闻出现 199ms；待办页正常；无 console 错误。
+- 已打 annotated tag `v0.3.0` 并推送，指向实际部署提交 `76fb7c6`。
