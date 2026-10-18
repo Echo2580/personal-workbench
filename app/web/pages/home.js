@@ -358,7 +358,8 @@ export function mount(container,context){
   /* ===== 常用入口 ===== */
   const entries=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]'});
   function draw(modules){
-    const avail=modules.filter(m=>m.status==='available');
+    /* 只展示有导航路由的可用模块；API-only 模块（如首页数据服务）不作为入口。 */
+    const avail=modules.filter(m=>m.status==='available'&&m.route);
     const needsSettings=avail.filter(m=>(m.summary||{}).availability==='尚未配置扫描目录');
     const grid=el('div',{class:'mt-3 grid min-h-0 flex-1 grid-cols-3 gap-2'});
     for(const m of avail){
