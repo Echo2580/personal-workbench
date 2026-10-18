@@ -241,7 +241,7 @@ export function mount(container,context){
     const meta=el('p',{class:'mt-px truncate text-[9px] text-[#A0A7A1]'},item.source+(item.publishedAt?(' · '+fmtNewsTime(item.publishedAt)):''));
     const rows=[el('div',{class:'flex items-start gap-1.5'},tag,title),meta];
     if(item.summary)rows.push(el('p',{class:'mt-px line-clamp-2 text-[10px] leading-[13px] text-[#7A6A55]'},item.summary));
-    return el('div',{class:'rounded-lg border-b border-[#F0EDE5] px-1 py-1 last:border-b-0'},...rows);
+    return el('div',{class:'rounded-lg border-b border-[#F0EDE5] px-1 py-0.5 last:border-b-0'},...rows);
   }
   function fmtNewsTime(value){
     try{
@@ -262,7 +262,11 @@ export function mount(container,context){
       const data=await context.api.request('/world-news'+(refresh?'?refresh=1':''));
       const items=data.items||[];
       newsListEl.replaceChildren(...items.map(newsItemNode));
-      const stamp=data.aiUsed?'AI 精选 · 实时抓取':'最新标题 · 实时抓取';
+      const stamp=data.stale
+        ? ('显示上次保存的新闻'+(data.savedDate?('（'+data.savedDate+'）'):'')+'，今日更新失败')
+        : data.cached
+          ? '今日快讯 · 已保存'
+          : (data.aiUsed?'AI 精选 · 刚刚更新':'最新标题 · 刚刚更新');
       newsMetaEl.textContent=stamp+'（'+(data.sourceCount||0)+' 个来源 / '+(data.totalFetched||items.length)+' 条）';
     }catch(e){
       newsListEl.replaceChildren();
@@ -464,7 +468,7 @@ export function mount(container,context){
           weatherErrorEl=el('p',{class:'mt-0.5 hidden text-[9.5px] text-[#B4543B]','role':'alert'})))),
     weatherForecastBox=el('div',{class:'relative z-10 mt-3 grid grid-cols-4 gap-1.5 rounded-xl border border-white/[0.45] bg-white/[0.55] p-1.5'}));
 
-  const todoCard=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)] xl:p-5',id:'todoCard'},
+  const todoCard=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)] lg:h-[380px] xl:p-5',id:'todoCard'},
     el('div',{class:'flex flex-wrap items-center justify-between gap-2.5'},
       el('div',{class:'flex items-center gap-2'},el('h2',{class:'text-[16px] font-semibold tracking-[-0.01em] text-[#25362D]'},'今日待办'),todoBadge=el('span',{class:'grid h-[20px] min-w-[20px] place-items-center rounded-full bg-[#E8EFE7] px-1.5 text-[10px] font-semibold text-[#466453]'},'0')),
       el('div',{class:'flex items-center gap-2'},
@@ -482,7 +486,7 @@ export function mount(container,context){
         progressText=el('span',{class:'shrink-0 text-[10px] text-[#87918B]'},''))),
     undatedNote=el('button',{type:'button',hidden:true,class:'mt-2 w-full rounded-lg bg-[#F7F6F1] px-2.5 py-1.5 text-left text-[10px] text-[#6B7A70] hover:bg-[#F0EEE7]',onClick:()=>context.navigate('/tasks')},''));
 
-  const newsCard=el('section',{class:'flex min-h-0 max-h-[440px] flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] xl:p-5',id:'newsCard'},
+  const newsCard=el('section',{class:'flex min-h-0 max-h-[440px] flex-col rounded-2xl border border-[#E5DDD1] bg-white p-4 shadow-[0_4px_18px_rgba(82,57,36,0.04)] lg:h-[380px] xl:p-5',id:'newsCard'},
     el('div',{class:'flex items-center justify-between gap-2'},
       el('div',{class:'flex items-center gap-2'},
         el('h2',{class:'text-[16px] font-semibold tracking-[-0.01em] text-[#2A352F]'},'世界快讯'),
@@ -490,7 +494,7 @@ export function mount(container,context){
       (()=>{const b=el('button',{type:'button',class:'flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-[#85796C] transition-colors hover:bg-[#F8F2E9] hover:text-[#5B4636]'},icon('refresh',14),el('span',{},'换一批'));
         b.addEventListener('click',()=>loadNews(true));
         newsRefreshBtn=b;return b;})()),
-    newsListEl=el('div',{class:'mt-2 min-h-0 max-h-[300px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-[#ECE8DE] bg-[#FBFAF6] px-2.5 py-1'}),
+    newsListEl=el('div',{class:'mt-2 min-h-0 max-h-[300px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-[#ECE8DE] bg-[#FBFAF6] px-2.5 py-1 lg:max-h-none'}),
     newsErrorEl=el('p',{class:'mt-2 hidden text-[10px] text-[#B4543B]','role':'alert'},''),
     el('p',{class:'mt-2 text-[9px] leading-4 tracking-wide text-[#A0A7A1]'},
       newsMetaEl=el('span',{},'世界快讯'),
@@ -526,14 +530,14 @@ export function mount(container,context){
     (()=>{noteAddBtn=el('button',{type:'button',class:'mt-2 flex h-[30px] w-full shrink-0 items-center justify-center gap-1 rounded-lg border border-[#E3D3A6] bg-[#FCF6E3] text-[10px] font-medium text-[#7C693C] transition-colors hover:border-[#D4BF86] hover:bg-[#F9EFD3]'},icon('add-circle',13),el('span',{},'记录一个想法'));
       noteAddBtn.addEventListener('click',enterNoteEdit);return noteAddBtn;})());
 
-  const row1=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},heroCard,weatherCard);
-  const row2=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},todoCard,newsCard);
-  const row3=el('div',{class:'grid grid-cols-1 gap-4 lg:grid-cols-3'},entries,calendarCard,scratchCard);
+  const row1=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},heroCard,weatherCard);
+  const row2=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},todoCard,newsCard);
+  const row3=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-3'},entries,calendarCard,scratchCard);
   const foot=el('p',{class:'mt-2.5 pb-0.5 text-center text-[9.5px] tracking-wide text-[#9A9F9A]'},'天气来自 Open-Meteo · 段子与规划由 AI 生成，请自行判断');
 
   container.replaceChildren(
     el('div',{class:'mx-auto flex min-h-full w-full max-w-[1560px] flex-col px-4 pb-3 pt-4 sm:px-6 lg:px-5 lg:pt-5'},
-      el('div',{class:'grid grid-cols-1 gap-4 lg:min-h-[740px] lg:flex-1 lg:grid-rows-[minmax(210px,0.92fr)_minmax(300px,1.22fr)_minmax(222px,0.96fr)]'},row1,row2,row3),
+      el('div',{class:'grid grid-cols-1 gap-3.5 lg:min-h-[700px] lg:flex-1 lg:grid-rows-[minmax(210px,0.92fr)_minmax(300px,1.22fr)_minmax(222px,0.96fr)]'},row1,row2,row3),
       foot));
 
   renderTasks();renderDayStrip();renderSchedule();renderNoteDisplay();

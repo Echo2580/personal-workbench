@@ -158,6 +158,33 @@ def _fetch_feed(feed: dict[str, str]) -> list[dict[str, Any]]:
     return parse_feed(text, feed)
 
 
+def _briefing_path(data_dir: Path) -> Path:
+    return _home_dir(data_dir) / "news_briefing.json"
+
+
+def read_briefing(data_dir: Path) -> dict[str, Any] | None:
+    """读取当天（或最近一次）保存的完整简报（含 AI 解读）。"""
+    import json
+
+    try:
+        payload = json.loads(_briefing_path(data_dir).read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError, OSError):
+        return None
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        return None
+    return payload
+
+
+def write_briefing(data_dir: Path, payload: dict[str, Any]) -> None:
+    import json
+
+    path = _briefing_path(data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(path)
+
+
 def _read_cached_items(data_dir: Path) -> tuple[list[dict[str, Any]], str]:
     try:
         import json
@@ -224,38 +251,35 @@ def _fallback_picks(items: list[dict[str, Any]], count: int = 5) -> list[dict[st
     return picks
 
 
-_curated_cache: dict[str, Any] = {"fetched_at": "", "payload": None}
 _curated_lock = threading.Lock()
 
 
-def build_briefing(data_dir: Path, refresh: bool, model: Any) -> dict[str, Any]:
-    """返回世界快讯：真实新闻条目标题/链接 + AI 筛选与一句话解读。
+def _today() -> str:
+    return datetime.now(SHANGHAI).date().isoformat()
 
-    AI 不可用或输出不合法时退回纯标题（aiUsed=false），不会编造内容。
+
+def build_briefing(data_dir: Path, refresh: bool, model: Any) -> dict[str, Any]:
+    """世界快讯：每个自然日第一次进入时抓取并保存，之后直接读存档。
+
+    - refresh=False 且当天已有存档 → 直接返回，不抓取、不调模型；
+    - refresh=True（用户点「换一批」）或当天还没有存档 → 抓 RSS + AI 筛选后写入存档；
+    - 抓取失败时回退最近一次存档（标记 stale），没有存档才报错。
     """
-    items, from_memory = collect_items(refresh=refresh)
+    today = _today()
+    persisted = read_briefing(data_dir)
+
+    if not refresh and persisted and persisted.get("date") == today:
+        return {**persisted, "cached": True, "stale": False, "savedDate": today}
+
+    try:
+        items, _ = collect_items(refresh=True)
+    except Exception:  # noqa: BLE001 - 抓取异常统一走降级
+        items = []
 
     if not items:
-        persisted, fetched_at = _read_cached_items(data_dir)
-        if not persisted:
-            raise NewsError("暂时无法获取新闻源，请稍后再试。")
-        items = persisted
-        from_memory = True
-        fetched_at_cached = fetched_at
-    else:
-        fetched_at_cached = ""
-
-    _ = from_memory
-    stamp = fetched_at_cached or _write_cached_items(data_dir, items)
-
-    with _curated_lock:
-        cached_payload = _curated_cache["payload"]
-        if (
-            not refresh
-            and cached_payload
-            and _curated_cache["fetched_at"] == stamp
-        ):
-            return {**cached_payload, "cached": True}
+        if persisted and persisted.get("items"):
+            return {**persisted, "cached": True, "stale": True, "savedDate": persisted.get("date")}
+        raise NewsError("暂时无法获取新闻源，请稍后再试。")
 
     picks: list[dict[str, Any]] = []
     ai_used = False
@@ -271,18 +295,23 @@ def build_briefing(data_dir: Path, refresh: bool, model: Any) -> dict[str, Any]:
         picks = _fallback_picks(items)
 
     payload = {
+        "date": today,
         "items": picks,
-        "fetchedAt": stamp,
+        "fetchedAt": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "cached": False,
+        "stale": False,
         "aiUsed": ai_used,
         "aiError": ai_error,
         "sourceCount": len({item["source"] for item in items}),
         "totalFetched": len(items),
+        "savedDate": today,
     }
-    with _curated_lock:
-        _curated_cache["fetched_at"] = stamp
-        _curated_cache["payload"] = payload
-    _write_cached_items(data_dir, items)
+    write_briefing(data_dir, payload)
+    # 供兼容保留：旧 items 缓存文件同步落一份，便于排查
+    try:
+        _write_cached_items(data_dir, items)
+    except OSError:
+        pass
     return payload
 
 
