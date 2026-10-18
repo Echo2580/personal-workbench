@@ -12,7 +12,7 @@ import {icon} from '../core/icons.js';
 const CITY_CACHE_KEY='wb.weather.city';
 const cachedCity=(()=>{try{return localStorage.getItem(CITY_CACHE_KEY)||'';}catch(e){return '';}})();
 const state={
-  filter:'all',selectedDay:18,city:cachedCity||'南京',noteLines:[],
+  filter:'all',selectedDay:18,city:cachedCity||'南京',quickEntries:[],
 };
 const CITY_LIST=['南京','杭州','苏州','上海'];
 
@@ -135,6 +135,7 @@ export function mount(container,context){
     try{const data=await context.api.request('/tasks?status=all');tasks=(data.tasks||[]).map(viewOf);taskLoading=false;taskError='';}
     catch(e){taskLoading=false;taskError=e.message||'无法连接待办模块';}
     renderTasks();
+    renderSchedule();
   }
   async function toggleTask(task){
     const next=task.done?'open':'completed';
@@ -188,7 +189,9 @@ export function mount(container,context){
         weatherCityEl.textContent=city;
         try{localStorage.setItem(CITY_CACHE_KEY,city);}catch(e){}
       }
+      state.quickEntries=Array.isArray(data&&data.quickEntries)?data.quickEntries.slice():[];
     }catch(e){/* 偏好读取失败时沿用本地缓存/默认城市 */}
+    draw(lastModules);
     loadWeather(state.city);
   }
   async function loadWeather(city){
@@ -279,66 +282,147 @@ export function mount(container,context){
     }
   }
 
-  /* ===== 日程（暂无数据源，空状态） ===== */
-  let dayStrip,scheduleDateLabel,scheduleList;
-  const calendarDays=[];
-  for(let d=now.getDate()-6;d<=now.getDate();d++){
-    calendarDays.push({day:d,label:['周日','周一','周二','周三','周四','周五','周六'][new Date(now.getFullYear(),now.getMonth(),d).getDay()]});
-  }
-  state.selectedDay=now.getDate();
-  function renderDayStrip(){
-    dayStrip.replaceChildren(...calendarDays.map(item=>{
-      const active=item.day===state.selectedDay;
-      const b=el('button',{type:'button','aria-label':(now.getMonth()+1)+' 月 '+item.day+' 日 '+item.label,class:'group flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors '+(active?'bg-[#EFF3ED] text-[#244C40]':'text-[#909A94] hover:bg-[#F4F5F0] hover:text-[#244C40]')},
-        el('span',{class:'text-[9px]'},item.label),
-        el('span',{class:'flex h-[26px] w-[26px] items-center justify-center rounded-full text-[11px] font-medium transition-colors '+(active?'bg-[#244C40] text-white shadow-sm':'bg-transparent group-hover:bg-[#E8ECE4]')},item.day));
-      b.addEventListener('click',()=>{state.selectedDay=item.day;renderDayStrip();renderSchedule();});
-      return b;
-    }));
+  /* ===== 接下来：用真实待办生成日程 ===== */
+  let scheduleTodayEl,scheduleWeekEl,scheduleSummaryEl,scheduleEmptyEl;
+  const WEEK_LABELS=['日','一','二','三','四','五','六'];
+  function timeOf(task){
+    const value=task.due||task.start;
+    if(!value)return '';
+    const d=new Date(value);
+    if(Number.isNaN(d.getTime()))return '';
+    return pad(d.getHours())+':'+pad(d.getMinutes());
   }
   function renderSchedule(){
-    scheduleDateLabel.textContent=(now.getMonth()+1)+' 月 '+state.selectedDay+' 日 · 暂无日程';
-    scheduleList.replaceChildren(el('div',{class:'flex h-full min-h-[86px] flex-col items-center justify-center text-center'},
-      el('span',{class:'grid h-8 w-8 place-items-center rounded-full bg-[#F0F3EC] text-[#84988A]'},icon('calendar',16)),
-      el('p',{class:'mt-1.5 text-[10.5px] font-medium text-[#7E8C84]'},'日程功能尚未接入'),
-      el('p',{class:'mt-0.5 text-[9px] text-[#A0A7A1]'},'待办清单页的月历可以先看安排')));
+    if(!scheduleTodayEl)return;
+    const key=todayKey();
+    const open=tasks.filter(t=>!t.done);
+    const overdue=open.filter(t=>t.overdue);
+    const todayOpen=open
+      .filter(t=>t.date===key)
+      .sort((a,b)=>(a.due||a.start||'').localeCompare(b.due||b.start||''));
+    const upcoming=open.filter(t=>t.date&&t.date>key);
+
+    if(overdue.length){
+      scheduleTodayEl.replaceChildren(
+        el('p',{class:'mb-1 text-[9.5px] font-medium text-[#B4543B]'},'已逾期 '+overdue.length+' 条'),
+        ...overdue.slice(0,2).map(t=>el('p',{class:'truncate text-[10.5px] text-[#A15B47]'},'· '+t.title)));
+    }else if(todayOpen.length){
+      scheduleTodayEl.replaceChildren(...todayOpen.slice(0,3).map(task=>
+        el('div',{class:'flex items-center gap-2 py-0.5'},
+          el('span',{class:'shrink-0 font-mono text-[9.5px] text-[#8C9A90]'},timeOf(task)||'待定'),
+          el('span',{class:'truncate text-[10.5px] text-[#4A5A50]'},task.title))));
+    }else{
+      scheduleTodayEl.replaceChildren(el('p',{class:'text-[10px] text-[#A0A7A1]'},'今天没有安排待办。'));
+    }
+
+    const week=[];
+    for(let offset=0;offset<7;offset++){
+      const d=new Date();
+      d.setDate(d.getDate()+offset);
+      const day=dayKey(d);
+      const count=open.filter(t=>t.date===day).length;
+      week.push({day,label:offset===0?'今天':WEEK_LABELS[d.getDay()],ampm:'',count});
+    }
+    const weekTotal=open.filter(t=>t.date&&t.date>=key&&t.date<=week[6].day).length;
+    scheduleSummaryEl.textContent='今天 '+(todayOpen.length+(overdue.length||0))+' 项 · 未来 7 天 '+weekTotal+' 项';
+
+    const maxCount=Math.max(1,...week.map(item=>item.count));
+    scheduleWeekEl.replaceChildren(...week.map(item=>{
+      const barH=item.count?Math.max(4,Math.round(item.count/maxCount*24)):2;
+      const col=el('button',{type:'button','aria-label':(item.label==='今天'?'今天':('周'+item.label))+' '+item.count+' 项待办',class:'group flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg py-1 transition-colors hover:bg-[#F4F6F0]'},
+        el('span',{class:'flex h-[26px] w-full items-end justify-center'},
+          el('span',{class:'w-2.5 rounded-t-[3px] transition-colors '+(item.count?'bg-[#9BB7A6] group-hover:bg-[#7FA08C]':'bg-transparent'),style:'height:'+barH+'px'})),
+        el('span',{class:'text-[9px] '+(item.count?'text-[#52645A]':'text-[#AEB5AF]')},item.label),
+        el('span',{class:'text-[9px] font-semibold '+(item.count?'text-[#3F6B52]':'text-[#C3C8C2]')},item.count?String(item.count):''));
+      col.addEventListener('click',()=>context.navigate('/tasks'));
+      return col;
+    }));
   }
 
-  /* ===== 随手记（落盘） ===== */
-  let noteDisplay,noteEditor,noteTextarea,noteAddBtn,noteSaving=false;
-  function renderNoteDisplay(){
-    if(!state.noteLines.length){
-      noteDisplay.replaceChildren(el('p',{class:'text-[10.5px] leading-[1.65] text-[#9A8558]'},'还没有随手记。点右下角记一条。'));
+  /* ===== 随手记：收集箱（最近 3 条，可转待办/删除，全部抽屉） ===== */
+  let noteListEl,noteInputEl,noteAll=[],noteBusy=false,notesModal=null;
+  function noteItemNode(note,compact){
+    const text=el('p',{class:'min-w-0 flex-1 '+(compact?'line-clamp-2':'line-clamp-3')+' text-[10.5px] leading-[1.55] text-[#7B6840]'},note.text);
+    const toTask=el('button',{type:'button',class:'shrink-0 rounded-md px-1.5 py-0.5 text-[9px] text-[#6F5C31] transition-colors hover:bg-[#F1E3BD]','aria-label':'转为待办：'+note.text},'转待办');
+    toTask.addEventListener('click',event=>{event.stopPropagation();convertNoteToTask(note,toTask);});
+    const del=el('button',{type:'button',class:'shrink-0 rounded-md px-1 py-0.5 text-[9px] text-[#B08A5E] transition-colors hover:bg-[#F6E3C9]','aria-label':'删除笔记：'+note.text},icon('trash-bin-minimalistic',12));
+    del.addEventListener('click',event=>{event.stopPropagation();removeNote(note);});
+    return el('div',{class:'group flex items-start gap-1.5 rounded-lg border-b border-[#F1E8CE] px-1 py-1 last:border-b-0'},
+      text,el('div',{class:'flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100'},toTask,del));
+  }
+  function renderNotes(){
+    if(!noteListEl)return;
+    if(!noteAll.length){
+      noteListEl.replaceChildren(el('p',{class:'py-2 text-center text-[10px] text-[#A08A5C]'},'还没有随手记，在下面写一条。'));
       return;
     }
-    noteDisplay.replaceChildren(...state.noteLines.map(l=>el('p',{class:'text-[11px] leading-[1.65] text-[#7B6840]'},l)));
+    noteListEl.replaceChildren(...noteAll.slice(0,3).map(note=>noteItemNode(note,true)));
   }
   async function loadNotes(){
-    try{const data=await context.api.request('/notes');state.noteLines=(data.lines||[]).slice();}
-    catch(e){state.noteLines=[];}
-    renderNoteDisplay();
+    try{const data=await context.api.request('/notes');noteAll=(data.items||[]).slice();}
+    catch(e){noteAll=[];}
+    renderNotes();
   }
-  async function saveNotes(lines){
-    if(noteSaving)return;
-    noteSaving=true;
+  async function addNote(){
+    const text=(noteInputEl.value||'').trim();
+    if(!text){noteInputEl.focus();return;}
+    if(noteBusy)return;
+    noteBusy=true;
     try{
-      const data=await context.api.request('/notes',{method:'PUT',body:{lines}});
-      state.noteLines=(data.lines||[]).slice();
-      renderNoteDisplay();
-      exitNoteEdit();
-      toast('随手记已保存');
+      const data=await context.api.request('/notes',{method:'POST',body:{text}});
+      noteAll.unshift(data.item);
+      noteInputEl.value='';
+      renderNotes();
+      toast('已记下');
     }catch(e){toast(e.message||'保存失败',true);}
-    finally{noteSaving=false;}
+    finally{noteBusy=false;}
   }
-  function enterNoteEdit(){
-    noteDisplay.classList.add('hidden');noteAddBtn.classList.add('hidden');
-    noteEditor.classList.remove('hidden');noteEditor.classList.add('flex');
-    noteTextarea.value=state.noteLines.join('\n');
-    setTimeout(()=>noteTextarea.focus(),40);
+  async function saveNoteText(text){
+    const trimmed=(text||'').trim();
+    if(!trimmed)return;
+    try{
+      const data=await context.api.request('/notes',{method:'POST',body:{text:trimmed}});
+      noteAll.unshift(data.item);
+      renderNotes();
+      toast('已记下');
+    }catch(e){toast(e.message||'保存失败',true);}
   }
-  function exitNoteEdit(){
-    noteEditor.classList.add('hidden');noteEditor.classList.remove('flex');
-    noteDisplay.classList.remove('hidden');noteAddBtn.classList.remove('hidden');
+  async function removeNote(note){
+    try{
+      await context.api.request('/notes/'+encodeURIComponent(note.id),{method:'DELETE'});
+      noteAll=noteAll.filter(item=>item.id!==note.id);
+      renderNotes();
+      if(notesModal)renderNotesModal();
+      toast('已删除');
+    }catch(e){toast(e.message||'删除失败',true);}
+  }
+  async function convertNoteToTask(note,btn){
+    if(btn.disabled)return;
+    btn.disabled=true;
+    try{
+      await context.api.request('/tasks',{method:'POST',body:{title:note.text.slice(0,200)}});
+      toast('已转为待办');
+      await loadTasks();
+    }catch(e){toast(e.message||'转待办失败',true);}
+    finally{btn.disabled=false;}
+  }
+  function renderNotesModal(){
+    if(!notesModal)return;
+    const list=notesModal.querySelector('#notesAllList');
+    if(!noteAll.length){list.replaceChildren(el('p',{class:'py-6 text-center text-[11px] text-[#A08A5C]'},'还没有随手记。'));return;}
+    list.replaceChildren(...noteAll.map(note=>noteItemNode(note,false)));
+  }
+  function openNotesModal(){
+    if(!notesModal){
+      notesModal=mkOverlay('notesModal',[
+        el('div',{class:'flex items-start justify-between gap-4'},
+          el('div',{},el('h2',{class:'text-[17px] font-semibold text-[#5D4D2D]'},'全部随手记'),el('p',{class:'mt-1 text-[10.5px] text-[#A08A5C]'},'想法可以直接转成待办。')),
+          el('button',{type:'button','aria-label':'关闭',class:'grid h-8 w-8 place-items-center rounded-lg text-[#9D895D] hover:bg-[#F4E8C4]',onClick:()=>closeOv(notesModal)},icon('close-circle',19))),
+        el('div',{class:'mt-3 max-h-[54vh] overflow-y-auto rounded-xl border border-[#F0E4C4] bg-[#FDF8E8] px-2 py-1',id:'notesAllList'}),
+      ]);
+    }
+    renderNotesModal();
+    openOv(notesModal);
   }
 
   /* ===== 全局搜索（真实数据：项目 / 待办 / 长期任务） ===== */
@@ -392,32 +476,99 @@ export function mount(container,context){
   searchInput.addEventListener('focus',()=>{if(searchInput.value.trim())renderSearch();});
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();searchInput.focus();searchInput.select();}
-    if(e.key==='Escape'){hideSearch();closeOv(cityModal);}
+    if(e.key==='Escape'){hideSearch();closeOv(cityModal);if(notesModal)closeOv(notesModal);if(manageModal)closeOv(manageModal);}
   });
   document.addEventListener('click',e=>{if(!document.querySelector('#searchWrap')?.contains(e.target))hideSearch();});
 
-  /* ===== 常用入口 ===== */
-  const entries=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]'});
+  /* ===== 常用入口：工作台模块 + 最近项目 + 自定义入口 ===== */
+  const entries=el('section',{class:'flex min-h-0 flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)] lg:h-[300px]',id:'entriesCard'});
+  let entriesGrid,entriesCountEl,entriesFooter;
+  let lastModules=[],recentProjects=[],manageModal=null;
+  state.quickEntries=[];
+
+  function tile({label,iconName,ariaLabel,onClick,accent}){
+    const b=el('button',{type:'button','aria-label':ariaLabel||label,class:'group flex min-h-[54px] flex-col items-center justify-center gap-1.5 rounded-xl border px-1 text-center transition-colors '+(accent==='custom'?'border-[#E6DAC0] bg-[#FBF5E7] text-[#7A6437] hover:border-[#D6C49B] hover:bg-[#F7EDD6]':'border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] hover:border-[#C4D3C8] hover:bg-[#E6EEE5]')},
+      el('span',{class:'text-current opacity-80'},icon(iconName,18)),
+      el('span',{class:'line-clamp-1 w-full text-[10px] font-medium'},label));
+    b.addEventListener('click',onClick);
+    return b;
+  }
   function draw(modules){
-    /* 只展示有导航路由的可用模块；API-only 模块（如首页数据服务）不作为入口。 */
+    lastModules=modules;
     const avail=modules.filter(m=>m.status==='available'&&m.route);
     const needsSettings=avail.filter(m=>(m.summary||{}).availability==='尚未配置扫描目录');
-    const grid=el('div',{class:'mt-3 grid min-h-0 flex-1 grid-cols-3 gap-2'});
-    for(const m of avail){
-      grid.append(el('button',{type:'button','aria-label':'进入'+m.title,class:'flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]',onClick:()=>context.navigate(m.route)},
-        el('span',{class:'text-[#607F6C]'},icon(m.icon,19)),el('span',{class:'text-[10.5px] font-medium'},m.title)));
-    }
-    const extra=[{label:'常用工具',icon:'widget-4'},{label:'GitHub',icon:'code'},{label:'AI 助手',icon:'magic-stick'},{label:'学习资料',icon:'book'},{label:'全部收藏',icon:'bookmark'}];
-    for(const x of extra.slice(0,Math.max(0,6-avail.length))){
-      grid.append(el('button',{type:'button',class:'flex min-h-[52px] flex-col items-center justify-center gap-1.5 rounded-xl border border-[#E4E9E1] bg-[#EEF3ED] text-[#466152] transition-colors hover:border-[#C4D3C8] hover:bg-[#E6EEE5]',onClick:()=>toast('「'+x.label+'」待接入')},
-        el('span',{class:'text-[#607F6C]'},icon(x.icon,19)),el('span',{class:'text-[10.5px] font-medium'},x.label)));
-    }
-    entries.replaceChildren(...[
-      el('div',{class:'flex items-center justify-between'},el('h2',{class:'text-[15px] font-semibold tracking-[-0.01em] text-[#2A382F]'},'常用入口'),el('span',{class:'text-[9px] text-[#A0A7A1]'},'6 个入口')),
-      grid,
-      needsSettings.length?el('div',{class:'mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#EFEDE5] pt-2.5'},
-        button('设置扫描目录',()=>context.navigate('/settings'),'',{class:'wb-quiet'})):null,
+    const tiles=[];
+    for(const m of avail)tiles.push(tile({label:m.title,iconName:m.icon,ariaLabel:'进入'+m.title,onClick:()=>context.navigate(m.route)}));
+    for(const project of recentProjects)tiles.push(tile({label:project.name||'未命名项目',iconName:'folder-2',ariaLabel:'打开项目 '+project.name,onClick:()=>context.navigate('/projects')}));
+    for(const entry of state.quickEntries)tiles.push(tile({label:entry.label,iconName:'link',ariaLabel:'打开链接 '+entry.label,accent:'custom',onClick:()=>{window.open(entry.url,'_blank','noopener');}}));
+    entriesGrid.replaceChildren(...tiles);
+    entriesCountEl.textContent=(avail.length+recentProjects.length+state.quickEntries.length)+' 个入口';
+    entriesFooter.replaceChildren(...[
+      needsSettings.length?button('设置扫描目录',()=>context.navigate('/settings'),'',{class:'wb-quiet'}):null,
+      (!state.quickEntries.length)?el('button',{type:'button',class:'wb-quiet',onClick:openManageEntries},'+ 添加自定义入口'):null,
     ].filter(Boolean));
+    entriesFooter.hidden=!entriesFooter.childElementCount;
+  }
+  async function loadProjects(){
+    try{
+      const data=await context.api.request('/projects');
+      const list=(data.projects||[]).filter(item=>item&&!item.removed_at);
+      list.sort((a,b)=>String(b.last_action_at||'').localeCompare(String(a.last_action_at||'')));
+      recentProjects=list.slice(0,2);
+    }catch(e){recentProjects=[];}
+    draw(lastModules);
+  }
+  function renderManageList(){
+    const list=manageModal.querySelector('#manageList');
+    if(!state.quickEntries.length){
+      list.replaceChildren(el('p',{class:'py-3 text-center text-[10.5px] text-[#A0A7A1]'},'还没有自定义入口。'));
+      return;
+    }
+    list.replaceChildren(...state.quickEntries.map(entry=>el('div',{class:'flex items-center gap-2 rounded-lg border border-[#EFEDE5] px-2 py-1.5'},
+      el('span',{class:'text-[#6C8B79]'},icon('link',14)),
+      el('span',{class:'min-w-0 flex-1 truncate text-[11px] text-[#3F4E44]'},entry.label+' · '+entry.url),
+      el('button',{type:'button','aria-label':'删除入口 '+entry.label,class:'rounded-md px-1.5 py-0.5 text-[9px] text-[#B08A5E] hover:bg-[#F6E3C9]',onClick:()=>{state.quickEntries=state.quickEntries.filter(item=>item.id!==entry.id);renderManageList();}},icon('trash-bin-minimalistic',13)))));
+  }
+  function openManageEntries(){
+    if(!manageModal){
+      manageModal=mkOverlay('manageEntriesModal',[
+        el('div',{class:'flex items-start justify-between gap-4'},
+          el('div',{},el('h2',{class:'text-[17px] font-semibold text-[#23342B]'},'自定义入口'),el('p',{class:'mt-1 text-[10.5px] text-[#8D958F]'},'添加常用网页或工具，最多 8 个。')),
+          el('button',{type:'button','aria-label':'关闭',class:'grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] hover:bg-[#F2F2EC]',onClick:()=>closeOv(manageModal)},icon('close-circle',19))),
+        el('div',{class:'mt-3 max-h-[32vh] space-y-1.5 overflow-y-auto',id:'manageList'}),
+        (()=>{
+          const row=el('div',{class:'mt-3 flex items-center gap-2'});
+          const label=el('input',{id:'entryLabel',type:'text',placeholder:'名称，如 GitHub',class:'w-[34%] rounded-xl border border-[#E1DED2] bg-white px-2.5 py-2 text-[11px] outline-none focus:border-[#8FAA9A]'});
+          const url=el('input',{id:'entryUrl',type:'text',placeholder:'https://…',class:'min-w-0 flex-1 rounded-xl border border-[#E1DED2] bg-white px-2.5 py-2 text-[11px] outline-none focus:border-[#8FAA9A]'});
+          const add=el('button',{type:'button',class:'shrink-0 rounded-xl bg-[#244C40] px-3 py-2 text-[11px] font-medium text-white hover:bg-[#1B3D31]',onClick:()=>{
+            const name=label.value.trim();const link=url.value.trim();
+            if(!name||!/^https?:\/\//.test(link)){toast('请填写名称和 http(s) 链接');return;}
+            if(state.quickEntries.length>=8){toast('最多 8 个自定义入口');return;}
+            state.quickEntries.push({id:'tmp-'+Date.now(),label:name,url:link});
+            label.value='';url.value='';
+            renderManageList();
+          }},'添加');
+          row.append(label,url,add);return row;
+        })(),
+        el('div',{class:'mt-4 flex justify-end gap-2'},
+          el('button',{type:'button',class:'wb-quiet',onClick:()=>closeOv(manageModal)},'取消'),
+          el('button',{type:'button',class:'rounded-xl bg-[#244C40] px-4 py-2 text-[12px] font-medium text-white hover:bg-[#1B3D31]',id:'saveEntriesBtn'},'保存')),
+      ]);
+    }
+    renderManageList();
+    openOv(manageModal);
+    const saveBtn=manageModal.querySelector('#saveEntriesBtn');
+    saveBtn.onclick=async()=>{
+      saveBtn.disabled=true;
+      try{
+        const data=await context.api.request('/preferences',{method:'PUT',body:{quickEntries:state.quickEntries.map(({label,url})=>({label,url}))}});
+        state.quickEntries=(data.quickEntries||[]).slice();
+        closeOv(manageModal);
+        draw(lastModules);
+        toast('入口已保存');
+      }catch(e){toast(e.message||'保存失败',true);}
+      finally{saveBtn.disabled=false;}
+    };
   }
 
   /* ===== 组装 ===== */
@@ -443,7 +594,7 @@ export function mount(container,context){
           toast('已带到导入页，确认后保存');
           return;
         }
-        saveNotes([...state.noteLines,v]);
+        saveNoteText(v);
         input.value='';updateQuick();
       }
       function updateQuick(){const has=input.value.trim().length>0;actions.classList.toggle('hidden',!has);actions.classList.toggle('flex',has);}
@@ -500,48 +651,51 @@ export function mount(container,context){
       newsMetaEl=el('span',{},'世界快讯'),
       el('span',{},' · 新闻来自公开 RSS，AI 只做筛选与解读，点击标题看原文')));
 
-  const calendarCard=el('section',{class:'flex flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)]',id:'calendarCard'},
+  const scheduleCard=el('section',{class:'flex min-h-0 flex-col rounded-2xl border border-[#E3E0D5] bg-white p-4 shadow-[0_4px_18px_rgba(36,76,64,0.04)] lg:h-[300px]',id:'calendarCard'},
     el('div',{class:'flex items-center justify-between gap-2'},
       el('h2',{class:'text-[15px] font-semibold tracking-[-0.01em] text-[#2A382F]'},'接下来'),
       el('button',{type:'button',class:'flex items-center gap-1 text-[10px] text-[#8A938D] transition-colors hover:text-[#244C40]',onClick:()=>context.navigate('/tasks')},el('span',{},'打开日历'),icon('arrow',13))),
-    dayStrip=el('div',{class:'mt-2.5 grid grid-cols-7 gap-0.5'}),
-    el('div',{class:'mt-2 flex min-h-0 flex-1 flex-col'},
-      el('div',{class:'flex items-center justify-between'},scheduleDateLabel=el('p',{class:'text-[9.5px] font-medium text-[#8D968F]'},''),el('span',{class:'h-px flex-1 bg-[#EFEDE4] ml-2'})),
-      scheduleList=el('div',{class:'mt-1 min-h-0 flex-1'})));
+    scheduleSummaryEl=el('p',{class:'mt-1 text-[9.5px] text-[#9AA1A0]'},''),
+    scheduleTodayEl=el('div',{class:'mt-1.5 min-h-0 flex-1 overflow-y-auto rounded-lg bg-[#F7F8F3] px-2 py-1'}),
+    scheduleWeekEl=el('div',{class:'mt-1.5 flex items-end justify-between gap-0.5'}));
 
-  const scratchCard=el('section',{class:'relative flex flex-col overflow-hidden rounded-2xl border border-[#EDE1BD] bg-[#FBF3D9] p-4 shadow-[0_4px_18px_rgba(123,99,46,0.05)]',id:'scratchCard'},
+  const scratchCard=el('section',{class:'relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#EDE1BD] bg-[#FBF3D9] p-4 shadow-[0_4px_18px_rgba(123,99,46,0.05)] lg:h-[300px]',id:'scratchCard'},
     el('span',{class:'pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full border border-[#EADDAF]','aria-hidden':'true'}),
     el('span',{class:'pointer-events-none absolute bottom-12 right-5 h-1 w-1 rounded-full bg-[#D5C289]','aria-hidden':'true'}),
-    el('div',{class:'flex items-center justify-between'},
+    el('div',{class:'relative z-10 flex items-center justify-between'},
       el('div',{class:'flex items-center gap-1.5 text-[10px] font-medium tracking-wide text-[#9B8656]'},icon('notebook',14),el('span',{},'随手记')),
-      (()=>{const b=el('button',{type:'button','aria-label':'编辑随手记',class:'grid h-7 w-7 place-items-center rounded-lg text-[#9D895D] transition-colors hover:bg-[#F4E8C4] hover:text-[#6D5A32]'},icon('pen-square',16));b.addEventListener('click',enterNoteEdit);return b;})()),
-    el('h2',{class:'mt-1.5 text-[15px] font-semibold text-[#5D4D2D]'},'首页想法'),
-    noteDisplay=el('div',{class:'mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto'}),
-    (()=>{noteEditor=el('div',{class:'mt-2 hidden min-h-0 flex-1 flex-col'});
-      noteTextarea=el('textarea',{class:'min-h-[62px] flex-1 resize-none rounded-lg border border-[#E4D4A6] bg-[#FFFDF5] px-2.5 py-2 text-[11px] leading-[1.65] text-[#5F4F2F] outline-none focus:border-[#B7A15F]','aria-label':'随手记内容'});
-      noteEditor.append(noteTextarea,el('div',{class:'mt-1.5 flex justify-end gap-1.5'},
-        el('button',{type:'button',class:'rounded-md px-2 py-1 text-[10px] text-[#8C7950] transition-colors hover:bg-[#F4E8C4]',onClick:exitNoteEdit},'取消'),
-        el('button',{type:'button',class:'rounded-md bg-[#66542E] px-2.5 py-1 text-[10px] font-medium text-white transition-colors hover:bg-[#554525]',onClick:()=>{
-          const lines=noteTextarea.value.split('\n').map(l=>l.trim()).filter(Boolean);
-          if(!lines.length){toast('写点什么再保存吧');return;}
-          saveNotes(lines);
-        }},'保存')));
-      return noteEditor;})(),
-    (()=>{noteAddBtn=el('button',{type:'button',class:'mt-2 flex h-[30px] w-full shrink-0 items-center justify-center gap-1 rounded-lg border border-[#E3D3A6] bg-[#FCF6E3] text-[10px] font-medium text-[#7C693C] transition-colors hover:border-[#D4BF86] hover:bg-[#F9EFD3]'},icon('add-circle',13),el('span',{},'记录一个想法'));
-      noteAddBtn.addEventListener('click',enterNoteEdit);return noteAddBtn;})());
+      (()=>{const b=el('button',{type:'button',class:'rounded-md px-1.5 py-0.5 text-[9.5px] text-[#9A7F43] transition-colors hover:bg-[#F4E8C4]',onClick:openNotesModal},'查看全部');
+        return b;})()),
+    noteListEl=el('div',{class:'relative z-10 mt-1.5 min-h-0 flex-1 overflow-y-auto'}),
+    (()=>{
+      const row=el('div',{class:'relative z-10 mt-1.5 flex items-center gap-1.5'});
+      noteInputEl=el('input',{type:'text',placeholder:'记一个想法，回车保存…','aria-label':'随手记输入','class':'min-w-0 flex-1 rounded-lg border border-[#E3D3A6] bg-[#FFFDF5] px-2 py-1.5 text-[10.5px] text-[#5F4F2F] outline-none placeholder:text-[#BBA77E] focus:border-[#B7A15F]'});
+      noteInputEl.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addNote();}});
+      const add=el('button',{type:'button','aria-label':'保存随手记',class:'shrink-0 rounded-lg bg-[#66542E] px-2.5 py-1.5 text-[10px] font-medium text-white transition-colors hover:bg-[#554525]',onClick:addNote},'记');
+      row.append(noteInputEl,add);
+      return row;
+    })());
 
   const row1=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},heroCard,weatherCard);
   const row2=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'},todoCard,newsCard);
-  const row3=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-3'},entries,calendarCard,scratchCard);
-  const foot=el('p',{class:'mt-2.5 pb-0.5 text-center text-[9.5px] tracking-wide text-[#9A9F9A]'},'天气来自 Open-Meteo · 段子与规划由 AI 生成，请自行判断');
+  const row3=el('div',{class:'grid grid-cols-1 gap-3.5 lg:grid-cols-3'},entries,scheduleCard,scratchCard);
+  const foot=el('p',{class:'mt-2.5 pb-0.5 text-center text-[9.5px] tracking-wide text-[#9A9F9A]'},'天气来自 Open-Meteo · 世界快讯与 AI 规划由模型生成，请自行判断');
 
   container.replaceChildren(
     el('div',{class:'mx-auto flex min-h-full w-full max-w-[1560px] flex-col px-4 pb-3 pt-4 sm:px-6 lg:px-5 lg:pt-5'},
-      el('div',{class:'grid grid-cols-1 gap-3.5 lg:min-h-[700px] lg:flex-1 lg:grid-rows-[minmax(210px,0.92fr)_minmax(300px,1.22fr)_minmax(222px,0.96fr)]'},row1,row2,row3),
+      el('div',{class:'grid grid-cols-1 gap-3.5 lg:min-h-[820px] lg:flex-1 lg:grid-rows-[minmax(210px,0.88fr)_minmax(380px,1.2fr)_minmax(300px,1fr)]'},row1,row2,row3),
       foot));
 
-  renderTasks();renderDayStrip();renderSchedule();renderNoteDisplay();
-  loadTasks();loadPreferences();loadNews(false);loadNotes();
+  entries.replaceChildren(...[
+    el('div',{class:'flex items-center justify-between gap-2'},
+      el('div',{class:'flex items-center gap-2'},el('h2',{class:'text-[15px] font-semibold tracking-[-0.01em] text-[#2A382F]'},'常用入口'),entriesCountEl=el('span',{class:'text-[9px] text-[#A0A7A1]'},'')),
+      el('button',{type:'button',class:'rounded-md px-1.5 py-0.5 text-[9.5px] text-[#8A938D] transition-colors hover:bg-[#F2F2EC] hover:text-[#244C40]',onClick:openManageEntries},'编辑')),
+    entriesGrid=el('div',{class:'mt-2 grid min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto'}),
+    entriesFooter=el('div',{hidden:true,class:'mt-2 flex-wrap items-center gap-2'}),
+  ]);
+
+  renderTasks();renderSchedule();renderNotes();
+  loadTasks();loadPreferences();loadNews(false);loadNotes();loadProjects();
   draw(context.modules);
   const stopPoll=poll(async()=>{draw((await context.api.bootstrap(context.signal)).modules);await loadTasks();},context.signal);
   return stopPoll;

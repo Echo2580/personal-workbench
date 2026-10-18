@@ -118,9 +118,27 @@ async def put_preferences(request: Request) -> JSONResponse:
         body = await request.json()
     except Exception:  # noqa: BLE001
         return error_response("invalid_request", "请求体必须是合法 JSON。", 400)
-    if not isinstance(body, dict) or not body:
-        return error_response("invalid_request", "请求体必须是非空 JSON 对象。", 400)
-    unknown = [key for key in body if key != "city"]
+    try:
+        payload = preferences_service.write_preferences(_data_dir(request), body)
+    except preferences_service.PreferencesError as exc:
+        return error_response("invalid_request", str(exc), 422)
+    return JSONResponse(status_code=200, content=payload)
+
+
+@router.get("/notes")
+def get_notes(request: Request) -> JSONResponse:
+    return JSONResponse(status_code=200, content=services.read_notes(_data_dir(request)))
+
+
+@router.post("/notes", status_code=201)
+async def post_note(request: Request) -> JSONResponse:
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return error_response("invalid_request", "请求体必须是合法 JSON。", 400)
+    if not isinstance(body, dict) or "text" not in body:
+        return error_response("invalid_request", "请求体必须包含 text。", 400)
+    unknown = [key for key in body if key != "text"]
     if unknown:
         return error_response(
             "invalid_request",
@@ -129,7 +147,31 @@ async def put_preferences(request: Request) -> JSONResponse:
             details=[{"field": key, "code": "unknown_field", "message": "该字段不可写。"} for key in unknown],
         )
     try:
-        payload = preferences_service.write_preferences(_data_dir(request), body)
-    except ValueError:
-        return error_response("invalid_request", "city 必须是非空字符串。", 422)
+        payload = services.add_note(_data_dir(request), body["text"])
+    except services.HomeServiceError as exc:
+        return error_response(exc.code, exc.message, exc.status)
+    return JSONResponse(status_code=201, content=payload)
+
+
+@router.put("/notes/{note_id}")
+async def put_note(note_id: str, request: Request) -> JSONResponse:
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return error_response("invalid_request", "请求体必须是合法 JSON。", 400)
+    if not isinstance(body, dict) or "text" not in body:
+        return error_response("invalid_request", "请求体必须包含 text。", 400)
+    try:
+        payload = services.update_note(_data_dir(request), note_id, body["text"])
+    except services.HomeServiceError as exc:
+        return error_response(exc.code, exc.message, exc.status)
     return JSONResponse(status_code=200, content=payload)
+
+
+@router.delete("/notes/{note_id}", status_code=204)
+def delete_note(note_id: str, request: Request) -> JSONResponse:
+    try:
+        services.delete_note(_data_dir(request), note_id)
+    except services.HomeServiceError as exc:
+        return error_response(exc.code, exc.message, exc.status)
+    return JSONResponse(status_code=204, content=None)

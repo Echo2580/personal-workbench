@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import threading
+import uuid
 import time
 import urllib.parse
 from datetime import datetime, timedelta, timezone
@@ -186,35 +187,97 @@ def fetch_weather(city: str) -> dict[str, Any]:
 
 # ---------------------------------------------------------------- 随手记
 
+MAX_NOTES = 200
+MAX_NOTE_TEXT = 500
 
-MAX_NOTE_LINES = 50
-MAX_NOTE_LINE = 200
+
+def _notes_path(data_dir: Path) -> Path:
+    return _home_dir(data_dir) / "notes.json"
 
 
-def read_notes(data_dir: Path) -> dict[str, Any]:
-    payload = _read_json(_home_dir(data_dir) / "notes.json") or {}
+def _now_iso() -> str:
+    return datetime.now(SHANGHAI).isoformat(timespec="seconds")
+
+
+def _normalise_note(raw: object) -> dict | None:
+    if not isinstance(raw, dict):
+        return None
+    text = raw.get("text")
+    if not isinstance(text, str) or not text.strip():
+        return None
+    note_id = raw.get("id")
+    if not isinstance(note_id, str) or not note_id:
+        note_id = uuid.uuid4().hex[:12]
+    created = raw.get("createdAt")
+    if not isinstance(created, str) or not created:
+        created = _now_iso()
+    return {"id": note_id, "text": text.strip()[:MAX_NOTE_TEXT], "createdAt": created}
+
+
+def _load_notes(data_dir: Path) -> list[dict]:
+    payload = _read_json(_notes_path(data_dir)) or {}
+    items = payload.get("items")
+    if isinstance(items, list):
+        return [note for note in (_normalise_note(raw) for raw in items) if note]
+    # 兼容旧版 {lines: [...]}：按行迁移成独立笔记
     lines = payload.get("lines")
-    if not isinstance(lines, list):
-        lines = []
-    lines = [str(line) for line in lines if isinstance(line, str) and line.strip()]
-    return {"lines": lines, "updatedAt": payload.get("updatedAt")}
+    if isinstance(lines, list):
+        stamp = _now_iso()
+        migrated = []
+        for line in lines:
+            if isinstance(line, str) and line.strip():
+                migrated.append(
+                    {"id": uuid.uuid4().hex[:12], "text": line.strip()[:MAX_NOTE_TEXT], "createdAt": stamp}
+                )
+        return migrated
+    return []
 
 
-def write_notes(data_dir: Path, lines: Any) -> dict[str, Any]:
-    if not isinstance(lines, list):
-        raise HomeServiceError("invalid_request", "lines 必须是字符串数组。", 400)
-    cleaned: list[str] = []
-    for line in lines:
-        if not isinstance(line, str):
-            raise HomeServiceError("invalid_request", "lines 必须是字符串数组。", 400)
-        text = line.strip()
-        if not text:
-            continue
-        if len(text) > MAX_NOTE_LINE:
-            raise HomeServiceError("invalid_request", f"单行不能超过 {MAX_NOTE_LINE} 字。", 422)
-        cleaned.append(text)
-    if len(cleaned) > MAX_NOTE_LINES:
-        raise HomeServiceError("invalid_request", f"最多保存 {MAX_NOTE_LINES} 行。", 422)
-    payload = {"lines": cleaned, "updatedAt": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
-    _write_json(_home_dir(data_dir) / "notes.json", payload)
-    return payload
+def _save_notes(data_dir: Path, items: list[dict]) -> None:
+    path = _notes_path(data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"items": items[:MAX_NOTES], "updatedAt": _now_iso()}
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(path)
+
+
+def _clean_note_text(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise HomeServiceError("invalid_request", "笔记内容不能为空。", 422)
+    text = " ".join(value.split())
+    if len(text) > MAX_NOTE_TEXT:
+        raise HomeServiceError("invalid_request", f"单条笔记不能超过 {MAX_NOTE_TEXT} 字。", 422)
+    return text
+
+
+def read_notes(data_dir: Path) -> dict:
+    return {"items": _load_notes(data_dir)}
+
+
+def add_note(data_dir: Path, text: object) -> dict:
+    cleaned = _clean_note_text(text)
+    items = _load_notes(data_dir)
+    note = {"id": uuid.uuid4().hex[:12], "text": cleaned, "createdAt": _now_iso()}
+    items.insert(0, note)
+    _save_notes(data_dir, items)
+    return {"item": note}
+
+
+def update_note(data_dir: Path, note_id: str, text: object) -> dict:
+    cleaned = _clean_note_text(text)
+    items = _load_notes(data_dir)
+    for note in items:
+        if note["id"] == note_id:
+            note["text"] = cleaned
+            _save_notes(data_dir, items)
+            return {"item": note}
+    raise HomeServiceError("note_not_found", "这条笔记不存在或已被删除。", 404)
+
+
+def delete_note(data_dir: Path, note_id: str) -> None:
+    items = _load_notes(data_dir)
+    remaining = [note for note in items if note["id"] != note_id]
+    if len(remaining) == len(items):
+        raise HomeServiceError("note_not_found", "这条笔记不存在或已被删除。", 404)
+    _save_notes(data_dir, remaining)
