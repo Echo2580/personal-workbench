@@ -11,8 +11,11 @@ import {icon} from '../core/icons.js';
 
 const CITY_CACHE_KEY='wb.weather.city';
 const cachedCity=(()=>{try{return localStorage.getItem(CITY_CACHE_KEY)||'';}catch(e){return '';}})();
+/* 首页大字：preferences.heroHeadline 为空时使用默认文案（与服务端默认值保持一致）。 */
+const DEFAULT_HEADLINE='把今天，安排清楚。';
+const MAX_HEADLINE=30;
 const state={
-  filter:'all',selectedDay:18,city:cachedCity||'南京',quickEntries:[],
+  filter:'all',selectedDay:18,city:cachedCity||'南京',quickEntries:[],heroHeadline:'',
 };
 const CITY_LIST=['南京','杭州','苏州','上海'];
 
@@ -39,6 +42,61 @@ export function mount(container,context){
   const now=new Date();
   const dateLine=`${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日 · ${['周日','周一','周二','周三','周四','周五','周六'][now.getDay()]}`;
   const pad=n=>String(n).padStart(2,'0');
+
+  /* ===== 首页大字：点击标题或「编辑」进入编辑态，保存到 preferences.heroHeadline ===== */
+  let heroHeadlineEl,headlineInput,headlineEditBtn;
+  let headlineEditing=false,headlineSaving=false;
+  function renderHeadline(){
+    if(!heroHeadlineEl)return;
+    heroHeadlineEl.textContent=(state.heroHeadline||'').trim()||DEFAULT_HEADLINE;
+  }
+  function endHeadlineEdit(){
+    headlineEditing=false;
+    if(headlineInput)headlineInput.hidden=true;
+    if(heroHeadlineEl)heroHeadlineEl.hidden=false;
+    if(headlineEditBtn)headlineEditBtn.hidden=false;
+  }
+  function beginHeadlineEdit(){
+    if(headlineEditing||headlineSaving||!headlineInput)return;
+    headlineEditing=true;
+    heroHeadlineEl.hidden=true;
+    headlineEditBtn.hidden=true;
+    headlineInput.hidden=false;
+    headlineInput.value=state.heroHeadline||'';
+    headlineInput.focus();
+    const end=headlineInput.value.length;
+    try{headlineInput.setSelectionRange(end,end);}catch(e){/* 部分输入法忽略 */}
+  }
+  function cancelHeadlineEdit(){
+    if(!headlineEditing)return;
+    endHeadlineEdit();
+    renderHeadline();
+    heroHeadlineEl.focus();
+  }
+  async function saveHeadline(refocusOnDone=true){
+    if(!headlineEditing||headlineSaving)return;
+    const value=(headlineInput.value||'').replace(/[\r\n\t]/g,'').trim().slice(0,MAX_HEADLINE);
+    const previous=state.heroHeadline||'';
+    if(value===previous){endHeadlineEdit();renderHeadline();if(refocusOnDone)heroHeadlineEl.focus();return;}
+    headlineSaving=true;
+    try{
+      const data=await context.api.request('/preferences',{method:'PUT',body:{heroHeadline:value}});
+      if(!active())return;
+      state.heroHeadline=(data&&typeof data.heroHeadline==='string')?data.heroHeadline:value;
+      endHeadlineEdit();
+      renderHeadline();
+      toast(value?'大字已更新':'已恢复默认大字');
+    }catch(e){
+      /* 失败回退到保存前的值，避免界面与落盘不一致。 */
+      endHeadlineEdit();
+      renderHeadline();
+      toast(e.message||'大字保存失败',true);
+    }finally{
+      headlineSaving=false;
+      /* 只有 Enter 保存才把焦点还给标题；失焦保存时用户可能已点进其他输入框，不能抢焦点。 */
+      if(refocusOnDone)heroHeadlineEl.focus();
+    }
+  }
 
   /* ===== 待办（真实数据） ===== */
   let taskList,todoBadge,progressBar,progressText,heroSummary,undatedNote;
@@ -195,7 +253,9 @@ export function mount(container,context){
         try{localStorage.setItem(CITY_CACHE_KEY,city);}catch(e){}
       }
       state.quickEntries=Array.isArray(data&&data.quickEntries)?data.quickEntries.slice():[];
-    }catch(e){if(!active())return;/* 偏好读取失败时沿用本地缓存/默认城市 */}
+      state.heroHeadline=(data&&typeof data.heroHeadline==='string')?data.heroHeadline:'';
+      if(!headlineEditing)renderHeadline();
+    }catch(e){if(!active())return;/* 偏好读取失败时沿用本地缓存/默认城市与默认大字 */}
     draw(lastModules);
     loadWeather(state.city);
   }
@@ -542,7 +602,10 @@ export function mount(container,context){
     el('div',{class:'home-hero-top flex items-start justify-between gap-4'},
       el('div',{class:'min-w-0'},
         el('p',{class:'home-day-label'},'我的一天'),
-        el('h1',{'aria-label':'我的一天',class:'mt-2 text-[26px] font-semibold leading-none tracking-[-0.02em] text-[#1F332A]'},'把今天，安排清楚。'),
+        el('div',{class:'home-headline-row'},
+          heroHeadlineEl=el('h1',{'aria-label':'我的一天',title:'点击编辑今天的大字',tabIndex:0,class:'home-hero-headline mt-2 text-[26px] font-semibold leading-none tracking-[-0.02em] text-[#1F332A]'},DEFAULT_HEADLINE),
+          headlineEditBtn=el('button',{type:'button','aria-label':'编辑首页大字',title:'编辑首页大字',class:'home-headline-edit'},icon('pen-square',14)),
+          headlineInput=el('input',{type:'text',hidden:true,autocomplete:'off',maxLength:MAX_HEADLINE,placeholder:DEFAULT_HEADLINE,'aria-label':'首页大字，回车保存，Esc 取消',class:'home-hero-headline-input'})),
         heroSummary=el('p',{class:'home-hero-summary mt-2 text-[12.5px] leading-5 text-[#7B857F]'},''))),
     (()=>{
       const quick=el('div',{class:'home-quick mt-4 flex h-[44px] items-center gap-2 rounded-xl border border-[#DDD9CC] bg-[#FBFAF6] px-3 transition-colors focus-within:border-[#8FAA9A] focus-within:bg-white'});
@@ -657,7 +720,20 @@ export function mount(container,context){
     entriesFooter=el('div',{hidden:true,class:'mt-2 flex-wrap items-center gap-2'}),
   ]);
 
-  renderTasks();renderSchedule();renderNotes();
+  heroHeadlineEl.addEventListener('click',beginHeadlineEdit);
+  heroHeadlineEl.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){event.preventDefault();beginHeadlineEdit();}
+  });
+  headlineEditBtn.addEventListener('click',beginHeadlineEdit);
+  /* 失焦保存（不抢回焦点）；Esc 取消；中文输入法 composition 期间不触发保存。 */
+  headlineInput.addEventListener('blur',()=>{if(headlineEditing)saveHeadline(false);});
+  headlineInput.addEventListener('keydown',event=>{
+    if(event.isComposing||event.keyCode===229)return;
+    if(event.key==='Enter'){event.preventDefault();event.stopPropagation();saveHeadline(true);}
+    else if(event.key==='Escape'){event.preventDefault();event.stopPropagation();cancelHeadlineEdit();}
+  });
+
+  renderTasks();renderSchedule();renderNotes();renderHeadline();
   loadTasks();loadPreferences();loadNews(false);loadNotes();loadProjects();
   draw(context.modules);
   const stopPoll=poll(async()=>{draw((await context.api.bootstrap(context.signal)).modules);await loadTasks();},context.signal);
