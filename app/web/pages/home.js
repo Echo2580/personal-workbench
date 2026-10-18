@@ -148,16 +148,31 @@ export function mount(container,context){
   let weatherSeq=0;
   const cityModal=mkOverlay('cityModal',[
     el('div',{class:'flex items-start justify-between gap-4'},
-      el('div',{},el('h2',{class:'text-[18px] font-semibold text-[#23342B]'},'切换城市'),el('p',{class:'mt-1 text-[11px] text-[#8D958F]'},'选择一个城市，查看实时天气。')),
+      el('div',{},el('h2',{class:'text-[18px] font-semibold text-[#23342B]'},'切换城市'),el('p',{class:'mt-1 text-[11px] text-[#8D958F]'},'输入任意城市名，或点下面的常用城市。')),
       el('button',{type:'button','aria-label':'关闭',class:'grid h-8 w-8 place-items-center rounded-lg text-[#8B948E] hover:bg-[#F2F2EC] hover:text-[#244C40]',onClick:()=>closeOv(cityModal)},icon('close-circle',19))),
-    el('div',{class:'mt-4 grid grid-cols-2 gap-2.5',id:'cityOptions'}),
-    el('p',{class:'mt-4 text-center text-[9.5px] text-[#A0A6A1]'},'天气数据来自 Open-Meteo，仅供参考')]);
+    (()=>{
+      const row=el('div',{class:'mt-4 flex items-center gap-2'});
+      const input=el('input',{id:'cityInput',type:'text',autocomplete:'off',placeholder:'输入城市名，如 成都、武汉',class:'min-w-0 flex-1 rounded-xl border border-[#E1DED2] bg-white px-3 py-2.5 text-[12px] text-[#2C3A32] outline-none transition-colors focus:border-[#8FAA9A]'});
+      const go=el('button',{type:'button',class:'shrink-0 rounded-xl bg-[#244C40] px-4 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[#1B3D31]'},'查看');
+      function submit(){
+        const name=input.value.trim();
+        if(!name){input.focus();return;}
+        selectCity(name);
+      }
+      go.addEventListener('click',submit);
+      input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();submit();}});
+      row.append(input,go);
+      return row;
+    })(),
+    el('p',{class:'mt-3 text-[9.5px] text-[#A0A6A1]'},'常用城市'),
+    el('div',{class:'mt-1.5 grid grid-cols-4 gap-2',id:'cityOptions'}),
+    el('p',{class:'mt-3 text-center text-[9.5px] text-[#A0A6A1]'},'天气数据来自 Open-Meteo，实时更新，仅供参考')]);
   function renderCityOptions(){
     const box=cityModal.querySelector('#cityOptions');
     box.replaceChildren(...CITY_LIST.map(name=>{
       const active=state.city===name;
-      const b=el('button',{type:'button',class:'flex items-center justify-center rounded-xl border px-3.5 py-3 text-left transition-colors '+(active?'border-[#244C40] bg-[#EDF3EA]':'border-[#E4E1D6] bg-[#FBFAF6] hover:border-[#B7C9BC] hover:bg-[#F7F9F4]')},
-        el('span',{class:'flex items-center gap-2'},el('span',{class:'grid h-7 w-7 place-items-center rounded-lg bg-white/70 text-[#6C8B79]'},icon('cloud-sun',17)),el('span',{class:'text-[12px] font-medium text-[#34453B]'},name)));
+      const b=el('button',{type:'button',class:'flex items-center justify-center rounded-xl border px-2 py-2.5 transition-colors '+(active?'border-[#244C40] bg-[#EDF3EA]':'border-[#E4E1D6] bg-[#FBFAF6] hover:border-[#B7C9BC] hover:bg-[#F7F9F4]')},
+        el('span',{class:'flex items-center gap-1.5'},el('span',{class:'text-[#6C8B79]'},icon('cloud-sun',15)),el('span',{class:'text-[11.5px] font-medium text-[#34453B]'},name)));
       b.addEventListener('click',()=>selectCity(name));
       return b;
     }));
@@ -165,6 +180,7 @@ export function mount(container,context){
   async function loadWeather(city){
     const seq=++weatherSeq;
     weatherErrorEl.hidden=true;
+    weatherErrorEl.textContent='';
     weatherConditionEl.textContent='读取中…';
     try{
       const data=await context.api.request('/weather?city='+encodeURIComponent(city));
@@ -181,16 +197,23 @@ export function mount(container,context){
           el('span',{class:'text-[12px] font-semibold'},item.temperature+'°')))));
     }catch(e){
       if(seq!==weatherSeq)return;
-      weatherConditionEl.textContent='天气读取失败';
-      weatherErrorEl.textContent=e.message||'天气服务暂时不可用';
+      weatherTempEl.textContent='—°';
+      weatherConditionEl.textContent='读取失败';
+      weatherRangeEl.textContent='—°/ —°';
+      weatherHumidityEl.textContent='湿度 —';
+      weatherForecastBox.replaceChildren();
+      weatherErrorEl.textContent=(e.message||'天气服务暂时不可用')+'（Open-Meteo 连接失败）';
       weatherErrorEl.hidden=false;
     }
   }
   function selectCity(name){
-    if(!CITY_LIST.includes(name))return;
+    const city=(name||'').trim();
+    if(!city)return;
     closeOv(cityModal);
+    state.city=city;
+    weatherCityEl.textContent=city;
     renderCityOptions();
-    loadWeather(name);
+    loadWeather(city);
   }
 
   /* ===== 每日段子（AI 生成，可刷新） ===== */

@@ -250,3 +250,17 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
 - 首页搜索改为异步真实搜索：220ms 防抖、过期响应丢弃、搜索中/无结果/失败三态，点击结果直达 /projects 或 /tasks。
 - 按用户要求删除「快捷导航」占位模块（module_registry 不再注册 navigation，侧栏不再出现「快捷导航 规划中」）。
 - 测试：新增 `tests/unit/test_home_search.py`（5 例：令牌、空查询、超长、待办+长期任务、项目）；模块注册/边界/外壳测试同步更新。
+
+
+## 2026-10-18：天气城市任意选择、生产部署与测试隔离
+
+- **天气城市**：城市弹窗支持输入任意城市（后端走 Open-Meteo 地理编码），保留 4 个常用城市快捷按钮；
+  切换时先乐观更新城市名，失败显示「读取失败 + 原因」，不再卡在「读取中」。
+- **段子模型密钥兜底**：`joke_model` 与待办模块一致，进程环境没有 `DEEPSEEK_API_KEY` 时从 Windows
+  用户环境读取，保证经快捷方式/计划任务启动的生产实例也能生成段子。
+- **生产部署**：确认生产 17843 跑的是 `wb-stable`（主仓库的 linked worktree，detached 在旧提交）。
+  升级流程：备份 `%LOCALAPPDATA%\PersonalWorkbench` → `git reset --hard origin/main` →
+  用 uv 给 `wb-stable/.venv` 安装 requirements.lock 新增依赖（httpx 链、python-multipart）→
+  重启 launcher → 冒烟（模块、天气真实、项目 6 个保留、待办库为空）。
+- **测试隔离**：浏览器回归 fixture 注入 Mock 段子模型并桩掉天气请求，避免测试访问外网/调用真实模型；
+  Windows 实例测试放宽等待时间（断言不变）。

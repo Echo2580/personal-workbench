@@ -52,11 +52,12 @@ def test_double_launch_port_conflict_and_shutdown(tmp_path):
         info = wait_instance(tmp_path)
         assert info["port"] != port
         duplicate = launch(tmp_path, f"{port}:{port + 2}")
-        assert duplicate.wait(timeout=12) == 0
+        # 全量测试并行时进程启动会变慢，给足等待时间（断言不变）。
+        assert duplicate.wait(timeout=30) == 0
         assert find_existing_instance(tmp_path)["instance_id"] == info["instance_id"]
         assert proc.poll() is None
         call(info, "/system/shutdown", {"confirmed_stop_running": True})
-        assert proc.wait(timeout=10) == 0
+        assert proc.wait(timeout=20) == 0
     finally:
         occupied.close()
         if proc.poll() is None:
@@ -75,7 +76,7 @@ def test_all_ports_occupied_returns_failure_and_no_false_instance(tmp_path):
     )
     proc = launch(tmp_path, f"{port}:{port}")
     try:
-        assert proc.wait(timeout=12) != 0
+        assert proc.wait(timeout=30) != 0
     finally:
         occupied.close()
         if proc.poll() is None:

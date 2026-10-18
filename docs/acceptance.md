@@ -292,3 +292,14 @@
 | 搜索 UI | Ctrl+K 输入防抖 220ms，结果显示真实条目，点击跳转 /tasks（或 /projects）；空结果提示「没有找到「…」」 |
 | 快捷导航 | 已删除：bootstrap 模块列表与侧栏均不再出现「快捷导航」 |
 | 测试 | 新增 5 个搜索测试；浏览器回归 21 passed；全量回归通过 |
+
+
+## 2026-10-18 天气城市任意选择 + 生产切换
+
+| 检查 | 实际结果 |
+|---|---|
+| 任意城市 | 成都 20° 多云 16/20 湿度 67%；武汉 20°；乌鲁木齐 10° 晴；界面输入城市后正确切换并显示逐时 |
+| 生产 17843 | 已从旧代码切到 `origin/main`（273c876）：模块 projects/tasks/home、天气接口真实返回、项目 6 个保留、待办库初始为空 |
+| 数据备份 | 升级前备份 `%LOCALAPPDATA%\\PersonalWorkbench-backup-20261018-1619` |
+| 依赖 | `wb-stable/.venv` 用 uv 安装 requirements.lock 新增包（certifi/httpcore/httpx/python-multipart） |
+| 测试隔离 | 浏览器回归不再访问外网/真实模型；全量 812 passed / 3 skipped |

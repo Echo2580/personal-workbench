@@ -2,16 +2,40 @@
 
 from __future__ import annotations
 
-import json
 import os
-from dataclasses import dataclass
-from typing import Any
+import sys
+from dataclasses import dataclass, field
 
 import httpx
 
 from app.modules.home.services import JOKE_PROMPT, JokeModelError
 
 CREDENTIAL_ENV_VAR = "DEEPSEEK_API_KEY"
+
+
+def _read_windows_user_variable(name: str) -> str | None:
+    """从 Windows 用户环境读取（launcher 由快捷方式启动时不一定继承当前进程环境）。"""
+    if sys.platform != "win32":
+        return None
+    try:
+        import winreg
+    except ImportError:  # pragma: no cover - 非 Windows
+        return None
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+            raw, kind = winreg.QueryValueEx(key, name)
+    except OSError:
+        return None
+    if not isinstance(raw, str):
+        return None
+    if kind == getattr(winreg, "REG_EXPAND_SZ", None):
+        raw = os.path.expandvars(raw)
+    value = raw.strip()
+    return value or None
+
+
+def resolve_api_key() -> str | None:
+    return os.environ.get(CREDENTIAL_ENV_VAR, "").strip() or _read_windows_user_variable(CREDENTIAL_ENV_VAR)
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-flash"
 DEFAULT_TIMEOUT_SECONDS = 30.0
@@ -26,7 +50,7 @@ class DeepSeekJokeModel:
     timeout: float = DEFAULT_TIMEOUT_SECONDS
 
     def generate(self, now_iso: str) -> str:
-        key = os.environ.get(CREDENTIAL_ENV_VAR, "").strip()
+        key = resolve_api_key()
         if not key:
             raise JokeModelError("未配置模型密钥，无法生成段子。")
         try:
@@ -65,11 +89,7 @@ class MockJokeModel:
 
     joke: str = "今天在地铁上看见一个人对着手机傻笑，我凑近一看，原来他在看自己的待办清单。"
     error: Exception | None = None
-    calls: list[str] = None  # type: ignore[assignment]
-
-    def __post_init__(self) -> None:
-        if self.calls is None:
-            self.calls = []
+    calls: list[str] = field(default_factory=list)
 
     def generate(self, now_iso: str) -> str:
         self.calls.append(now_iso)
