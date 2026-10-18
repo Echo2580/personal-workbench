@@ -3,8 +3,8 @@
    :root 变量挂到 .tasks-scope 上，避免污染外壳的 .page/.panel/.btn/.field 等。
    唯一改动：@keyframes spin -> tasks-spin（避免覆盖 tailwind 全局 spin）。 */
 /* 源 html,body 基底的作用域替代（#content 已提供高度与滚动） */
-.tasks-scope{color-scheme:light;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);font-size:14px;line-height:1.55}
-.tasks-scope{color-scheme:light;--bg:#F5F4EF;--panel:#FFFFFF;--border:#E3E0D5;--text:#1F332A;--muted:#6B7A70;--primary:#244C40;--danger:#B4543B;--ok:#3F6B52;--warn:#8A6B2F}
+.tasks-scope{color-scheme:dark;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);font-size:14px;line-height:1.55}
+.tasks-scope{color-scheme:dark;--bg:#151a1c;--panel:#1e2528;--border:#344045;--text:#edf1ef;--muted:#a8b3b5;--primary:#c8e88b;--danger:#f0a799;--ok:#bedf8a;--warn:#e9cd8e}
 .tasks-scope *{box-sizing:border-box}
 .tasks-scope button,.tasks-scope input,.tasks-scope select,.tasks-scope textarea{font:inherit}
 .tasks-scope button{cursor:pointer}
@@ -13,68 +13,68 @@
 .tasks-scope button:disabled{cursor:wait;opacity:.55}
 .tasks-scope [hidden]{display:none!important}
 .tasks-scope h1,.tasks-scope h2,.tasks-scope p{margin:0}
-.tasks-scope h1{font-size:26px;line-height:1.4;font-weight:600;letter-spacing:-.6px;color:#1F332A}
-.tasks-scope h2{font-size:14px;font-weight:600;color:#1F332A}
+.tasks-scope h1{font-size:26px;line-height:1.4;font-weight:600;letter-spacing:-.6px;color:var(--text)}
+.tasks-scope h2{font-size:14px;font-weight:600;color:var(--text)}
 .tasks-scope .icon-defs{position:absolute;width:0;height:0;overflow:hidden}
 .tasks-scope .icon{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-.tasks-scope ::selection{background:#dbe7ff;color:#172b50}
-.tasks-scope :focus-visible{outline:3px solid #93b8ff;outline-offset:3px}
+.tasks-scope ::selection{background:var(--surface-raised);color:var(--info)}
+.tasks-scope :focus-visible{outline:3px solid var(--line);outline-offset:3px}
 .tasks-scope input,.tasks-scope textarea{caret-color:var(--primary)}
 .tasks-scope ::-webkit-scrollbar{width:7px;height:7px}
-.tasks-scope ::-webkit-scrollbar-thumb{background:#ced3dc;border-radius:8px}
-.tasks-scope .skip-link{position:fixed;top:-80px;left:16px;z-index:100;background:#fff;padding:10px}
+.tasks-scope ::-webkit-scrollbar-thumb{background:var(--accent-soft);border-radius:8px}
+.tasks-scope .skip-link{position:fixed;top:-80px;left:16px;z-index:100;background:var(--surface);padding:10px}
 .tasks-scope .skip-link:focus{top:10px}
 .tasks-scope .shell{min-height:100vh;display:flex}
-.tasks-scope .sidebar{width:224px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);height:100dvh;position:sticky;top:0;display:flex;flex-direction:column}
-.tasks-scope .brand{height:72px;padding:0 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eef0f3}
-.tasks-scope .brand-icon{height:36px;width:36px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center}
-.tasks-scope .brand strong{display:block;font-size:15px;font-weight:600;color:#1F332A}
+.tasks-scope .sidebar{width:224px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);height:100dvh;position:sticky;top:0;display:flex;flex-direction:column}
+.tasks-scope .brand{height:72px;padding:0 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.tasks-scope .brand-icon{height:36px;width:36px;border-radius:10px;background:var(--primary);color:var(--text);display:grid;place-items:center}
+.tasks-scope .brand strong{display:block;font-size:15px;font-weight:600;color:var(--text)}
 .tasks-scope .brand small{display:block;font-size:11px;color:var(--muted)}
 .tasks-scope .side-nav{padding:16px 12px}
 .tasks-scope .nav-label{font-size:11px;color:var(--muted);padding:3px 12px 8px}
-.tasks-scope .nav-link{height:42px;padding:0 12px;margin-bottom:4px;border-radius:8px;display:flex;align-items:center;gap:10px;color:#4b5563}
-.tasks-scope .nav-link:hover{background:#f5f6f8}
-.tasks-scope .nav-link.is-active{background:#eff5ff;color:var(--primary);font-weight:500}
-.tasks-scope .nav-count{margin-left:auto;padding:0 8px;border-radius:20px;background:#eef0f3;color:var(--muted);font-size:12px}
-.tasks-scope .nav-link.is-active .nav-count{background:#dbe7ff;color:var(--primary)}
+.tasks-scope .nav-link{height:42px;padding:0 12px;margin-bottom:4px;border-radius:8px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.tasks-scope .nav-link:hover{background:var(--surface-raised)}
+.tasks-scope .nav-link.is-active{background:var(--surface-raised);color:var(--primary);font-weight:500}
+.tasks-scope .nav-count{margin-left:auto;padding:0 8px;border-radius:20px;background:var(--surface-raised);color:var(--muted);font-size:12px}
+.tasks-scope .nav-link.is-active .nav-count{background:var(--surface-raised);color:var(--primary)}
 .tasks-scope .sidebar-bottom{margin-top:auto;padding:12px}
-.tasks-scope .reminder-info{background:#f7f8fa;border:1px solid #eceef1;border-radius:12px;padding:12px}
+.tasks-scope .reminder-info{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
 .tasks-scope .reminder-info strong{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
-.tasks-scope .reminder-info .icon{width:16px;color:#b77916}
+.tasks-scope .reminder-info .icon{width:16px;color:var(--amber)}
 .tasks-scope .reminder-info p{font-size:11.5px;line-height:19px;color:var(--muted);margin-top:6px}
 .tasks-scope .local-caption{margin:12px 0 3px;text-align:center;color:var(--muted);font-size:11px}
 .tasks-scope .workspace{flex:1;min-width:0}
-.tasks-scope .topbar{height:72px;background:#fff;border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.tasks-scope .topbar{height:72px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .tasks-scope .steps{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;white-space:nowrap}
-.tasks-scope .steps .icon{width:13px;height:13px;color:#a0a8b5}
+.tasks-scope .steps .icon{width:13px;height:13px;color:var(--muted)}
 .tasks-scope .steps .is-active{color:var(--primary);font-weight:500}
 .tasks-scope .topbar-right{display:flex;align-items:center;gap:14px}
-.tasks-scope .local-status{display:flex;align-items:center;gap:6px;border:1px solid #eceef1;background:#f5f6f8;border-radius:8px;padding:6px 10px;font-size:12px;color:var(--muted)}
+.tasks-scope .local-status{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-raised);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--muted)}
 .tasks-scope .local-status .icon{width:15px;height:15px}
-.tasks-scope .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#e8effd;color:var(--primary);font-size:13px}
+.tasks-scope .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--surface-raised);color:var(--primary);font-size:13px}
 .tasks-scope .page{padding:28px 32px 40px;max-width:1320px;margin:auto}
 .tasks-scope .page-heading{margin-bottom:24px}
 .tasks-scope .page-heading p{margin-top:7px;color:var(--muted);font-size:14px}
-.tasks-scope .panel{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.tasks-scope .btn{min-height:39px;padding:8px 15px;border:1px solid #d6dae1;border-radius:10px;background:#fff;color:#4b5563;display:inline-flex;justify-content:center;align-items:center;gap:7px;font-size:13.5px;line-height:1.4;white-space:nowrap}
-.tasks-scope .btn:hover{background:#f7f8fa}
-.tasks-scope .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-.tasks-scope .btn-primary:hover{background:#1B3D31}
-.tasks-scope .btn-danger{background:#fff7f7;border-color:#f1cdcd;color:#c32626}
-.tasks-scope .btn-danger:hover{background:#fef0f0}
+.tasks-scope .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.tasks-scope .btn{min-height:39px;padding:8px 15px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);display:inline-flex;justify-content:center;align-items:center;gap:7px;font-size:13.5px;line-height:1.4;white-space:nowrap}
+.tasks-scope .btn:hover{background:var(--surface)}
+.tasks-scope .btn-primary{background:var(--primary);color:var(--text);border-color:var(--primary)}
+.tasks-scope .btn-primary:hover{background:var(--accent-soft)}
+.tasks-scope .btn-danger{background:var(--surface);border-color:var(--line);color:var(--red)}
+.tasks-scope .btn-danger:hover{background:var(--surface-raised)}
 .tasks-scope .btn-small{min-height:32px;padding:5px 11px;font-size:12.5px}
 .tasks-scope .hint{font-size:12px;color:var(--muted);line-height:1.7}
-.tasks-scope input:not([type=checkbox]):not([type=file]),.tasks-scope select,.tasks-scope textarea{width:100%;min-width:0;border:1px solid #d6dae1;border-radius:8px;background:#fff;color:var(--text);padding:9px 11px;min-height:39px;outline:none;transition:border-color .15s,box-shadow .15s}
+.tasks-scope input:not([type=checkbox]):not([type=file]),.tasks-scope select,.tasks-scope textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);padding:9px 11px;min-height:39px;outline:none;transition:border-color .15s,box-shadow .15s}
 .tasks-scope input:focus,.tasks-scope select:focus,.tasks-scope textarea:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px #244C4016}
-.tasks-scope input::placeholder,.tasks-scope textarea::placeholder{color:#75808f}
+.tasks-scope input::placeholder,.tasks-scope textarea::placeholder{color:var(--muted)}
 .tasks-scope textarea{resize:vertical;line-height:1.7}
-.tasks-scope label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:#4b5563}
+.tasks-scope label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--text)}
 .tasks-scope label.inline{flex-direction:row;align-items:center;font-weight:400;gap:7px}
 .tasks-scope input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);margin:0}
 .tasks-scope .field-label{margin-bottom:8px}
 .tasks-scope .field-label span{display:inline;font-weight:400;color:var(--muted);margin-left:5px}
 .tasks-scope fieldset{margin:0;min-width:0;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
-.tasks-scope legend{font-size:12.5px;font-weight:500;color:#4b5563;padding:0 5px}
+.tasks-scope legend{font-size:12.5px;font-weight:500;color:var(--text);padding:0 5px}
 .tasks-scope details{font-size:12px;color:var(--muted)}
 .tasks-scope summary{cursor:pointer;font-size:12px;padding:3px 0}
 .tasks-scope details[open]>label{margin-top:10px}
@@ -82,32 +82,32 @@
 .tasks-scope .form-actions{display:flex;gap:8px;flex-wrap:wrap}
 .tasks-scope .import-page{max-width:1144px;padding-top:30px}
 .tasks-scope .import-layout{display:grid;grid-template-columns:minmax(0,7fr) minmax(280px,5fr);gap:24px;align-items:start}
-.tasks-scope .import-tabs{display:flex;border-bottom:1px solid #eceef1;padding:8px 8px 0;gap:4px}
+.tasks-scope .import-tabs{display:flex;border-bottom:1px solid var(--line);padding:8px 8px 0;gap:4px}
 .tasks-scope .import-tab{display:flex;gap:8px;align-items:center;padding:12px 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:14px}
 .tasks-scope .import-tab.is-active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500}
 .tasks-scope .import-tab:hover{color:var(--primary)}
 .tasks-scope .import-body{padding:24px}
-.tasks-scope .dropzone{position:relative;border:2px dashed #d6dae1;background:#fafbfc;min-height:238px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;cursor:pointer;padding:28px 18px}
-.tasks-scope .dropzone:hover,.tasks-scope .dropzone.is-dragging{border-color:var(--primary);background:#f6f9ff}
-.tasks-scope .dropzone:focus-within{outline:3px solid #93b8ff;outline-offset:3px}
-.tasks-scope .dropzone strong{font-size:14px;font-weight:500;color:#374151}
+.tasks-scope .dropzone{position:relative;border:2px dashed var(--line);background:var(--surface);min-height:238px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;cursor:pointer;padding:28px 18px}
+.tasks-scope .dropzone:hover,.tasks-scope .dropzone.is-dragging{border-color:var(--primary);background:var(--surface)}
+.tasks-scope .dropzone:focus-within{outline:3px solid var(--line);outline-offset:3px}
+.tasks-scope .dropzone strong{font-size:14px;font-weight:500;color:var(--text)}
 .tasks-scope .dropzone>span:not(.upload-icon){font-size:12px;color:var(--muted)}
 .tasks-scope .dropzone .drop-tip{margin-top:5px}
-.tasks-scope .upload-icon{width:48px;height:48px;display:grid;place-items:center;background:#eff5ff;color:var(--primary);border-radius:50%;margin-bottom:5px}
+.tasks-scope .upload-icon{width:48px;height:48px;display:grid;place-items:center;background:var(--surface-raised);color:var(--primary);border-radius:50%;margin-bottom:5px}
 .tasks-scope .upload-icon .icon{width:24px;height:24px}
 .tasks-scope .file-input{position:absolute;width:100%;height:100%;inset:0;opacity:0;cursor:pointer}
 .tasks-scope .file-actions{display:flex;gap:8px;margin-top:14px}
-.tasks-scope .import-preview{display:flex;align-items:center;gap:16px;padding:12px;background:#fafbfc;border:1px solid var(--border);border-radius:10px}
-.tasks-scope .preview-img{width:168px;height:126px;object-fit:contain;cursor:zoom-in;background:#f1f3f6;border-radius:8px;border:1px solid var(--border)}
-.tasks-scope .preview-meta{font-size:12.5px;color:#4b5563;overflow-wrap:anywhere}
+.tasks-scope .import-preview{display:flex;align-items:center;gap:16px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.tasks-scope .preview-img{width:168px;height:126px;object-fit:contain;cursor:zoom-in;background:var(--surface-raised);border-radius:8px;border:1px solid var(--border)}
+.tasks-scope .preview-meta{font-size:12.5px;color:var(--text);overflow-wrap:anywhere}
 .tasks-scope .input-caption{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:var(--muted);margin-top:7px}
-.tasks-scope .import-metadata{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;padding-top:20px;border-top:1px solid #eceef1}
+.tasks-scope .import-metadata{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
 .tasks-scope .import-metadata .hint{margin-top:6px;font-size:11.5px}
 .tasks-scope .privacy-note{display:flex;gap:8px;align-items:start;color:var(--muted);padding-top:3px}
 .tasks-scope .privacy-note .icon{margin-top:2px;color:var(--primary);width:16px}
-.tasks-scope .privacy-note strong{font-size:12px;font-weight:500;color:#4b5563}
+.tasks-scope .privacy-note strong{font-size:12px;font-weight:500;color:var(--text)}
 .tasks-scope .privacy-note p{font-size:11.5px;line-height:1.7;margin-top:6px}
-.tasks-scope .import-actions{margin-top:24px;padding-top:20px;border-top:1px solid #eceef1;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.tasks-scope .import-actions{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}
 .tasks-scope .import-actions .btn{min-height:44px;padding-inline:24px}
 .tasks-scope .import-guide{display:flex;flex-direction:column;gap:20px}
 .tasks-scope .guide-panel{padding:20px}
@@ -116,75 +116,75 @@
 .tasks-scope .guide-panel>p{margin-top:12px;color:var(--muted);font-size:12.5px;line-height:1.85}
 .tasks-scope .workflow{list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:18px}
 .tasks-scope .workflow li{display:flex;gap:12px}
-.tasks-scope .workflow li>span{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:#eff5ff;color:var(--primary);flex-shrink:0}
-.tasks-scope .workflow li:nth-child(2)>span{background:#fff7ed;color:#c2410c}
-.tasks-scope .workflow li:nth-child(3)>span{background:#ecfdf5;color:var(--ok)}
+.tasks-scope .workflow li>span{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--surface-raised);color:var(--primary);flex-shrink:0}
+.tasks-scope .workflow li:nth-child(2)>span{background:var(--surface-raised);color:var(--red)}
+.tasks-scope .workflow li:nth-child(3)>span{background:var(--surface-raised);color:var(--ok)}
 .tasks-scope .workflow strong{font-size:13.5px;font-weight:500}
 .tasks-scope .workflow p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.7}
-.tasks-scope .guide-callout{margin-top:15px;background:#fffaf1;border:1px solid #fde3c2;border-radius:8px;color:#98601b;padding:10px 12px;font-size:12px}
+.tasks-scope .guide-callout{margin-top:15px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--amber);padding:10px 12px;font-size:12px}
 .tasks-scope .guide-footnote{padding:0 7px;display:flex;gap:8px;color:var(--muted);font-size:12px;line-height:1.8}
 .tasks-scope .guide-footnote .icon{width:16px;margin-top:3px}
-.tasks-scope .notice{padding:12px 14px;border:1px solid #d5e3ff;background:#f6f9ff;color:#1B3D31;border-radius:10px;font-size:12.5px;margin-top:16px}
+.tasks-scope .notice{padding:12px 14px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;font-size:12.5px;margin-top:16px}
 .tasks-scope #import-mode{display:none}
 .tasks-scope #extract-loading{display:flex;align-items:center;gap:12px}
 .tasks-scope #extract-loading p{font-size:12px;margin-top:4px}
-.tasks-scope .spinner{width:18px;height:18px;border:2px solid #bdd1fc;border-top-color:var(--primary);border-radius:50%;animation:tasks-spin 1s linear infinite;flex-shrink:0}
+.tasks-scope .spinner{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:tasks-spin 1s linear infinite;flex-shrink:0}
 @keyframes tasks-spin{to{transform:rotate(360deg)}}
 .tasks-scope .review-heading,.tasks-scope .list-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}
 .tasks-scope .review-layout{display:grid;grid-template-columns:minmax(300px,5fr) minmax(0,7fr);gap:24px;align-items:start}
 .tasks-scope .review-source{position:sticky;top:24px}
-.tasks-scope .panel-heading{padding:15px 20px;border-bottom:1px solid #eceef1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tasks-scope .panel-heading{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .tasks-scope .panel-heading h2{display:flex;align-items:center;gap:8px}
 .tasks-scope .panel-heading .icon{color:var(--primary)}
-.tasks-scope .source-tag{font-size:11.5px;background:#eff5ff;color:var(--primary);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.tasks-scope .source-tag{font-size:11.5px;background:var(--surface-raised);color:var(--primary);padding:3px 8px;border-radius:6px;white-space:nowrap}
 .tasks-scope .review-original{padding:20px;max-height:65vh;overflow:auto}
-.tasks-scope .review-original pre,.tasks-scope .source-content pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.9;background:#f7f8fa;border:1px solid #eceef1;border-radius:10px;padding:16px;margin:0}
+.tasks-scope .review-original pre,.tasks-scope .source-content pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.9;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin:0}
 .tasks-scope .review-original img{width:100%;height:auto;max-height:55vh;object-fit:contain;border:1px solid var(--border);border-radius:9px;cursor:zoom-in}
-.tasks-scope .source-footer{padding:12px 20px;border-top:1px solid #eceef1}
+.tasks-scope .source-footer{padding:12px 20px;border-top:1px solid var(--line)}
 .tasks-scope .source-meta{font-size:11.5px;color:var(--muted);line-height:1.7}
 .tasks-scope .draft-list{display:flex;flex-direction:column;gap:16px}
-.tasks-scope .draft-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px}
-.tasks-scope .draft-head{display:flex;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid #eceef1;font-weight:600;font-size:14px}
+.tasks-scope .draft-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.tasks-scope .draft-head{display:flex;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px}
 .tasks-scope .draft-head .btn{margin-left:auto}
-.tasks-scope .field-title input{font-weight:500;color:#1F332A}
+.tasks-scope .field-title input{font-weight:500;color:var(--text)}
 .tasks-scope .time-editor .hint{font-size:11.5px}
 .tasks-scope .time-editor .inline{font-size:12px}
-.tasks-scope .time-editor.is-unresolved{background:#fffaf3;border-color:#f1d5a8}
-.tasks-scope .draft-card .reminder-editor{background:#fafbfc}
-.tasks-scope .issue-list{list-style:none;margin:0;padding:10px 12px;background:#fffaf1;border:1px solid #fde3c2;border-radius:8px;font-size:12px;color:#98601b}
+.tasks-scope .time-editor.is-unresolved{background:var(--surface);border-color:var(--line)}
+.tasks-scope .draft-card .reminder-editor{background:var(--surface)}
+.tasks-scope .issue-list{list-style:none;margin:0;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--amber)}
 .tasks-scope .issue-list li+li{margin-top:4px}
-.tasks-scope .review-actions{position:sticky;bottom:0;z-index:4;display:flex;align-items:center;gap:14px;margin-top:24px;padding:16px 20px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 18px #17203406}
+.tasks-scope .review-actions{position:sticky;bottom:0;z-index:4;display:flex;align-items:center;gap:14px;margin-top:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 18px #17203406}
 .tasks-scope .review-actions .btn-primary{margin-left:auto}
-.tasks-scope .badge{display:inline-flex;align-items:center;font-size:11.5px;line-height:1.5;padding:3px 8px;border-radius:6px;font-weight:400;background:#f1f3f6;color:var(--muted)}
-.tasks-scope .badge.reminder-scheduled{background:#eff5ff;color:var(--primary)}
-.tasks-scope .badge.reminder-blocked,.tasks-scope .badge.needs-review{background:#fff7ed;color:#8A6B2F}
-.tasks-scope .badge.reminder-acknowledged,.tasks-scope .badge.is-completed{background:#ecfdf5;color:var(--ok)}
-.tasks-scope .badge.reminder-expired,.tasks-scope .badge.is-overdue{background:#fef2f2;color:#b91c1c}
+.tasks-scope .badge{display:inline-flex;align-items:center;font-size:11.5px;line-height:1.5;padding:3px 8px;border-radius:6px;font-weight:400;background:var(--surface-raised);color:var(--muted)}
+.tasks-scope .badge.reminder-scheduled{background:var(--surface-raised);color:var(--primary)}
+.tasks-scope .badge.reminder-blocked,.tasks-scope .badge.needs-review{background:var(--surface-raised);color:var(--amber)}
+.tasks-scope .badge.reminder-acknowledged,.tasks-scope .badge.is-completed{background:var(--surface-raised);color:var(--ok)}
+.tasks-scope .badge.reminder-expired,.tasks-scope .badge.is-overdue{background:var(--surface-raised);color:var(--red)}
 .tasks-scope .list-page{max-width:none}
 .tasks-scope .list-heading h1{font-size:22px}
 .tasks-scope .list-toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-.tasks-scope .filters{display:flex;background:#fff;border:1px solid var(--border);border-radius:11px;padding:4px;gap:2px}
+.tasks-scope .filters{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:4px;gap:2px}
 .tasks-scope .filter-btn{border:0;padding:6px 15px;border-radius:8px;background:transparent;color:var(--muted);font-size:13px}
-.tasks-scope .filter-btn:hover{background:#f5f6f8}
-.tasks-scope .filter-btn.is-active{background:var(--primary);color:#fff}
+.tasks-scope .filter-btn:hover{background:var(--surface-raised)}
+.tasks-scope .filter-btn.is-active{background:var(--primary);color:var(--text)}
 .tasks-scope .search-box{position:relative;max-width:360px;flex:1;min-width:140px}
 .tasks-scope .search-box .icon{position:absolute;top:11px;left:11px;color:var(--muted);width:17px;height:17px}
 .tasks-scope .search-box input{padding-left:36px!important}
 .tasks-scope .list-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-left:auto}
 .tasks-scope .dot{width:7px;height:7px;border-radius:50%;margin-left:8px}
-.tasks-scope .dot-warn{background:#d68b16}
-.tasks-scope .dot-danger{background:#B4543B}
-.tasks-scope .dot-ok{background:#16a34a}
+.tasks-scope .dot-warn{background:var(--red-bg)}
+.tasks-scope .dot-danger{background:var(--red-bg)}
+.tasks-scope .dot-ok{background:var(--accent-soft)}
 .tasks-scope .task-list{display:flex;flex-direction:column;gap:12px}
-.tasks-scope .task-row{display:flex;gap:14px;align-items:flex-start;padding:20px;background:#fff;border:1px solid var(--border);border-radius:14px;transition:border-color .15s,background .15s}
-.tasks-scope .task-row:hover{border-color:#afc7f3;background:#fdfefe}
-.tasks-scope .task-check{width:19px;height:19px;margin-top:3px;border:1.5px solid #cbd1db;border-radius:6px;flex-shrink:0;display:grid;place-items:center;background:#fff;color:#16a34a}
+.tasks-scope .task-row{display:flex;gap:14px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;transition:border-color .15s,background .15s}
+.tasks-scope .task-row:hover{border-color:var(--line);background:var(--surface)}
+.tasks-scope .task-check{width:19px;height:19px;margin-top:3px;border:1.5px solid var(--line);border-radius:6px;flex-shrink:0;display:grid;place-items:center;background:var(--surface);color:var(--text)}
 .tasks-scope .task-check .icon{width:15px;height:15px}
 .tasks-scope .task-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
-.tasks-scope .task-title{font-size:15px;font-weight:500;color:#1F332A;overflow-wrap:anywhere}
+.tasks-scope .task-title{font-size:15px;font-weight:500;color:var(--text);overflow-wrap:anywhere}
 .tasks-scope .status-completed .task-title{text-decoration:line-through;color:var(--muted)}
 .tasks-scope .task-time{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.tasks-scope .task-requirements{font-size:12.5px;color:#6B7A70;line-height:1.7}
+.tasks-scope .task-requirements{font-size:12.5px;color:var(--muted);line-height:1.7}
 .tasks-scope .task-source{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .tasks-scope .task-row-end{display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0}
 .tasks-scope .task-detail-link{font-size:12px;color:var(--primary)}
@@ -192,35 +192,35 @@
 .tasks-scope .empty h2{font-size:17px;margin:15px 0 8px}
 .tasks-scope .empty p{line-height:1.9;max-width:380px;margin:0 auto 20px}
 .tasks-scope .empty .upload-icon{margin:0 auto;width:58px;height:58px}
-.tasks-scope .detail-drawer{position:fixed;z-index:20;right:0;top:0;bottom:0;width:min(480px,100%);background:#fff;border-left:1px solid var(--border);box-shadow:-12px 0 40px #1F332A12;display:flex;flex-direction:column}
+.tasks-scope .detail-drawer{position:fixed;z-index:20;right:0;top:0;bottom:0;width:min(480px,100%);background:var(--surface);border-left:1px solid var(--border);box-shadow:-12px 0 40px #1F332A12;display:flex;flex-direction:column}
 .tasks-scope .detail-header{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .tasks-scope .detail-header h1{font-size:18px}
 .tasks-scope .detail-header .source-meta{margin-top:6px}
 .tasks-scope .icon-button{border:0;background:transparent;border-radius:8px;padding:6px;color:var(--muted);display:grid;place-items:center}
-.tasks-scope .icon-button:hover{background:#f1f3f6}
+.tasks-scope .icon-button:hover{background:var(--surface-raised)}
 .tasks-scope .detail-body{overflow-y:auto;padding:20px 22px;flex:1}
 .tasks-scope #task-form{display:flex;flex-direction:column;gap:16px}
 .tasks-scope #task-form .time-grid{grid-template-columns:1fr}
-.tasks-scope #task-form .form-actions{position:sticky;bottom:-20px;background:#fff;padding:16px 0;margin-top:5px;border-top:1px solid var(--border);z-index:2}
-.tasks-scope .reminder-meta{font-size:12px;color:var(--muted);margin-bottom:16px;padding:9px 12px;background:#f7f8fa;border-radius:8px}
+.tasks-scope #task-form .form-actions{position:sticky;bottom:-20px;background:var(--surface);padding:16px 0;margin-top:5px;border-top:1px solid var(--border);z-index:2}
+.tasks-scope .reminder-meta{font-size:12px;color:var(--muted);margin-bottom:16px;padding:9px 12px;background:var(--surface);border-radius:8px}
 .tasks-scope .source-content:not(:empty){padding-top:20px;margin-top:10px;border-top:1px solid var(--border)}
 .tasks-scope .source-image{width:100%;height:auto;border:1px solid var(--border);border-radius:8px}
-.tasks-scope .confirm-box{margin-top:16px;padding:14px;background:#fef6f6;border:1px solid #f3d6d6;border-radius:10px;color:#b91c1c}
+.tasks-scope .confirm-box{margin-top:16px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--red)}
 .tasks-scope .confirm-box p{margin-bottom:12px;font-size:13px}
 .tasks-scope .confirm-box .btn+.btn{margin-left:8px}
-.tasks-scope .error-panel{position:sticky;top:8px;z-index:30;margin:16px 32px 0;padding:14px 16px;background:#fef6f6;border:1px solid #f3d6d6;border-radius:10px;color:#b91c1c;font-size:13px}
+.tasks-scope .error-panel{position:sticky;top:8px;z-index:30;margin:16px 32px 0;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--red);font-size:13px}
 .tasks-scope .error-panel ul{padding-left:20px;margin:6px 0}
-.tasks-scope .error-panel button{margin-top:8px;padding:5px 12px;border:1px solid #e9c6c6;border-radius:6px;background:#fff;color:#b91c1c}
-.tasks-scope .reminder-layer{position:fixed;z-index:40;bottom:24px;right:24px;width:min(420px,calc(100% - 32px));background:#fff;border:1px solid #d5e3ff;border-radius:16px;box-shadow:0 8px 36px #1F332A20;overflow:hidden}
-.tasks-scope .reminder-head{padding:16px 20px;background:#f4f8ff;border-bottom:1px solid #dce7fc;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:9px}
+.tasks-scope .error-panel button{margin-top:8px;padding:5px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--red)}
+.tasks-scope .reminder-layer{position:fixed;z-index:40;bottom:24px;right:24px;width:min(420px,calc(100% - 32px));background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 36px #1F332A20;overflow:hidden}
+.tasks-scope .reminder-head{padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--line);color:var(--primary);font-weight:600;display:flex;align-items:center;gap:9px}
 .tasks-scope .reminder-item{padding:16px 20px;border-bottom:1px solid var(--border)}
 .tasks-scope .reminder-item h3{font-size:15px;margin:0 0 7px}
 .tasks-scope .reminder-item p{font-size:13px;color:var(--muted);margin:6px 0 12px}
 .tasks-scope .reminder-item button{margin-right:8px}
 .tasks-scope .reminder-note{padding:11px 20px;color:var(--muted);font-size:11.5px}
-.tasks-scope .image-lightbox{position:fixed;inset:0;border:0;background:#1F332Aba;z-index:60;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:24px;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.tasks-scope .image-lightbox{position:fixed;inset:0;border:0;background:#080d10ba;z-index:60;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:24px;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
 .tasks-scope .image-lightbox img{max-width:100%;max-height:92vh;object-fit:contain;border-radius:8px}
-.tasks-scope .image-lightbox button{position:absolute;top:16px;right:18px;color:#fff;background:#1F332A;border:1px solid #697383;border-radius:8px;padding:7px 13px}
+.tasks-scope .image-lightbox button{position:absolute;top:16px;right:18px;color:var(--text);background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:7px 13px}
 @media(max-width:1100px){
 .tasks-scope .sidebar{width:200px}
 .tasks-scope .topbar{padding:0 24px}
@@ -357,7 +357,7 @@
 .tasks-scope .dialog-note{margin:0 0 16px;font-size:12px;color:var(--muted)}
 .tasks-scope .task-dialog .field{margin-bottom:14px}
 .tasks-scope .task-dialog .field-label{display:block;margin-bottom:6px;font-size:11.5px;color:var(--muted)}
-.tasks-scope .task-dialog input,.tasks-scope .task-dialog textarea,.tasks-scope .task-dialog select{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:13px;background:#FCFBF7;color:var(--text)}
+.tasks-scope .task-dialog input,.tasks-scope .task-dialog textarea,.tasks-scope .task-dialog select{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:13px;background:var(--surface);color:var(--text)}
 .tasks-scope .dialog-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tasks-scope .dialog-error{margin:0 0 12px;font-size:12px;color:var(--danger)}
 .tasks-scope .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
@@ -373,38 +373,38 @@
 .tasks-scope .list-column{min-width:0}
 .tasks-scope .calendar-panel{min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 16px 14px}
 .tasks-scope .calendar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.tasks-scope .calendar-title{font-size:16px;font-weight:600;line-height:1.4;color:#1F332A;margin:0;letter-spacing:-.2px}
+.tasks-scope .calendar-title{font-size:16px;font-weight:600;line-height:1.4;color:var(--text);margin:0;letter-spacing:-.2px}
 .tasks-scope .calendar-summary{margin:0 0 10px;font-size:11.5px;line-height:1.6;color:var(--muted)}
 .tasks-scope .calendar-nav{display:flex;align-items:center;gap:5px}
-.tasks-scope .calendar-nav-btn{width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:9px;background:#FCFBF7;color:#4b5563;display:grid;place-items:center}
-.tasks-scope .calendar-nav-btn:hover{background:#F1F5F1;border-color:#cfdcd3;color:var(--primary)}
+.tasks-scope .calendar-nav-btn{width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);display:grid;place-items:center}
+.tasks-scope .calendar-nav-btn:hover{background:var(--surface-raised);border-color:var(--line);color:var(--primary)}
 .tasks-scope .calendar-nav-btn .icon{width:15px;height:15px}
 .tasks-scope .calendar-nav-btn.is-prev .icon{transform:rotate(180deg)}
 .tasks-scope .calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:4px}
 .tasks-scope .calendar-weekdays span{text-align:center;font-size:11px;color:var(--muted);padding:3px 0}
 .tasks-scope .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.tasks-scope .cal-day{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px;padding:6px 3px 5px;border:1px solid transparent;border-radius:10px;background:#FAF9F5;color:var(--text);font-size:13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
-.tasks-scope .cal-day:hover{background:#F1F5F1;border-color:#cfdcd3}
-.tasks-scope .cal-day.is-outside{background:transparent;color:#A9B3AC}
-.tasks-scope .cal-day.is-outside:hover{background:#F5F4EF}
+.tasks-scope .cal-day{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px;padding:6px 3px 5px;border:1px solid transparent;border-radius:10px;background:var(--surface-raised);color:var(--text);font-size:13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.tasks-scope .cal-day:hover{background:var(--surface-raised);border-color:var(--line)}
+.tasks-scope .cal-day.is-outside{background:transparent;color:var(--muted)}
+.tasks-scope .cal-day.is-outside:hover{background:var(--surface-raised)}
 .tasks-scope .cal-day.is-outside .cal-dot{opacity:.4}
-.tasks-scope .cal-day.is-today{border-color:var(--primary);background:#F1F6F2}
-.tasks-scope .cal-day.is-selected{background:var(--primary);border-color:var(--primary);color:#fff}
-.tasks-scope .cal-day.is-selected:hover{background:#1B3D31;border-color:#1B3D31}
+.tasks-scope .cal-day.is-today{border-color:var(--primary);background:var(--surface-raised)}
+.tasks-scope .cal-day.is-selected{background:var(--primary);border-color:var(--primary);color:var(--text)}
+.tasks-scope .cal-day.is-selected:hover{background:var(--accent-soft);border-color:var(--accent)}
 .tasks-scope .cal-day-num{font-size:12.5px;line-height:1;font-variant-numeric:tabular-nums}
 .tasks-scope .cal-day.is-today .cal-day-num{font-weight:600;color:var(--primary)}
-.tasks-scope .cal-day.is-selected .cal-day-num{color:#fff}
+.tasks-scope .cal-day.is-selected .cal-day-num{color:var(--text)}
 .tasks-scope .cal-day-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px;min-height:7px}
-.tasks-scope .cal-dot{width:6px;height:6px;border-radius:50%;background:#7D9B8C;flex-shrink:0}
-.tasks-scope .cal-dot.is-done{background:#3F8F63}
-.tasks-scope .cal-dot.is-review{background:#d68b16}
+.tasks-scope .cal-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-soft);flex-shrink:0}
+.tasks-scope .cal-dot.is-done{background:var(--accent-soft)}
+.tasks-scope .cal-dot.is-review{background:var(--red-bg)}
 .tasks-scope .cal-dot.is-overdue{background:var(--danger)}
-.tasks-scope .cal-day.is-selected .cal-dot{background:#CBE0D2}
-.tasks-scope .cal-day.is-selected .cal-dot.is-done{background:#B7EBC5}
-.tasks-scope .cal-day.is-selected .cal-dot.is-review{background:#F3D9A6}
-.tasks-scope .cal-day.is-selected .cal-dot.is-overdue{background:#FFC5B5}
+.tasks-scope .cal-day.is-selected .cal-dot{background:var(--accent-soft)}
+.tasks-scope .cal-day.is-selected .cal-dot.is-done{background:var(--accent-soft)}
+.tasks-scope .cal-day.is-selected .cal-dot.is-review{background:var(--warning-bg)}
+.tasks-scope .cal-day.is-selected .cal-dot.is-overdue{background:var(--accent-soft)}
 .tasks-scope .cal-more{font-size:9.5px;line-height:1;color:var(--muted);font-variant-numeric:tabular-nums}
-.tasks-scope .cal-day.is-selected .cal-more{color:#DCE9E1}
+.tasks-scope .cal-day.is-selected .cal-more{color:var(--muted)}
 .tasks-scope .calendar-filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .tasks-scope .calendar-scope .filter-btn{padding:6px 14px}
 .tasks-scope .calendar-selection{margin:0;font-size:12px;line-height:1.6;color:var(--muted);min-width:0;overflow-wrap:anywhere}
@@ -436,34 +436,34 @@
    ===================================================================== */
 .tasks-scope .goals-section{margin-top:30px;padding-top:24px;border-top:1px solid var(--border)}
 .tasks-scope .goals-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
-.tasks-scope .goals-heading h2{font-size:18px;font-weight:600;color:#1F332A;letter-spacing:-.2px}
+.tasks-scope .goals-heading h2{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-.2px}
 .tasks-scope .goals-summary{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.6}
 .tasks-scope .goals-actions{display:flex;gap:8px;flex-wrap:wrap}
 .tasks-scope .goals-actions .btn{min-height:34px;font-size:12.5px}
 .tasks-scope .goal-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:stretch}
 .tasks-scope .goal-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.tasks-scope .goal-card:hover{border-color:#cfdcd3}
+.tasks-scope .goal-card:hover{border-color:var(--line)}
 .tasks-scope .goal-card-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.tasks-scope .goal-kind{display:inline-flex;align-items:center;font-size:11px;line-height:1.5;padding:2px 8px;border-radius:6px;background:#F1F6F2;color:var(--primary);flex-shrink:0}
-.tasks-scope .goal-kind-habit{background:#fff7ed;color:#8A6B2F}
-.tasks-scope .goal-card-title{font-size:15px;font-weight:600;color:#1F332A;margin:0;overflow-wrap:anywhere}
+.tasks-scope .goal-kind{display:inline-flex;align-items:center;font-size:11px;line-height:1.5;padding:2px 8px;border-radius:6px;background:var(--surface-raised);color:var(--primary);flex-shrink:0}
+.tasks-scope .goal-kind-habit{background:var(--surface-raised);color:var(--amber)}
+.tasks-scope .goal-card-title{font-size:15px;font-weight:600;color:var(--text);margin:0;overflow-wrap:anywhere}
 .tasks-scope .goal-card-desc{font-size:12px;color:var(--muted);line-height:1.7;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tasks-scope .goal-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin:0}
-.tasks-scope .goal-chip{display:inline-flex;align-items:center;font-size:11.5px;color:#4b5563;background:#F7F6F0;border:1px solid #ECE9DD;border-radius:7px;padding:3px 8px;overflow-wrap:anywhere}
+.tasks-scope .goal-chip{display:inline-flex;align-items:center;font-size:11.5px;color:var(--text);background:var(--surface-raised);border:1px solid var(--line);border-radius:7px;padding:3px 8px;overflow-wrap:anywhere}
 .tasks-scope .goal-progress{display:flex;flex-direction:column;gap:6px}
 .tasks-scope .goal-progress-line{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tasks-scope .goal-progress-caption{font-size:11.5px;color:var(--muted)}
-.tasks-scope .goal-overdue-badge{font-size:11px;color:#b91c1c;background:#fef2f2;border:1px solid #f5d4d4;border-radius:6px;padding:2px 7px;flex-shrink:0}
-.tasks-scope progress.goal-progress-meter{appearance:none;-webkit-appearance:none;display:block;width:100%;height:8px;border:0;border-radius:999px;background:#ECE9DD;overflow:hidden}
-.tasks-scope progress.goal-progress-meter::-webkit-progress-bar{background:#ECE9DD;border-radius:999px}
+.tasks-scope .goal-overdue-badge{font-size:11px;color:var(--red);background:var(--surface-raised);border:1px solid var(--line);border-radius:6px;padding:2px 7px;flex-shrink:0}
+.tasks-scope progress.goal-progress-meter{appearance:none;-webkit-appearance:none;display:block;width:100%;height:8px;border:0;border-radius:999px;background:var(--surface-raised);overflow:hidden}
+.tasks-scope progress.goal-progress-meter::-webkit-progress-bar{background:var(--surface-raised);border-radius:999px}
 .tasks-scope progress.goal-progress-meter::-webkit-progress-value{background:var(--primary);border-radius:999px;transition:width .2s}
 .tasks-scope progress.goal-progress-meter::-moz-progress-bar{background:var(--primary);border-radius:999px}
 .tasks-scope .goal-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:2px}
 .tasks-scope .goal-card-actions .btn{min-height:32px;padding:5px 11px;font-size:12.5px}
 .tasks-scope .goal-card-actions .goal-action{color:var(--primary)}
-.tasks-scope .goal-card-actions .goal-action:hover{background:#F1F6F2}
-.tasks-scope .goal-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px 20px;text-align:center;border:1px dashed #DCD7C7;border-radius:14px;background:#FBFAF6;color:var(--muted)}
-.tasks-scope .goal-empty-title{font-size:14px;font-weight:600;color:#4b5563}
+.tasks-scope .goal-card-actions .goal-action:hover{background:var(--surface-raised)}
+.tasks-scope .goal-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px 20px;text-align:center;border:1px dashed var(--line);border-radius:14px;background:var(--surface);color:var(--muted)}
+.tasks-scope .goal-empty-title{font-size:14px;font-weight:600;color:var(--text)}
 .tasks-scope .goal-empty-text{font-size:12.5px;line-height:1.8;max-width:460px;margin:0}
 
 /* 目标详情抽屉（沿用 task 详情抽屉骨架，略宽以容纳进度与关联待办） */
@@ -471,18 +471,18 @@
 .tasks-scope .goal-drawer-heading{display:flex;flex-direction:column;gap:6px;min-width:0}
 .tasks-scope .goal-drawer-heading h1{font-size:18px;overflow-wrap:anywhere}
 .tasks-scope .goal-drawer-actions{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.tasks-scope .goal-detail-desc{font-size:13px;line-height:1.9;color:#4b5563;margin:0 0 4px;overflow-wrap:anywhere}
-.tasks-scope .goal-detail-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin:16px 0 18px;padding:14px;background:#FBFAF6;border:1px solid var(--border);border-radius:12px}
+.tasks-scope .goal-detail-desc{font-size:13px;line-height:1.9;color:var(--text);margin:0 0 4px;overflow-wrap:anywhere}
+.tasks-scope .goal-detail-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin:16px 0 18px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
 .tasks-scope .goal-detail-meta-item{display:flex;flex-direction:column;gap:3px;min-width:0}
 .tasks-scope .goal-detail-meta-label{font-size:11px;color:var(--muted)}
 .tasks-scope .goal-detail-meta-value{font-size:13px;color:var(--text);overflow-wrap:anywhere}
 .tasks-scope .goal-detail-section{margin-top:20px}
-.tasks-scope .goal-detail-heading{font-size:14px;font-weight:600;color:#1F332A;margin:0 0 10px}
+.tasks-scope .goal-detail-heading{font-size:14px;font-weight:600;color:var(--text);margin:0 0 10px}
 .tasks-scope .goal-detail-empty{font-size:12.5px;line-height:1.8;color:var(--muted);padding:14px;border:1px dashed var(--border);border-radius:10px;margin:0}
-.tasks-scope .goal-detail-error{font-size:13px;color:#b91c1c;line-height:1.8}
+.tasks-scope .goal-detail-error{font-size:13px;color:var(--red);line-height:1.8}
 .tasks-scope .goal-linked-tasks{display:flex;flex-direction:column;gap:8px}
-.tasks-scope .goal-linked-task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#FCFBF7}
-.tasks-scope .goal-linked-task:hover{border-color:#b9cbbf;background:#F7FAF7}
+.tasks-scope .goal-linked-task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.tasks-scope .goal-linked-task:hover{border-color:var(--line);background:var(--surface-raised)}
 .tasks-scope .goal-linked-task-main{display:flex;flex-direction:column;gap:3px;min-width:0}
 .tasks-scope .goal-linked-task-title{font-size:13px;color:var(--text);overflow-wrap:anywhere}
 .tasks-scope .goal-linked-task.is-completed .goal-linked-task-title{text-decoration:line-through;color:var(--muted)}
@@ -494,35 +494,35 @@
 .tasks-scope .goal-dialog fieldset.habit-weekdays{border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .tasks-scope .goal-dialog fieldset.habit-weekdays legend{font-size:11.5px;font-weight:500;color:var(--muted);padding:0 5px}
 .tasks-scope .weekday-picker{display:flex;flex-wrap:wrap;gap:6px}
-.tasks-scope .weekday-chip{display:inline-flex;flex-direction:row;align-items:center;gap:5px;padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px;font-weight:400;color:#4b5563;cursor:pointer}
+.tasks-scope .weekday-chip{display:inline-flex;flex-direction:row;align-items:center;gap:5px;padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:12px;font-weight:400;color:var(--text);cursor:pointer}
 .tasks-scope .weekday-chip input{width:14px;height:14px;accent-color:var(--primary);margin:0}
-.tasks-scope .weekday-chip:has(input:checked){border-color:var(--primary);background:#F1F6F2;color:var(--primary)}
+.tasks-scope .weekday-chip:has(input:checked){border-color:var(--primary);background:var(--surface-raised);color:var(--primary)}
 
 /* 模块内轻提示：AI 规划占位与操作成功反馈 */
-.tasks-scope .tasks-toast{position:fixed;z-index:70;left:50%;bottom:28px;transform:translateX(-50%);max-width:calc(100% - 40px);background:#244C40;color:#fff;font-size:13px;line-height:1.6;padding:10px 18px;border-radius:999px;box-shadow:0 10px 30px rgba(20,36,30,.24);text-align:center}
+.tasks-scope .tasks-toast{position:fixed;z-index:70;left:50%;bottom:28px;transform:translateX(-50%);max-width:calc(100% - 40px);background:var(--accent-soft);color:var(--text);font-size:13px;line-height:1.6;padding:10px 18px;border-radius:999px;box-shadow:0 10px 30px rgba(20,36,30,.24);text-align:center}
 
 /* =====================================================================
    期6-C：AI 规划预览（加载 / 失败 / 草稿列表 / 确认保存）
    - 草稿列表可逐条移除；底部保存走 POST /goals/{id}/tasks。
    ===================================================================== */
-.tasks-scope .plan-preview{margin-top:22px;padding:16px;border:1px solid #D9E2D9;background:#F6F9F5;border-radius:14px}
+.tasks-scope .plan-preview{margin-top:22px;padding:16px;border:1px solid var(--line);background:var(--surface-raised);border-radius:14px}
 .tasks-scope .plan-preview .goal-detail-heading{margin-bottom:10px}
 .tasks-scope .plan-preview-hint{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.7}
 .tasks-scope .plan-loading{display:flex;align-items:flex-start;gap:12px;padding:4px 0}
 .tasks-scope .plan-loading .spinner{margin-top:2px}
-.tasks-scope .plan-loading-title{display:block;font-size:13.5px;font-weight:600;color:#1F332A}
+.tasks-scope .plan-loading-title{display:block;font-size:13.5px;font-weight:600;color:var(--text)}
 .tasks-scope .plan-loading-text{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.8}
-.tasks-scope .plan-error-message{margin:0 0 12px;font-size:12.5px;line-height:1.8;color:#b91c1c}
+.tasks-scope .plan-error-message{margin:0 0 12px;font-size:12.5px;line-height:1.8;color:var(--red)}
 .tasks-scope .plan-empty-text{margin:0 0 12px;font-size:12.5px;line-height:1.8;color:var(--muted)}
 .tasks-scope .plan-draft-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:2px;margin-bottom:12px}
-.tasks-scope .plan-draft{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:10px}
+.tasks-scope .plan-draft{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
 .tasks-scope .plan-draft-main{display:flex;flex-direction:column;gap:4px;min-width:0}
 .tasks-scope .plan-draft-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.tasks-scope .plan-draft-date{font-size:11.5px;color:var(--primary);background:#EDF4EE;border-radius:6px;padding:2px 7px;flex-shrink:0}
-.tasks-scope .plan-draft-title{font-size:13px;font-weight:600;color:#1F332A;overflow-wrap:anywhere}
+.tasks-scope .plan-draft-date{font-size:11.5px;color:var(--primary);background:var(--surface-raised);border-radius:6px;padding:2px 7px;flex-shrink:0}
+.tasks-scope .plan-draft-title{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
 .tasks-scope .plan-draft-meta{font-size:11.5px;color:var(--muted);line-height:1.7;overflow-wrap:anywhere}
 .tasks-scope .plan-draft-remove{border:0;background:transparent;color:var(--muted);font-size:12px;padding:4px 8px;border-radius:7px;flex-shrink:0}
-.tasks-scope .plan-draft-remove:hover{background:#FEF0F0;color:#b91c1c}
+.tasks-scope .plan-draft-remove:hover{background:var(--surface-raised);color:var(--red)}
 .tasks-scope .plan-preview-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tasks-scope .plan-preview-actions .btn{min-height:34px;font-size:12.5px}
 
@@ -543,3 +543,28 @@
 .tasks-scope .plan-draft{padding:9px 10px}
 }
 
+
+/* Shared dark theme, including the module's independently loaded dialogs. */
+.tasks-scope .btn-primary{background:var(--primary);border-color:var(--primary);color:#202b19;font-weight:600}
+.tasks-scope .btn-primary:hover:not(:disabled){background:#d8f2a5;border-color:#d8f2a5}
+.tasks-scope .btn-secondary{background:var(--panel);border-color:var(--border);color:var(--text)}
+.tasks-scope .btn-secondary:hover:not(:disabled){background:#2c3639;border-color:#63706e}
+.tasks-scope .btn-danger{color:var(--danger);background:#392b2b;border-color:#785149}
+.tasks-scope .tab.is-active,.tasks-scope .filter-btn[aria-selected="true"]{color:var(--primary);background:#2a362c}
+.tasks-scope :focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+.tasks-scope input,.tasks-scope select,.tasks-scope textarea{color-scheme:dark;background:#151a1c;color:var(--text);border-color:var(--border)}
+.tasks-scope input::placeholder,.tasks-scope textarea::placeholder{color:var(--muted)}
+.tasks-scope input[type=checkbox],.tasks-scope input[type=radio]{accent-color:var(--primary)}
+.tasks-scope .page{max-width:1500px;margin:auto;padding:26px 28px 36px}
+.tasks-scope .panel,.tasks-scope .task-row,.tasks-scope .calendar-panel,.tasks-scope .goal-card{border-radius:8px}
+.tasks-scope .status-completed .task-check{color:#202b19;background:var(--primary);border-color:var(--primary)}
+.tasks-scope .task-dialog,.tasks-scope .detail-drawer{background:var(--panel);color:var(--text);border-color:var(--border)}
+.tasks-scope .task-dialog::backdrop{background:#080d10b8}
+.tasks-scope .cal-day.is-today{background:#2a362c;border-color:var(--primary)}
+.tasks-scope .cal-day.is-selected{color:#202b19;background:var(--primary);border-color:var(--primary)}
+.tasks-scope ::selection{background:#c8e88b45;color:var(--text)}
+.tasks-scope ::-webkit-scrollbar-thumb{background:#536166}
+@media(max-width:640px){.tasks-scope .page{padding:22px 16px 28px}}
+
+.tasks-scope .cal-day.is-selected,.tasks-scope .cal-day.is-selected .cal-day-num{color:#202b19}
+.tasks-scope .cal-day.is-selected:hover{background:#d8f2a5}

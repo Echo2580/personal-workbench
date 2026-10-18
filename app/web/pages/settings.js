@@ -159,7 +159,7 @@ async function mountBackupSection(container, context) {
 
 export async function mount(container, context) {
   const cleanup = [];
-  const wrapper = el('div', {});
+  const wrapper = el('div', {class:'settings-page'});
   wrapper.append(heading('设置', '管理数据备份、本机目录和项目默认环境'));
   container.replaceChildren(wrapper);
 

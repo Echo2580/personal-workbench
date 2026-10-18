@@ -199,7 +199,13 @@ def _now_iso() -> str:
     return datetime.now(SHANGHAI).isoformat(timespec="seconds")
 
 
-def _normalise_note(raw: object) -> dict | None:
+def _legacy_note_id(index: int, text: str) -> str:
+    # Read-only compatibility: repeated reads must resolve the same deep link.
+    # The position distinguishes duplicate lines; mutations persist these IDs.
+    return uuid.uuid5(uuid.NAMESPACE_URL, f"personal-workbench/note/{index}/{text}").hex[:12]
+
+
+def _normalise_note(raw: object, index: int = 0) -> dict | None:
     if not isinstance(raw, dict):
         return None
     text = raw.get("text")
@@ -207,7 +213,7 @@ def _normalise_note(raw: object) -> dict | None:
         return None
     note_id = raw.get("id")
     if not isinstance(note_id, str) or not note_id:
-        note_id = uuid.uuid4().hex[:12]
+        note_id = _legacy_note_id(index, text)
     created = raw.get("createdAt")
     if not isinstance(created, str) or not created:
         created = _now_iso()
@@ -216,18 +222,20 @@ def _normalise_note(raw: object) -> dict | None:
 
 def _load_notes(data_dir: Path) -> list[dict]:
     payload = _read_json(_notes_path(data_dir)) or {}
+    if not isinstance(payload, dict):
+        return []
     items = payload.get("items")
     if isinstance(items, list):
-        return [note for note in (_normalise_note(raw) for raw in items) if note]
+        return [note for note in (_normalise_note(raw, index) for index, raw in enumerate(items)) if note]
     # 兼容旧版 {lines: [...]}：按行迁移成独立笔记
     lines = payload.get("lines")
     if isinstance(lines, list):
         stamp = _now_iso()
         migrated = []
-        for line in lines:
+        for index, line in enumerate(lines):
             if isinstance(line, str) and line.strip():
                 migrated.append(
-                    {"id": uuid.uuid4().hex[:12], "text": line.strip()[:MAX_NOTE_TEXT], "createdAt": stamp}
+                    {"id": _legacy_note_id(index, line), "text": line.strip()[:MAX_NOTE_TEXT], "createdAt": stamp}
                 )
         return migrated
     return []

@@ -103,6 +103,7 @@ def global_search(request: Request, q: str = "") -> JSONResponse:
         query,
         Path(request.app.state.data_root),
         projects_snapshot=projects,
+        home_data_dir=_data_dir(request),
     )
     return JSONResponse(status_code=200, content=payload)
 

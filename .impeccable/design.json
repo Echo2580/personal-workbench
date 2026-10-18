@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-18T12:26:00.096767+00:00",
+  "title": "Design System: Personal Workbench",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "浅黄绿"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "深墨绿炭灰"
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "0 20px 70px #0007",
+        "purpose": "模态弹窗与页面分层"
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "150ms ease",
+        "purpose": "hover 和状态反馈；尊重 reduced-motion"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "navigation-collapse",
+        "value": "1024px"
+      },
+      {
+        "name": "home-stack",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "当前页面主要动作",
+      "html": "<button class=\"primary\">保存修改</button>",
+      "css": ".primary{background:#c8e88b;color:#202b19;border:1px solid #c8e88b;border-radius:6px;padding:7px 14px;font:600 14px \"Segoe UI\",sans-serif}.primary:hover{background:#d8f2a5}.primary:focus-visible{outline:2px solid #c8e88b;outline-offset:3px}"
+    },
+    {
+      "name": "输入框",
+      "kind": "input",
+      "description": "深色表面中的可编辑内容",
+      "html": "<input aria-label=\"任务名称\" placeholder=\"输入任务名称\">",
+      "css": "input{background:#151a1c;color:#edf1ef;border:1px solid #344045;border-radius:6px;padding:9px 11px;font:14px \"Segoe UI\",sans-serif}input::placeholder{color:#a8b3b5}input:focus-visible{outline:2px solid #c8e88b;outline-offset:3px}"
+    },
+    {
+      "name": "卡片",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "项目、天气、待办、随手记等信息分区",
+      "html": "<section><strong>今日待办</strong><p>把今天，安排清楚。</p></section>",
+      "css": "section{background:#1e2528;color:#edf1ef;border:1px solid #344045;border-radius:8px;padding:18px;font:14px \"Segoe UI\",sans-serif}p{color:#a8b3b5}"
+    }
+  ],
+  "narrative": {
+    "northStar": "把今天，安排清楚。",
+    "overview": "以第一张参考图为视觉权威，统一左导航、深色卡片与浅黄绿主动作，优先日常操作清晰度。",
+    "keyCharacteristics": [
+      "深色低饱和表面",
+      "清楚的任务与状态",
+      "本地离线资源"
+    ],
+    "rules": [
+      {
+        "name": "焦点可见",
+        "body": "键盘焦点使用浅黄绿，与边界色区分。",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "使用真实业务数据",
+      "保持所有路由与弹窗的视觉一致"
+    ],
+    "donts": [
+      "写入演示数据到用户数据目录",
+      "直接修改日常稳定版"
+    ]
+  }
+}

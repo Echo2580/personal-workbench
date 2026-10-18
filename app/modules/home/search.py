@@ -1,4 +1,4 @@
-"""全局搜索：项目、待办、长期任务。
+"""全局搜索：项目、待办、长期任务、随手记。
 
 数据直接读各自模块的现有存储，不引入新的索引：
 - 项目：ProjectService.snapshot()（内存/磁盘最新扫描结果）
@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from app.modules.tasks.storage import load_snapshot
+from app.modules.home import services
 
 GROUP_LIMIT = 5
 QUERY_MAX = 50
@@ -105,10 +106,35 @@ def _goal_items(data_root: Path, query: str) -> list[dict[str, Any]]:
     return items
 
 
+def _note_items(data_dir: Path, query: str) -> list[dict[str, Any]]:
+    try:
+        notes = services.read_notes(data_dir).get("items", [])
+    except services.HomeServiceError:
+        return []
+    items: list[dict[str, Any]] = []
+    for note in notes:
+        text = note.get("text") or ""
+        if not _matches(text, query):
+            continue
+        items.append({
+            "id": note["id"],
+            "title": text[:100],
+            "subtitle": _friendly_when(note.get("createdAt")),
+            "kind": "note",
+            "route": "/",
+            "params": {"note": note["id"]},
+            "badge": "随手记",
+        })
+        if len(items) >= GROUP_LIMIT:
+            break
+    return items
+
+
 def search(
     query: str,
     data_root: Path,
     projects_snapshot: Any = None,
+    home_data_dir: Path | None = None,
 ) -> dict[str, Any]:
     query = (query or "").strip()
     if not query:
@@ -119,6 +145,7 @@ def search(
         {"key": "projects", "label": "项目", "items": _project_items(projects_snapshot, needle)},
         {"key": "tasks", "label": "待办", "items": _task_items(data_root, needle)},
         {"key": "goals", "label": "长期任务", "items": _goal_items(data_root, needle)},
+        {"key": "notes", "label": "随手记", "items": _note_items(Path(home_data_dir) if home_data_dir is not None else Path(data_root).parent, needle)},
     ]
     groups = [group for group in groups if group["items"]]
     return {

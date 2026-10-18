@@ -45,3 +45,21 @@ def test_exit_preview_cancel_preserves_owned_command(ui):
     expect(dialog.get_by_text("项目 Alpha", exact=True)).to_be_visible()
     dialog.get_by_role("button", name="取消", exact=True).click()
     assert service.runtime.active_count() == 1
+
+
+def test_mobile_navigation_closes_when_selecting_current_page(ui):
+    page, app, root = ui
+    page.goto(page.url.split("#")[0] + "#/settings")
+    expect(page.get_by_role("heading", name="扫描目录", exact=True)).to_be_visible()
+    page.set_viewport_size({"width": 390, "height": 844})
+    menu = page.get_by_role("button", name="展开导航", exact=True)
+    menu.click()
+    page.locator("#settings-nav").click()
+    expect(menu).to_have_attribute("aria-expanded", "false")
+    menu.click()
+    page.get_by_role("button", name="工作台首页", exact=True).click()
+    expect(page.get_by_role("heading", name="我的一天", exact=True)).to_be_visible()
+    expect(menu).to_have_attribute("aria-expanded", "false")
+    menu.click()
+    page.get_by_role("button", name="工作台首页", exact=True).click()
+    expect(menu).to_have_attribute("aria-expanded", "false")

@@ -5,10 +5,14 @@ import {createRouter,navigate} from './core/router.js';
 import {moduleLoaders} from './core/module-loaders.js';
 import {sprite,icon} from './core/icons.js';
 import {startReminders} from './core/reminders.js';
+import {mountGlobalSearch} from './core/global-search.js';
 import {mount as mountHome} from './pages/home.js';
 import {mount as mountSettings} from './pages/settings.js';
 document.body.prepend(sprite());
-document.querySelectorAll('.wb-brand-mark').forEach(n=>n.prepend(icon('widget',18)));
+document.querySelectorAll('.wb-brand-mark').forEach(n=>n.prepend(icon('checklist',17)));
+const headerDate=document.querySelector('#header-date');
+function updateHeaderDate(){const d=new Date();headerDate.dateTime=d.toISOString();headerDate.textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 · '+['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];}
+updateHeaderDate();setInterval(updateHeaderDate,60000);
 document.querySelector('#brand-leaf')?.prepend(icon('leaf',15));
 document.querySelector('#breadcrumb-arrow')?.prepend(icon('alt-arrow-right',13));
 document.querySelector('#search-icon')?.prepend(icon('magnifer',16));
@@ -45,7 +49,7 @@ export async function requestExit(){
  try{const runs=(await api.request('/system/shutdown-preview')).running_items;
  const content=el('div',{},el('p',{},runs.length?'以下受管理任务将被停止，之后退出工作台：':'退出本地服务？再次使用时双击启动入口。'),el('ul',{},runs.map(r=>el('li',{},r.label))));
  let m;const error=el('p',{role:'alert',class:'error-text'});content.append(error);
- m=modal('退出工作台',content,[button('取消',()=>m.close()),button(runs.length?'停止项目并退出':'确认退出',async e=>{e.currentTarget.disabled=true;try{await api.request('/system/shutdown',{method:'POST',body:{confirmed_stop_running:true}});m.close();stopReminders?.();stopReminders=null;document.querySelector('#content').replaceChildren(el('h1',{},'工作台已退出'),el('p',{},'可以关闭此网页。下次双击 start.cmd 打开。'));}catch(ex){error.textContent=ex.message;e.target.disabled=false;}},'danger')]);
+ m=modal('退出工作台',content,[button('取消',()=>m.close()),button(runs.length?'停止项目并退出':'确认退出',async e=>{e.currentTarget.disabled=true;try{await api.request('/system/shutdown',{method:'POST',body:{confirmed_stop_running:true}});m.close();stopReminders?.();stopReminders=null;stopSearch?.();stopSearch=null;document.querySelector('#content').replaceChildren(el('h1',{},'工作台已退出'),el('p',{},'可以关闭此网页。下次双击 start.cmd 打开。'));}catch(ex){error.textContent=ex.message;e.target.disabled=false;}},'danger')]);
  }catch(e){notify(e.message,true);}
 }
 window.addEventListener('workbench-exit',requestExit);
@@ -54,17 +58,18 @@ window.addEventListener('workbench-connection',e=>{document.querySelector('#conn
 function navItem(label,route,{iconName,disabled=false,planned=false}={}){
  const n=el('button',{type:'button',class:'wb-nav-item','data-route':route||'',title:label},icon(iconName||'widget',17),el('span',{class:'nav-name'},label));
  if(planned)n.append(el('span',{class:'wb-nav-planned'},'规划中'));else n.append(el('span',{class:'wb-nav-dot','aria-hidden':'true'}));
- if(disabled)n.disabled=true;else n.addEventListener('click',()=>route&&navigate(route));
+ if(disabled)n.disabled=true;else n.addEventListener('click',()=>{setNav(false);if(route)navigate(route);});
  return n;
 }
 const settingsNav=document.querySelector('#settings-nav');
 settingsNav.prepend(icon('settings',17));
-settingsNav.onclick=()=>navigate('/settings');
+settingsNav.onclick=()=>{setNav(false);navigate('/settings');};
 document.querySelector('#exit').onclick=requestExit;
 
-let stopReminders=null;
+let stopReminders=null,stopSearch=null;
 async function start(){try{
  const bootstrap=await api.bootstrap();const modules=bootstrap.modules;const navigation=document.querySelector('#navigation');
+ stopSearch?.();stopSearch=mountGlobalSearch({api,navigate});
  navigation.append(el('p',{class:'wb-nav-label'},'工作区'),navItem('工作台首页','/',{iconName:'home-smile'}));
  /* 待办模块拆两个页面：截图转待办（导入/核对）与待办清单（日历/列表/长期任务）。 */
  const EXTRA_NAV={tasks:[{label:'截图转待办',route:'/tasks/import',icon:'image'},{label:'待办清单',route:'/tasks',icon:'checklist'}]};
