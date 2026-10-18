@@ -102,7 +102,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 
 ## 数据放在哪里
 
-个人配置和运行数据保存在本机 `%LOCALAPPDATA%\PersonalWorkbench\`，不进仓库；服务只绑定 `127.0.0.1`，在 17843–17852 中选可用端口。
+个人配置和运行数据保存在**项目目录内**的 `data\`（即 `<项目根>\data\`，如 `wb\data`、`wb-stable\data`），不进仓库；服务只绑定 `127.0.0.1`，在 17843–17852 中选可用端口。需要临时指定其它目录时，可用 `--data-dir` 参数或 `WORKBENCH_DATA_DIR` 环境变量。
 
 想留一份备份，可以到“设置 → 数据备份与恢复”导出；需要恢复时，也从这里导入。恢复前会自动保存一份当前数据。导出的备份包含任务、长期目标、笔记、偏好、项目配置等，不包含项目代码、运行日志和 AI 密钥。
 
@@ -110,7 +110,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 
 ## 稳定版与开发版
 
-日常使用用 `start.cmd`；调试改动时用 `start-dev.cmd`，开发数据会单独保存在 `%LOCALAPPDATA%\PersonalWorkbench-dev\`。
+日常使用用 `start.cmd`；调试改动时用 `start-dev.cmd`。两个副本的数据各自跟着项目目录走：日常稳定版在 `wb-stable\data`，开发版在 `wb\data`，互不影响。
 
 本地开发时，我们把代码也分成两个目录：
 

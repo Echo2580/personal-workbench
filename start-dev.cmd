@@ -1,9 +1,9 @@
 @echo off
 REM ---------------------------------------------------------------
 REM Development launcher.
-REM Delegates to scripts\start-dev.ps1, which points the workbench at
-REM an isolated data directory so experiments never touch the
-REM daily-use instance stored in %LOCALAPPDATA%\PersonalWorkbench.
+REM Delegates to scripts\start-dev.ps1. Data root lives inside this
+REM project (<project>\data); the daily stable copy keeps its own
+REM data in wb-stable\data, so experiments never touch daily data.
 REM
 REM Desktop shortcut and this .cmd share the same logic source.
 REM ---------------------------------------------------------------

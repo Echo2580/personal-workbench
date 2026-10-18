@@ -13,18 +13,26 @@
 ## 铁律
 
 1. 开发、调试、自动化验收一律在 `wb` + 预览实例（如 17860）完成，**不要动 `wb-stable`**。
-2. 需要验证"像生产一样"时，用独立数据目录启动临时实例，不要占用 17843 或改动 `wb-stable`。
+2. 需要验证"像生产一样"时，用独立数据目录（`--data-dir` 或 `WORKBENCH_DATA_DIR`，例如 `<项目根>\data-preview-<时间>`）启动临时实例，不要占用 17843 或改动 `wb-stable`。
 3. 只有用户明确说迁移/发布，才执行下面的流程。
 4. **每次迁移必须打 Git tag**（见下）。
+
+## 数据根目录
+
+- 工作台默认数据根跟着项目走：`wb\data`（开发版）、`wb-stable\data`（稳定版），不再写 `%LOCALAPPDATA%`。
+- `data/` 已加入 `.gitignore`，`git reset --hard` 不会删除它；但迁移/发布前仍建议先复制一份到项目外。
+- 旧版本遗留的 `%LOCALAPPDATA%\PersonalWorkbench*` 已迁移并清理；不要再把新数据写回 C 盘。
 
 ## 迁移流程（用户确认后执行）
 
 ```powershell
 $stable = 'D:\AI实训project\个人工作台\wb-stable'
 $stamp  = Get-Date -Format 'yyyyMMdd-HHmm'
+$backupRoot = 'D:\AI实训project\个人工作台\数据备份'
 
-# 1. 备份用户数据（数据目录在 %LOCALAPPDATA%\PersonalWorkbench）
-Copy-Item "$env:LOCALAPPDATA\PersonalWorkbench" "$env:LOCALAPPDATA\PersonalWorkbench-backup-$stamp" -Recurse -Force
+# 1. 备份稳定版数据（数据根在 wb-stable\data，不再是 %LOCALAPPDATA%）
+New-Item -ItemType Directory -Force $backupRoot | Out-Null
+Copy-Item "$stable\data" "$backupRoot\wb-stable-data-$stamp" -Recurse -Force
 
 # 2. 停止稳定版（launcher 是 pythonw -m app.launcher，父/子进程都要停）
 Get-CimInstance Win32_Process -Filter "Name='pythonw.exe'" |

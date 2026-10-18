@@ -14,6 +14,72 @@
  *  5. 图片预览与原图回看转 data: URL（工作台 CSP: img-src 'self' data:，blob: 被拦截）；
  *  6. window/document 监听、5 秒提醒轮询、弹层与预览 URL 在 destroy() 中统一清理。
  */
+/* 手动新建待办：对话框输入 → POST /api/v1/tasks 请求体（纯函数，无 DOM）。
+   放在模块作用域，node 测试可直接导入本文件验证载荷形状（契约 §4.2）：
+   - 只填日期时 precision=date，resolvedValue 必须严格是 YYYY-MM-DD；
+   - 填了时间才是 datetime（工作台固定 Asia/Shanghai，+08:00，无夏令时）；
+   - 提醒三选一：不提醒 / 提前 N 分钟（相对截止时间）/ 指定提醒时间（绝对时刻）。 */
+export function buildManualTaskPayload(input) {
+  var values = input || {};
+  var date = values.date || "";
+  var time = values.time || "";
+  var requirements = (values.requirements || "")
+    .split("\n")
+    .map(function (line) { return line.trim(); })
+    .filter(function (line) { return line.length > 0; });
+  var reminderMode = values.reminderMode || "none";
+  var payload = {
+    title: (values.title || "").trim(),
+    requirements: requirements,
+  };
+  if (date) {
+    payload.dueTime = {
+      rawExpression: time ? date + " " + time : date,
+      precision: time ? "datetime" : "date",
+      // 仅日期绝不能补默认时刻：date 精度下带 T09:00 会被后端判为非法载荷。
+      resolvedValue: time ? localIsoWithOffset(date, time) : date,
+      status: "resolved",
+    };
+  }
+  if (reminderMode === "relative") {
+    payload.reminder = {
+      mode: "relative",
+      requestedAt: null,
+      relativeTo: "due",
+      offsetMinutes: Number(values.reminderOffset),
+    };
+  } else if (reminderMode === "manual") {
+    payload.reminder = {
+      mode: "manual",
+      requestedAt: localDateTimeToIso(values.reminderAt),
+      relativeTo: null,
+      offsetMinutes: null,
+    };
+  } else {
+    payload.reminder = {
+      mode: "none",
+      requestedAt: null,
+      relativeTo: null,
+      offsetMinutes: null,
+    };
+  }
+  return payload;
+}
+
+function localDateTimeToIso(value) {
+  // 输入为本地 datetime-local（YYYY-MM-DDTHH:mm）；工作台固定 Asia/Shanghai（+08:00，无夏令时）
+  if (!value) return null;
+  var parts = String(value).split("T");
+  if (parts.length !== 2) return null;
+  return localIsoWithOffset(parts[0], parts[1]);
+}
+
+function localIsoWithOffset(dateValue, timeValue) {
+  // 输入是本地日期/时间；工作台固定 Asia/Shanghai（+08:00，无夏令时）
+  var time = timeValue.length === 5 ? timeValue + ":00" : timeValue;
+  return dateValue + "T" + time + "+08:00";
+}
+
 export function createTasksApp(scope, deps) {
   "use strict";
   var fetchRaw = deps.fetchRaw;
@@ -2191,11 +2257,24 @@ export function createTasksApp(scope, deps) {
 
   // ---------------- 手动新建待办 ----------------
 
-  function localIsoWithOffset(dateValue, timeValue) {
-    // 输入是本地日期/时间；工作台固定 Asia/Shanghai（+08:00，无夏令时）
-    var date = dateValue;
-    var time = timeValue || "09:00";
-    return date + "T" + (time.length === 5 ? time + ":00" : time) + "+08:00";
+  function showNewTaskError(text) {
+    var error = el("nt-error");
+    if (error) { error.textContent = text; error.hidden = false; }
+  }
+
+  function clearNewTaskError() {
+    var error = el("nt-error");
+    if (error) { error.hidden = true; error.textContent = ""; }
+  }
+
+  // 提醒三选一：不提醒 / 提前 N 分钟 / 指定提醒时间；按选择只显示对应输入。
+  function updateNewTaskReminderFields() {
+    var modeInput = el("nt-reminder-mode");
+    var mode = modeInput ? modeInput.value : "none";
+    var relativeFields = el("nt-relative-fields");
+    if (relativeFields) relativeFields.hidden = mode !== "relative";
+    var manualField = el("nt-manual-field");
+    if (manualField) manualField.hidden = mode !== "manual";
   }
 
   function openNewTaskDialog() {
@@ -2208,8 +2287,8 @@ export function createTasksApp(scope, deps) {
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var dateInput = el("nt-date");
     if (dateInput) dateInput.value = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
-    var error = el("nt-error");
-    if (error) { error.hidden = true; error.textContent = ""; }
+    clearNewTaskError();
+    updateNewTaskReminderFields();
     if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
     var title = el("nt-title");
     if (title) title.focus();
@@ -2221,42 +2300,61 @@ export function createTasksApp(scope, deps) {
     if (typeof dialog.close === "function") dialog.close(); else dialog.removeAttribute("open");
   }
 
+  // 提交前的本地校验：提醒的三种方式各有前置条件，不满足时在弹窗内提示，
+  // 避免把必然 422 的请求发给后端（错误信息只有笼统的「任务字段校验失败。」）。
+  function validateNewTaskReminder(payload) {
+    var mode = payload.reminder.mode;
+    if (mode === "relative") {
+      if (!(payload.dueTime && payload.dueTime.precision === "datetime")) {
+        showNewTaskError("设置「提前提醒」需要填写截止日期和截止时间；不需要提醒可以改为「不提醒」。");
+        if (el("nt-date") && !el("nt-date").value) el("nt-date").focus();
+        else if (el("nt-time")) el("nt-time").focus();
+        return false;
+      }
+      var offset = payload.reminder.offsetMinutes;
+      if (!isFinite(offset) || Math.round(offset) !== offset || offset < 1 || offset > 10080) {
+        showNewTaskError("提前分钟数需要是 1 到 10080 之间的整数。");
+        if (el("nt-reminder-offset")) el("nt-reminder-offset").focus();
+        return false;
+      }
+      return true;
+    }
+    if (mode === "manual") {
+      if (!payload.reminder.requestedAt) {
+        showNewTaskError("请填写提醒时间，或把提醒改为「不提醒」。");
+        if (el("nt-reminder-at")) el("nt-reminder-at").focus();
+        return false;
+      }
+      if (new Date(payload.reminder.requestedAt).getTime() <= Date.now()) {
+        showNewTaskError("提醒时间需要晚于现在，请重新选择。");
+        if (el("nt-reminder-at")) el("nt-reminder-at").focus();
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   async function submitNewTask(event) {
     if (event) event.preventDefault();
     var error = el("nt-error");
     var submit = el("nt-submit");
-    var title = (el("nt-title").value || "").trim();
-    if (!title) {
-      if (error) { error.textContent = "请填写任务名称。"; error.hidden = false; }
+    var payload = buildManualTaskPayload({
+      title: el("nt-title").value,
+      date: el("nt-date").value,
+      time: el("nt-time").value,
+      requirements: el("nt-requirements").value,
+      reminderMode: el("nt-reminder-mode").value,
+      reminderOffset: el("nt-reminder-offset").value,
+      reminderAt: el("nt-reminder-at").value,
+    });
+    if (!payload.title) {
+      showNewTaskError("请填写任务名称。");
       return;
     }
-    var date = el("nt-date").value;
-    var time = el("nt-time").value;
-    var requirements = (el("nt-requirements").value || "")
-      .split("\n")
-      .map(function (line) { return line.trim(); })
-      .filter(function (line) { return line.length > 0; });
-    var reminderValue = el("nt-reminder").value;
-    var payload = { title: title, requirements: requirements };
-    if (date) {
-      var resolved = localIsoWithOffset(date, time);
-      payload.dueTime = {
-        rawExpression: time ? date + " " + time : date,
-        precision: time ? "datetime" : "date",
-        resolvedValue: resolved,
-        status: "resolved",
-      };
-    }
-    payload.reminder = reminderValue === "none"
-      ? { mode: "none", requestedAt: null, relativeTo: null, offsetMinutes: null }
-      : {
-          mode: "relative",
-          requestedAt: null,
-          relativeTo: "due",
-          offsetMinutes: Number(reminderValue),
-        };
+    if (!validateNewTaskReminder(payload)) return;
     if (submit) submit.disabled = true;
-    if (error) error.hidden = true;
+    clearNewTaskError();
     try {
       await apiClient.createTask(payload);
       closeNewTaskDialog();
@@ -2285,7 +2383,15 @@ export function createTasksApp(scope, deps) {
     var cancelBtn = el("nt-cancel");
     if (cancelBtn) cancelBtn.addEventListener("click", closeNewTaskDialog);
     var form = el("new-task-form");
-    if (form) form.addEventListener("submit", submitNewTask);
+    if (form) {
+      form.addEventListener("submit", submitNewTask);
+      // 用户一改动就清掉上一次的内联提示，避免旧错误挂着让人误会。
+      form.addEventListener("input", clearNewTaskError);
+      form.addEventListener("change", function () {
+        clearNewTaskError();
+        updateNewTaskReminderFields();
+      });
+    }
   }
 
   function bindForm() {

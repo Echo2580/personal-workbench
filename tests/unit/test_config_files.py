@@ -1,5 +1,24 @@
 import pytest
-from app.core.config_files import read_toml, write_toml_atomic, ConfigConflict
+from pathlib import Path
+
+from app.core.config_files import (
+    ConfigConflict,
+    read_toml,
+    resolve_data_dir,
+    write_toml_atomic,
+)
+
+
+def test_data_dir_defaults_inside_project(tmp_path, monkeypatch):
+    """数据根目录跟着项目走：默认 <项目根>/data，不再写 %LOCALAPPDATA%。"""
+    monkeypatch.delenv("WORKBENCH_DATA_DIR", raising=False)
+    project_root = Path(__file__).resolve().parents[2]  # tests/unit -> tests -> 项目根
+    assert resolve_data_dir() == project_root / "data"
+    # 显式参数与环境变量优先级更高（测试/预览仍可隔离使用临时目录）
+    assert resolve_data_dir(tmp_path) == tmp_path
+    monkeypatch.setenv("WORKBENCH_DATA_DIR", str(tmp_path / "from-env"))
+    assert resolve_data_dir() == tmp_path / "from-env"
+    assert resolve_data_dir(tmp_path) == tmp_path
 
 
 def test_comments_unicode_conflicts_and_backup(tmp_path):

@@ -28,11 +28,16 @@ class ConfigDocument:
 
 
 def resolve_data_dir(override=None):
-    return Path(
-        override
-        or os.environ.get("WORKBENCH_DATA_DIR")
-        or Path(os.environ["LOCALAPPDATA"]) / "PersonalWorkbench"
-    )
+    """数据根目录：显式参数 > WORKBENCH_DATA_DIR > 项目内 data/ 目录。
+
+    默认不再写 %LOCALAPPDATA%，工作台数据跟着项目走：<项目根>/data。
+    """
+    if override is not None:
+        return Path(override)
+    configured = os.environ.get("WORKBENCH_DATA_DIR")
+    if configured:
+        return Path(configured)
+    return Path(__file__).resolve().parents[2] / "data"
 
 
 def digest(text):

@@ -24,6 +24,9 @@ docs/local-evidence/
 htmlcov/
 .superpowers/
 
+# 工作台数据根目录（项目内，不入库；可用 --data-dir / WORKBENCH_DATA_DIR 覆盖）
+/data/
+
 # 前端依赖与构建产物（兜底：子项目自带 .gitignore，这里防根目录误操作）
 node_modules/
 dist/

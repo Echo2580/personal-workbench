@@ -28,10 +28,7 @@ def default_data_dir():
     override = os.environ.get("WORKBENCH_DATA_DIR")
     if override:
         return Path(override)
-    local = os.environ.get("LOCALAPPDATA")
-    if not local:
-        raise SystemExit("无法确定 %LOCALAPPDATA%，请用 --data-dir 指定工作台数据目录。")
-    return Path(local) / "PersonalWorkbench"
+    return REPO_ROOT / "data"
 
 
 def load_raw_settings(data_dir):
@@ -180,7 +177,7 @@ def main(argv=None):
         "--data-dir",
         type=Path,
         default=None,
-        help="工作台数据目录（默认 %%LOCALAPPDATA%%\\PersonalWorkbench；只读）。",
+        help="工作台数据目录（默认 <项目根>\\data；只读）。",
     )
     parser.add_argument(
         "--roots",
