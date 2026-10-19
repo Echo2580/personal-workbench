@@ -70,25 +70,25 @@ def test_cancel_entry_draft_never_changes_saved_entries(ui,dismiss):
 def test_note_search_opens_and_focuses_matching_note_from_subpage(ui):
     page,app,root=ui
     title='查找这条独特的随手记'
-    note=api(page,'/notes','POST',{'text':title})['item']
+    api(page,'/notes','POST',{'text':title})
     page.goto(page.url.split('#')[0]+'#/settings')
     page.reload(wait_until='networkidle')
     page.locator('#globalSearch').fill(title)
     hit=page.locator('#searchResults button').filter(has_text=title)
     expect(hit).to_have_count(1)
     hit.click()
-    expect(page.locator('#notesModal')).to_be_visible()
-    target=page.locator('#notesAllList [data-note-id="'+note['id']+'"]')
-    expect(target).to_contain_text(title)
-    expect(target).to_be_focused()
+    # 搜索结果直接打开随手记详情，展示完整内容（不再是列表抽屉）。
+    modal=page.locator('#noteDetailModal')
+    expect(modal).to_be_visible()
+    expect(page.locator('#noteDetailModal .whitespace-pre-wrap')).to_have_text(title)
     page.keyboard.press('Escape')
-    expect(page.locator('#notesModal')).not_to_be_visible()
+    expect(modal).not_to_be_visible()
     # Clicking the same result must work even when the route already has its ID.
     page.locator('#globalSearch').fill(title)
     expect(hit).to_have_count(1)
     hit.click()
-    expect(page.locator('#notesModal')).to_be_visible()
-    expect(target).to_be_focused()
+    expect(page.locator('#noteDetailModal')).to_be_visible()
+    expect(page.locator('#noteDetailModal .whitespace-pre-wrap')).to_have_text(title)
 
 
 def test_cleared_search_ignores_slow_response(ui):

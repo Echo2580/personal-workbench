@@ -286,7 +286,7 @@ def fetch_weather(city: str) -> dict[str, Any]:
 # ---------------------------------------------------------------- 随手记
 
 MAX_NOTES = 200
-MAX_NOTE_TEXT = 500
+MAX_NOTE_TEXT = 1000
 
 
 def _notes_path(data_dir: Path) -> Path:
@@ -303,11 +303,22 @@ def _legacy_note_id(index: int, text: str) -> str:
     return uuid.uuid5(uuid.NAMESPACE_URL, f"personal-workbench/note/{index}/{text}").hex[:12]
 
 
+def _note_text_lines(value: object) -> str | None:
+    """把笔记文本规范化：统一换行、保留行内空格、去掉首尾空白；无效时返回 None。"""
+    if not isinstance(value, str):
+        return None
+    text = value.replace("\r\n", "\n").replace("\r", "\n")
+    # 除换行外的控制字符统一替换为空格（避免 JSON/前端出现不可见控制符）。
+    text = "".join(" " if (ord(ch) < 32 and ch != "\n") else ch for ch in text)
+    text = text.strip()
+    return text or None
+
+
 def _normalise_note(raw: object, index: int = 0) -> dict | None:
     if not isinstance(raw, dict):
         return None
-    text = raw.get("text")
-    if not isinstance(text, str) or not text.strip():
+    text = _note_text_lines(raw.get("text"))
+    if text is None:
         return None
     note_id = raw.get("id")
     if not isinstance(note_id, str) or not note_id:
@@ -315,7 +326,7 @@ def _normalise_note(raw: object, index: int = 0) -> dict | None:
     created = raw.get("createdAt")
     if not isinstance(created, str) or not created:
         created = _now_iso()
-    return {"id": note_id, "text": text.strip()[:MAX_NOTE_TEXT], "createdAt": created}
+    return {"id": note_id, "text": text[:MAX_NOTE_TEXT], "createdAt": created}
 
 
 def _load_notes(data_dir: Path) -> list[dict]:
@@ -331,9 +342,10 @@ def _load_notes(data_dir: Path) -> list[dict]:
         stamp = _now_iso()
         migrated = []
         for index, line in enumerate(lines):
-            if isinstance(line, str) and line.strip():
+            text = _note_text_lines(line)
+            if text is not None:
                 migrated.append(
-                    {"id": _legacy_note_id(index, line), "text": line.strip()[:MAX_NOTE_TEXT], "createdAt": stamp}
+                    {"id": _legacy_note_id(index, text), "text": text[:MAX_NOTE_TEXT], "createdAt": stamp}
                 )
         return migrated
     return []
@@ -349,9 +361,9 @@ def _save_notes(data_dir: Path, items: list[dict]) -> None:
 
 
 def _clean_note_text(value: object) -> str:
-    if not isinstance(value, str) or not value.strip():
+    text = _note_text_lines(value)
+    if text is None:
         raise HomeServiceError("invalid_request", "笔记内容不能为空。", 422)
-    text = " ".join(value.split())
     if len(text) > MAX_NOTE_TEXT:
         raise HomeServiceError("invalid_request", f"单条笔记不能超过 {MAX_NOTE_TEXT} 字。", 422)
     return text

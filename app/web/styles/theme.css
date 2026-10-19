@@ -557,7 +557,7 @@ html, body { height: 100%; overflow: hidden; }
 #sidebar.wb-sidebar { height: 100vh; height: 100dvh; }
 .wb-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .home-page { width: 100%; max-width: none; margin: 0; }
-#cityModal > div, #notesModal > div, #manageEntriesModal > div { max-height: calc(100dvh - 32px); overflow-y: auto; }
+#cityModal > div, #notesModal > div, #noteDetailModal > div, #manageEntriesModal > div { max-height: calc(100dvh - 32px); overflow-y: auto; }
 .drawer { height: 100dvh; max-height: 100dvh; }
 
 @media (min-width: 1024px) {
@@ -578,3 +578,9 @@ html, body { height: 100%; overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+/* 本地 tailwind 未编译的文本工具类：随手记摘要/详情需要保留换行与长串换行。 */
+.whitespace-pre-wrap { white-space: pre-wrap; }
+.break-words { overflow-wrap: break-word; word-break: break-word; }
+.leading-6 { line-height: 1.5rem; }
+.resize-none { resize: none; }

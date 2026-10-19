@@ -233,9 +233,67 @@ def test_notes_validation(client: TestClient):
     assert client.post("/api/v1/notes", headers=json_headers, json={}).status_code == 400
     assert client.post("/api/v1/notes", headers=json_headers, json={"text": ""}).status_code == 422
     assert client.post("/api/v1/notes", headers=json_headers, json={"text": "x", "foo": 1}).status_code == 400
-    too_long = "长" * 501
+    too_long = "长" * 1001
     assert client.post("/api/v1/notes", headers=json_headers, json={"text": too_long}).status_code == 422
     assert client.delete("/api/v1/notes/not-exist", headers=h).status_code == 404
+
+
+def test_notes_preserve_multiline_and_boundary(tmp_path):
+    from app.modules.home import services
+
+    assert services.MAX_NOTE_TEXT == 1000
+    app = create_app(tmp_path / "data")
+    client = TestClient(app, base_url="http://127.0.0.1:17843")
+    h = headers(client)
+    json_headers = {**h, "Content-Type": "application/json"}
+
+    text = "第一行\r\n第二行  保留两个空格\n\n第四行"
+    created = client.post("/api/v1/notes", headers=json_headers, json={"text": text})
+    assert created.status_code == 201
+    note = created.json()["item"]
+    expected = "第一行\n第二行  保留两个空格\n\n第四行"
+    assert note["text"] == expected
+    assert client.get("/api/v1/notes", headers=h).json()["items"][0]["text"] == expected
+
+    updated = client.put(
+        f"/api/v1/notes/{note['id']}",
+        headers=json_headers,
+        json={"text": "改过的第一行\n改过的第二行"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["item"]["text"] == "改过的第一行\n改过的第二行"
+
+    boundary = "长" * 1000
+    assert client.post("/api/v1/notes", headers=json_headers, json={"text": boundary}).status_code == 201
+    too_long = "长" * 1001
+    assert client.put(
+        f"/api/v1/notes/{note['id']}", headers=json_headers, json={"text": too_long}
+    ).status_code == 422
+
+    disk = json.loads((tmp_path / "data" / "home" / "notes.json").read_text(encoding="utf-8"))
+    saved = next(item for item in disk["items"] if item["id"] == note["id"])
+    assert "\n" in saved["text"]
+
+
+def test_notes_load_normalises_newlines_and_truncates(tmp_path):
+    data_dir = tmp_path / "data"
+    path = data_dir / "home" / "notes.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {"id": "a1", "text": "第一行\r\n第二行", "createdAt": "2026-10-01T09:00:00+08:00"},
+                    {"id": "a2", "text": "长" * 1200, "createdAt": "2026-10-01T09:00:00+08:00"},
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    notes = services.read_notes(data_dir)["items"]
+    assert notes[0]["text"] == "第一行\n第二行"
+    assert len(notes[1]["text"]) == 1000
 
 
 def test_notes_migrates_legacy_lines(tmp_path):

@@ -30,8 +30,21 @@ function mkOverlay(id,inner){
   ov.addEventListener('click',e=>{if(e.target===ov)closeOv(ov);});
   document.body.append(ov);return ov;
 }
-function openOv(ov){ov.classList.remove('hidden');ov.classList.add('flex');}
-function closeOv(ov){if(ov.classList.contains('hidden'))return;ov.classList.add('hidden');ov.classList.remove('flex');ov.dispatchEvent(new Event('overlay-close'));}
+const overlayOrder=[];
+function openOv(ov){
+  /* 重新 append 到 body 末尾，保证后打开的弹层永远在最上层（抽屉上再开详情等）。 */
+  const index=overlayOrder.indexOf(ov);
+  if(index>=0)overlayOrder.splice(index,1);
+  overlayOrder.push(ov);
+  if(ov.parentNode)ov.parentNode.append(ov);
+  ov.classList.remove('hidden');ov.classList.add('flex');
+}
+function closeOv(ov){
+  if(ov.classList.contains('hidden'))return;
+  const index=overlayOrder.indexOf(ov);
+  if(index>=0)overlayOrder.splice(index,1);
+  ov.classList.add('hidden');ov.classList.remove('flex');ov.dispatchEvent(new Event('overlay-close'));
+}
 
 export function mount(container,context){
   let disposed=false;
@@ -406,16 +419,30 @@ export function mount(container,context){
     }));
   }
 
-  /* ===== 随手记：收集箱（最近 3 条，可转待办/删除，全部抽屉） ===== */
+  /* ===== 随手记：收集箱（最近 3 条，可转待办/删除，全部抽屉 + 详情/编辑） ===== */
   let noteListEl,noteInputEl,noteAll=[],noteBusy=false,notesModal=null;
+  let noteDetailModal=null,noteDetailNote=null,noteDetailTrigger=null;
+  let noteDetailRefs=null;
+  const NOTE_MAX=1000;
+  function formatNoteTime(value){
+    if(!value)return '';
+    const d=new Date(value);
+    if(Number.isNaN(d.getTime()))return '';
+    const p=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function noteAriaLabel(text){const t=String(text||'');return t.length>40?t.slice(0,40)+'…':t;}
   function noteItemNode(note,compact){
-    const text=el('p',{class:'min-w-0 flex-1 '+(compact?'line-clamp-2':'line-clamp-3')+' text-[10.5px] leading-[1.55] text-[#7B6840]'},note.text);
-    const toTask=el('button',{type:'button',class:'shrink-0 rounded-md px-1.5 py-0.5 text-[9px] text-[#6F5C31] transition-colors hover:bg-[#F1E3BD]','aria-label':'转为待办：'+note.text},'转待办');
+    const text=el('button',{type:'button',class:'min-w-0 flex-1 cursor-pointer text-left',title:'查看全文','aria-label':'查看随手记全文：'+noteAriaLabel(note.text)},
+      el('span',{class:(compact?'line-clamp-2':'line-clamp-3')+' whitespace-pre-wrap break-words text-[10.5px] leading-[1.55] text-[#7B6840]'},note.text));
+    text.addEventListener('click',event=>{event.stopPropagation();openNoteDetail(note,text);});
+    const toTask=el('button',{type:'button',class:'shrink-0 rounded-md px-1.5 py-0.5 text-[9px] text-[#6F5C31] transition-colors hover:bg-[#F1E3BD]','aria-label':'转为待办：'+noteAriaLabel(note.text)},'转待办');
     toTask.addEventListener('click',event=>{event.stopPropagation();convertNoteToTask(note,toTask);});
-    const del=el('button',{type:'button',class:'shrink-0 rounded-md px-1 py-0.5 text-[9px] text-[#B08A5E] transition-colors hover:bg-[#F6E3C9]','aria-label':'删除笔记：'+note.text},icon('trash-bin-minimalistic',12));
+    const del=el('button',{type:'button',class:'shrink-0 rounded-md px-1 py-0.5 text-[9px] text-[#B08A5E] transition-colors hover:bg-[#F6E3C9]','aria-label':'删除笔记：'+noteAriaLabel(note.text)},icon('trash-bin-minimalistic',12));
     del.addEventListener('click',event=>{event.stopPropagation();removeNote(note);});
-    return el('div',{'data-note-id':note.id,tabIndex:-1,class:'group flex items-start gap-1.5 rounded-lg border-b border-[#F1E8CE] px-1 py-1 last:border-b-0'},
-      text,el('div',{class:'flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100'},toTask,del));
+    const viewAll=compact?null:el('button',{type:'button',class:'shrink-0 rounded-md px-1.5 py-0.5 text-[9px] text-[#6F5C31] transition-colors hover:bg-[#F1E3BD]',onClick:event=>{event.stopPropagation();openNoteDetail(note,event.currentTarget);}},'查看全文');
+    const actions=el('div',{class:'flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100'},viewAll,toTask,del);
+    return el('div',{'data-note-id':note.id,tabIndex:-1,class:'group flex items-start gap-1.5 rounded-lg border-b border-[#F1E8CE] px-1 py-1 last:border-b-0'},text,actions);
   }
   function renderNotes(){
     if(!noteListEl)return;
@@ -430,7 +457,10 @@ export function mount(container,context){
     catch(e){if(!active())return;noteAll=[];}
     renderNotes();
     const requested=context.params?.get('note');
-    if(requested){if(noteAll.some(note=>note.id===requested))openNotesModal(requested);else toast('这条随手记已不存在。');}
+    if(requested){
+      const target=noteAll.find(note=>note.id===requested);
+      if(target)openNoteDetail(target,null);else toast('这条随手记已不存在。');
+    }
   }
   async function addNote(){
     const text=(noteInputEl.value||'').trim();
@@ -441,6 +471,7 @@ export function mount(container,context){
       const data=await context.api.request('/notes',{method:'POST',body:{text}});
       noteAll.unshift(data.item);
       noteInputEl.value='';
+      noteInputEl.style.height='';
       renderNotes();
       toast('已记下');
     }catch(e){toast(e.message||'保存失败',true);}
@@ -469,7 +500,9 @@ export function mount(container,context){
     if(btn.disabled)return;
     btn.disabled=true;
     try{
-      await context.api.request('/tasks',{method:'POST',body:{title:note.text.slice(0,200)}});
+      /* 任务标题是单行输入，把多行笔记折叠成一行再提交。 */
+      const title=(note.text||'').replace(/\s+/g,' ').trim().slice(0,200);
+      await context.api.request('/tasks',{method:'POST',body:{title}});
       toast('已转为待办');
       await loadTasks();
     }catch(e){toast(e.message||'转待办失败',true);}
@@ -485,7 +518,7 @@ export function mount(container,context){
     if(!notesModal){
       notesModal=createOverlay('notesModal',[
         el('div',{class:'flex items-start justify-between gap-4'},
-          el('div',{},el('h2',{class:'text-[17px] font-semibold text-[#5D4D2D]'},'全部随手记'),el('p',{class:'mt-1 text-[10.5px] text-[#A08A5C]'},'想法可以直接转成待办。')),
+          el('div',{},el('h2',{class:'text-[17px] font-semibold text-[#5D4D2D]'},'全部随手记'),el('p',{class:'mt-1 text-[10.5px] text-[#A08A5C]'},'点击任意一条查看全文、编辑或转成待办。')),
           el('button',{type:'button','aria-label':'关闭',class:'grid h-8 w-8 place-items-center rounded-lg text-[#9D895D] hover:bg-[#F4E8C4]',onClick:()=>closeOv(notesModal)},icon('close-circle',19))),
         el('div',{class:'mt-3 max-h-[54vh] overflow-y-auto rounded-xl border border-[#F0E4C4] bg-[#FDF8E8] px-2 py-1',id:'notesAllList'}),
       ]);
@@ -498,9 +531,115 @@ export function mount(container,context){
     }
   }
 
+  /* 随手记详情：查看全文、复制、编辑、转待办、删除 */
+  function ensureNoteDetailModal(){
+    if(noteDetailModal)return noteDetailModal;
+    const textEl=el('p',{class:'whitespace-pre-wrap break-words text-[12px] leading-6 text-[#5F4F2F]'});
+    const metaEl=el('p',{class:'mt-2 text-[10px] text-[#A08A5C]'});
+    const view=el('div',{class:'rounded-xl border border-[#F0E4C4] bg-[#FDF8E8] px-3 py-2'},textEl,metaEl);
+    const error=el('p',{role:'alert',hidden:true,class:'mt-2 text-[10.5px] text-[#B4543B]'});
+    const editor=el('textarea',{hidden:true,rows:8,maxLength:NOTE_MAX,'aria-label':'编辑随手记内容',class:'mt-3 w-full resize-none rounded-lg border border-[#E3D3A6] bg-[#FFFDF5] px-2.5 py-2 text-[11.5px] leading-5 text-[#5F4F2F] outline-none focus:border-[#B7A15F]'});
+    const mkBtn=(label,fn,cls)=>{const b=el('button',{type:'button',class:'rounded-lg px-3 py-1.5 text-[11px] transition-colors '+cls,onClick:fn},label);b.type='button';return b;};
+    const copyBtn=mkBtn('复制全文',()=>copyNoteText(),'text-[#6F5C31] hover:bg-[#F1E3BD]');
+    const editBtn=mkBtn('编辑',()=>beginNoteDetailEdit(),'text-[#6F5C31] hover:bg-[#F1E3BD]');
+    const taskBtn=mkBtn('转待办',()=>convertNoteToTask(noteDetailNote,taskBtn),'text-[#6F5C31] hover:bg-[#F1E3BD]');
+    const delBtn=mkBtn('删除',()=>{const target=noteDetailNote;closeOv(noteDetailModal);if(target)removeNote(target);},'text-[#B4543B] hover:bg-[#F6E3C9]');
+    const saveBtn=mkBtn('保存',()=>saveNoteDetail(),'bg-[#66542E] text-white hover:bg-[#554525]');
+    const cancelBtn=mkBtn('取消',()=>showNoteDetailView(true),'text-[#6F5C31] hover:bg-[#F1E3BD]');
+    saveBtn.hidden=true;cancelBtn.hidden=true;
+    const closeBtn=el('button',{type:'button','aria-label':'关闭','class':'grid h-8 w-8 place-items-center rounded-lg text-[#9D895D] hover:bg-[#F4E8C4]',onClick:()=>closeOv(noteDetailModal)},icon('close-circle',19));
+    noteDetailModal=createOverlay('noteDetailModal',[
+      el('div',{class:'flex items-start justify-between gap-4'},
+        el('h2',{class:'text-[17px] font-semibold text-[#5D4D2D]'},'随手记'),
+        closeBtn),
+      el('div',{class:'mt-3'},view,error,editor,el('div',{class:'mt-4 flex flex-wrap items-center justify-end gap-2'},copyBtn,editBtn,taskBtn,delBtn,saveBtn,cancelBtn)),
+    ]);
+    noteDetailRefs={view,textEl,metaEl,error,editor,copyBtn,editBtn,taskBtn,delBtn,saveBtn,cancelBtn,closeBtn};
+    editor.addEventListener('keydown',event=>{
+      if(event.isComposing||event.keyCode===229)return;
+      if(event.key==='Escape'){event.preventDefault();event.stopPropagation();showNoteDetailView(true);}
+      else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();saveNoteDetail();}
+    });
+    noteDetailModal.addEventListener('overlay-close',()=>{
+      let target=noteDetailTrigger&&noteDetailTrigger.isConnected?noteDetailTrigger:null;
+      /* 抽屉里打开详情时，保存后列表会重建，按 note id 找回对应「查看全文」按钮。 */
+      if(!target&&noteDetailNote){
+        const row=document.querySelector('#notesAllList [data-note-id="'+noteDetailNote.id+'"]');
+        if(row)target=row.querySelector('button[aria-label^="查看随手记全文"]')||row;
+      }
+      if(!target){
+        const fallback=document.querySelector('#scratchCard button[aria-label^="查看随手记全文"]');
+        if(fallback)target=fallback;
+      }
+      if(target&&target.focus)target.focus();
+      noteDetailTrigger=null;
+    });
+    return noteDetailModal;
+  }
+  function showNoteDetailView(focus){
+    if(!noteDetailRefs)return;
+    const r=noteDetailRefs;
+    r.view.hidden=false;r.editor.hidden=true;r.error.hidden=true;
+    r.saveBtn.hidden=true;r.cancelBtn.hidden=true;r.editBtn.hidden=false;
+    r.copyBtn.hidden=false;r.taskBtn.hidden=false;r.delBtn.hidden=false;
+    if(noteDetailNote){
+      r.textEl.textContent=noteDetailNote.text;
+      r.metaEl.textContent='创建于 '+(formatNoteTime(noteDetailNote.createdAt)||'未知时间');
+    }
+    if(focus)r.editBtn.focus();
+  }
+  function beginNoteDetailEdit(){
+    if(!noteDetailRefs||!noteDetailNote)return;
+    const r=noteDetailRefs;
+    r.editor.value=noteDetailNote.text;
+    r.view.hidden=true;r.editor.hidden=false;r.error.hidden=true;
+    r.editBtn.hidden=true;r.saveBtn.hidden=false;r.cancelBtn.hidden=false;
+    /* 编辑期间隐藏基于旧文本的操作，避免复制/转待办/删除与未保存内容不一致。 */
+    r.copyBtn.hidden=true;r.taskBtn.hidden=true;r.delBtn.hidden=true;
+    r.editor.focus();
+    try{r.editor.setSelectionRange(r.editor.value.length,r.editor.value.length);}catch(e){/* 部分输入法忽略 */}
+  }
+  async function saveNoteDetail(){
+    if(!noteDetailRefs||!noteDetailNote)return;
+    const r=noteDetailRefs;
+    if(r.saveBtn.disabled)return;
+    const text=(r.editor.value||'').trim();
+    if(!text){r.error.textContent='内容不能为空。';r.error.hidden=false;r.editor.focus();return;}
+    r.saveBtn.disabled=true;
+    try{
+      const data=await context.api.request('/notes/'+encodeURIComponent(noteDetailNote.id),{method:'PUT',body:{text}});
+      const updated=data.item;
+      noteAll=noteAll.map(note=>note.id===updated.id?updated:note);
+      noteDetailNote=updated;
+      renderNotes();
+      if(notesModal)renderNotesModal();
+      showNoteDetailView(true);
+      toast('已保存');
+    }catch(e){r.error.textContent=e.message||'保存失败';r.error.hidden=false;}
+    finally{r.saveBtn.disabled=false;}
+  }
+  async function copyNoteText(){
+    if(!noteDetailNote)return;
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(noteDetailNote.text);toast('已复制全文');return;}
+    }catch(e){/* 隐私模式/无权限时走失败提示 */}
+    toast('复制失败，请手动选择文本',true);
+  }
+  function openNoteDetail(note,trigger){
+    ensureNoteDetailModal();
+    noteDetailNote=note;
+    noteDetailTrigger=trigger instanceof HTMLElement?trigger:null;
+    showNoteDetailView(false);
+    openOv(noteDetailModal);
+    noteDetailRefs.closeBtn.focus();
+  }
+
   // Header search belongs to the shell. Only this page's overlays are local.
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape')ownedOverlays.forEach(closeOv);
+    if(event.key!=='Escape')return;
+    /* 按实际打开顺序只关闭最上层弹层：详情叠在抽屉上时，第一次 Esc 不应把抽屉一起关掉。 */
+    const openOverlays=overlayOrder.filter(overlay=>ownedOverlays.has(overlay)&&!overlay.classList.contains('hidden'));
+    if(openOverlays.length)closeOv(openOverlays[openOverlays.length-1]);
   },{signal:context.signal});
 
   /* ===== 常用入口：工作台模块 + 最近项目 + 自定义入口 ===== */
@@ -697,9 +836,14 @@ export function mount(container,context){
         return b;})()),
     noteListEl=el('div',{class:'relative z-10 mt-1.5 min-h-0 flex-1 overflow-y-auto'}),
     (()=>{
-      const row=el('div',{class:'relative z-10 mt-1.5 flex items-center gap-1.5'});
-      noteInputEl=el('input',{type:'text',placeholder:'记一个想法，回车保存…','aria-label':'随手记输入','class':'min-w-0 flex-1 rounded-lg border border-[#E3D3A6] bg-[#FFFDF5] px-2 py-1.5 text-[10.5px] text-[#5F4F2F] outline-none placeholder:text-[#BBA77E] focus:border-[#B7A15F]'});
-      noteInputEl.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addNote();}});
+      const row=el('div',{class:'relative z-10 mt-1.5 flex items-end gap-1.5'});
+      noteInputEl=el('textarea',{rows:2,placeholder:'记一个想法，Enter 保存 · Shift+Enter 换行','aria-label':'随手记输入',maxLength:NOTE_MAX,class:'min-w-0 flex-1 resize-none rounded-lg border border-[#E3D3A6] bg-[#FFFDF5] px-2 py-1.5 text-[10.5px] leading-[1.55] text-[#5F4F2F] outline-none placeholder:text-[#BBA77E] focus:border-[#B7A15F]'});
+      const syncHeight=()=>{noteInputEl.style.height='auto';noteInputEl.style.height=Math.min(72,Math.max(38,noteInputEl.scrollHeight))+'px';};
+      noteInputEl.addEventListener('input',syncHeight);
+      noteInputEl.addEventListener('keydown',event=>{
+        if(event.isComposing||event.keyCode===229)return;
+        if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addNote();}
+      });
       const add=el('button',{type:'button','aria-label':'保存随手记',class:'shrink-0 rounded-lg bg-[#66542E] px-2.5 py-1.5 text-[10px] font-medium text-white transition-colors hover:bg-[#554525]',onClick:addNote},'记');
       row.append(noteInputEl,add);
       return row;
@@ -740,6 +884,7 @@ export function mount(container,context){
   function cleanup(){
     if(disposed)return;disposed=true;stopPoll();
     ownedOverlays.forEach(overlay=>{closeOv(overlay);overlay.remove();});ownedOverlays.clear();
+    for(let index=overlayOrder.length-1;index>=0;index--){if(!overlayOrder[index].isConnected)overlayOrder.splice(index,1);}
     context.signal.removeEventListener('abort',cleanup);
   }
   context.signal.addEventListener('abort',cleanup,{once:true});
