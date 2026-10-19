@@ -579,6 +579,9 @@ export function createTasksApp(scope, deps) {
     loading: false,
     detail: null,
     detailSource: null,
+    deleteTarget: null,
+    deleteTrigger: null,
+    deleting: false,
     form: null,
     saving: false,
     // T09：导入与核对（不持久化，刷新即失＝契约语义）
@@ -977,14 +980,29 @@ export function createTasksApp(scope, deps) {
         if (task.requirements && task.requirements.length) main.appendChild(textNode("span", "task-requirements", "要求：" + task.requirements.join(" · ")));
         if (task.reviewIssues && task.reviewIssues.length) main.appendChild(textNode("span", "badge needs-review", "有待补充信息"));
         if (task.sourceExcerpt) main.appendChild(textNode("span", "task-source", "原文：" + task.sourceExcerpt));
-        var end = document.createElement("a");
+        var end = document.createElement("div");
         end.className = "task-row-end";
-        end.href = "#/tasks/" + task.id;
+        var detailLink = document.createElement("a");
+        detailLink.className = "task-detail-link";
+        detailLink.href = "#/tasks/" + task.id;
+        detailLink.textContent = "查看详情";
         end.appendChild(badge);
-        end.appendChild(textNode("span", "task-detail-link", "查看详情"));
+        end.appendChild(detailLink);
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "task-row-delete";
+        remove.setAttribute("aria-label", "删除待办：" + task.title);
+        remove.title = "删除待办";
+        remove.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#t-i-trash"/></svg>';
+        remove.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          openDeleteDialog(task, remove);
+        });
         row.appendChild(check);
         row.appendChild(main);
         row.appendChild(end);
+        row.appendChild(remove);
         container.appendChild(row);
       });
       return container;
@@ -2496,25 +2514,69 @@ export function createTasksApp(scope, deps) {
     }
   }
 
-  function confirmDelete() {
-    if (!state.detail) return;
-    var box = el("delete-confirm");
-    if (box) box.hidden = false;
+  function openDeleteDialog(task, trigger) {
+    var target = task || state.detail;
+    if (!target) return;
+    state.deleteTarget = target;
+    state.deleteTrigger = trigger || null;
+    var name = el("delete-task-name");
+    if (name) name.textContent = target.title || "未命名待办";
+    var error = el("delete-task-error");
+    if (error) { error.hidden = true; error.textContent = ""; }
+    var confirm = el("btn-delete-dialog-confirm");
+    if (confirm) { confirm.disabled = false; confirm.textContent = "删除待办"; }
+    var cancel = el("btn-delete-dialog-cancel");
+    if (cancel) cancel.disabled = false;
+    var dialog = el("delete-task-dialog");
+    if (!dialog) return;
+    if (typeof dialog.showModal === "function") {
+      if (!dialog.open) dialog.showModal();
+    } else if (!dialog.open) {
+      dialog.setAttribute("open", "");
+    }
+    /* 打开后把焦点放在「取消」，避免回车误删。 */
+    if (cancel) cancel.focus();
   }
 
-  async function doDelete() {
-    if (!state.detail) return;
-    clearError();
+  function closeDeleteDialog() {
+    var dialog = el("delete-task-dialog");
+    if (!dialog) return;
+    if (typeof dialog.close === "function" && dialog.open) dialog.close();
+    else dialog.removeAttribute("open");
+  }
+
+  async function deleteTaskFromDialog() {
+    var target = state.deleteTarget || state.detail;
+    if (!target || state.deleting) return;
+    state.deleting = true;
+    var confirm = el("btn-delete-dialog-confirm");
+    var cancel = el("btn-delete-dialog-cancel");
+    var error = el("delete-task-error");
+    if (confirm) { confirm.disabled = true; confirm.textContent = "正在删除…"; }
+    if (cancel) cancel.disabled = true;
+    if (error) { error.hidden = true; error.textContent = ""; }
     try {
-      await apiClient.deleteTask(state.detail.id);
-      var box = el("delete-confirm");
-      if (box) box.hidden = true;
+      await apiClient.deleteTask(target.id);
+      state.deleteTrigger = null;
+      state.deleteTarget = null;
+      state.detail = null;
+      closeDeleteDialog();
+      showToast("已删除待办");
       navigate("#/tasks");
       await loadList();
+      if (state.goals.length) loadGoals();
+      /* 删除完成后把焦点放回列表主操作，键盘/读屏用户不会丢失位置。 */
+      var newTaskBtn = el("btn-new-task");
+      if (newTaskBtn) newTaskBtn.focus();
     } catch (e) {
-      showError(e);
-      var box2 = el("delete-confirm");
-      if (box2) box2.hidden = true;
+      if (error) {
+        error.textContent = (e && e.message) || "删除失败，请重试。";
+        error.hidden = false;
+      }
+      if (confirm) { confirm.disabled = false; confirm.textContent = "删除待办"; }
+      if (cancel) cancel.disabled = false;
+    } finally {
+      state.deleting = false;
     }
   }
 
@@ -3621,13 +3683,43 @@ function bindGlobal() {
     var toggleBtn = el("btn-toggle-status");
     if (toggleBtn) toggleBtn.addEventListener("click", toggleStatus);
     var deleteBtn = el("btn-delete");
-    if (deleteBtn) deleteBtn.addEventListener("click", confirmDelete);
-    var confirmBtn = el("btn-delete-confirm");
-    if (confirmBtn) confirmBtn.addEventListener("click", doDelete);
-    var cancelBtn = el("btn-delete-cancel");
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", function () {
-        el("delete-confirm").hidden = true;
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", function (event) {
+        openDeleteDialog(state.detail, event.currentTarget);
+      });
+    }
+    var deleteTopBtn = el("btn-delete-top");
+    if (deleteTopBtn) {
+      deleteTopBtn.addEventListener("click", function (event) {
+        openDeleteDialog(state.detail, event.currentTarget);
+      });
+    }
+    var deleteDialog = el("delete-task-dialog");
+    if (deleteDialog) {
+      deleteDialog.addEventListener("cancel", function (event) {
+        event.preventDefault();
+        if (!state.deleting) closeDeleteDialog();
+      });
+      deleteDialog.addEventListener("click", function (event) {
+        if (state.deleting || event.target !== deleteDialog) return;
+        /* 只有点在弹窗外（遮罩）才关闭；点在弹窗自身 padding 上不关闭。 */
+        var rect = deleteDialog.getBoundingClientRect();
+        var inside = event.clientX >= rect.left && event.clientX <= rect.right
+          && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        if (!inside) closeDeleteDialog();
+      });
+      deleteDialog.addEventListener("close", function () {
+        if (state.deleteTrigger && state.deleteTrigger.isConnected) state.deleteTrigger.focus();
+        state.deleteTrigger = null;
+        state.deleteTarget = null;
+      });
+    }
+    var deleteConfirmBtn = el("btn-delete-dialog-confirm");
+    if (deleteConfirmBtn) deleteConfirmBtn.addEventListener("click", deleteTaskFromDialog);
+    var deleteCancelBtn = el("btn-delete-dialog-cancel");
+    if (deleteCancelBtn) {
+      deleteCancelBtn.addEventListener("click", function () {
+        if (!state.deleting) closeDeleteDialog();
       });
     }
     var backBtn = el("btn-back");

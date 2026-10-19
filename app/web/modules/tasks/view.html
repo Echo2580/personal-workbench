@@ -18,6 +18,7 @@
 <symbol id="t-i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
 <symbol id="t-i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4Z"/><path d="M18.5 14.5 19.4 17l2.6.9-2.6.9-.9 2.5-.9-2.5-2.6-.9 2.6-.9Z"/></symbol>
 <symbol id="t-i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4.5" rx="1.5"/><path d="M5 8.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5M10 13h4"/></symbol>
+<symbol id="t-i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol>
 </svg>
 <div class="workspace"><header class="topbar"><nav class="steps" aria-label="整理进度"><span id="step-import">导入通知</span><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg><span id="step-review">核对任务</span><svg class="icon" aria-hidden="true"><use href="#t-i-arrow"/></svg><span id="step-save">保存完成</span></nav><div class="topbar-right"><button type="button" id="btn-open-list" class="btn btn-secondary btn-small">待办清单</button></div></header>
 <div id="error-panel" class="error-panel" role="alert" hidden></div>
@@ -127,8 +128,18 @@
 </form>
 </dialog>
 
+<dialog id="delete-task-dialog" class="task-dialog confirm-dialog" aria-labelledby="delete-task-title" aria-describedby="delete-task-note">
+<h2 id="delete-task-title">删除待办？</h2>
+<p id="delete-task-note" class="dialog-note">将删除「<strong id="delete-task-name"></strong>」，删除后不可恢复；来源记录会保留。</p>
+<p id="delete-task-error" class="dialog-error" role="alert" hidden></p>
+<div class="dialog-actions">
+<button type="button" class="btn btn-secondary" id="btn-delete-dialog-cancel">取消</button>
+<button type="button" class="btn btn-danger" id="btn-delete-dialog-confirm">删除待办</button>
+</div>
+</dialog>
+
 <section id="view-detail" class="detail-drawer" hidden aria-labelledby="detail-title">
-<div class="detail-header"><div><h1 id="detail-title">待办详情</h1><p id="source-meta" class="source-meta"></p></div><button type="button" id="btn-back" class="icon-button" aria-label="关闭详情"><svg class="icon" aria-hidden="true"><use href="#t-i-close"/></svg></button></div>
+<div class="detail-header"><div><h1 id="detail-title">待办详情</h1><p id="source-meta" class="source-meta"></p></div><div class="detail-header-actions"><button type="button" id="btn-delete-top" class="icon-button icon-button-danger" aria-label="删除待办"><svg class="icon" aria-hidden="true"><use href="#t-i-trash"/></svg></button><button type="button" id="btn-back" class="icon-button" aria-label="关闭详情"><svg class="icon" aria-hidden="true"><use href="#t-i-close"/></svg></button></div></div>
 <div class="detail-body"><p id="reminder-meta" class="reminder-meta"></p><form id="task-form">
 <label>任务标题<input id="f-title" type="text" required></label><div class="time-grid"><fieldset class="time-editor"><legend>开始时间</legend><label class="inline"><input id="f-start-enabled" type="checkbox">设置开始时间</label><input id="f-start-resolved" type="datetime-local" step="any" aria-label="开始时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-start-raw" type="text"></label><label>时间精度<select id="f-start-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-start-needs" type="checkbox">时间仍待核对</label></details></fieldset><fieldset class="time-editor"><legend>截止时间</legend><label class="inline"><input id="f-due-enabled" type="checkbox">设置截止时间</label><input id="f-due-resolved" type="datetime-local" step="any" aria-label="截止时间"><details><summary>原文与时间核对</summary><label>原始表达<input id="f-due-raw" type="text"></label><label>时间精度<select id="f-due-precision"><option value="datetime">日期和时间</option><option value="date">仅日期</option><option value="day_part">上午 / 下午等时段</option><option value="relative">相对日期</option><option value="unknown">尚不明确</option></select></label><label class="inline"><input id="f-due-needs" type="checkbox">时间仍待核对</label></details></fieldset></div>
 <label>执行要求（每行一条）<textarea id="f-requirements" rows="3"></textarea></label>
@@ -137,7 +148,7 @@
 <fieldset class="reminder-editor"><legend>提醒设置</legend><label>提醒方式<select id="f-rem-mode"><option value="none">不提醒</option><option value="manual">指定时间</option><option value="relative">提前提醒</option></select></label><label id="manual-reminder-field">提醒时间<input id="f-rem-requested" type="datetime-local" step="any"></label><div id="relative-reminder-fields" class="two-fields"><label>相对时间<select id="f-rem-relative-to"><option value="">请选择</option><option value="start">开始时间</option><option value="due">截止时间</option></select></label><label>提前分钟数<input id="f-rem-offset" type="number" min="1"></label></div><p class="hint">提醒仅在工具打开期间生效。</p></fieldset>
 <label>任务状态<select id="f-status"><option value="open">未完成</option><option value="completed">已完成</option></select></label>
 <div class="form-actions"><button type="button" id="btn-save" class="btn btn-primary">保存修改</button><button type="button" id="btn-toggle-status" class="btn btn-secondary">完成/重开</button><button type="button" id="btn-delete" class="btn btn-danger">删除</button><button type="button" id="btn-show-source" class="btn btn-secondary">查看原文</button></div>
-</form><div id="delete-confirm" class="confirm-box" hidden><p>确定删除该待办？此操作不可撤销（来源记录保留）。</p><button type="button" id="btn-delete-confirm" class="btn btn-danger">确认删除</button><button type="button" id="btn-delete-cancel" class="btn btn-secondary">取消</button></div><div id="source-content" class="source-content"></div></div>
+</form><div id="source-content" class="source-content"></div></div>
 </section></div></div>
 
 <section id="goal-drawer" class="goal-drawer" hidden aria-labelledby="goal-drawer-title" role="dialog">
