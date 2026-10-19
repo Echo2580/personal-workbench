@@ -78,5 +78,6 @@ git -C 'D:\AI实训project\个人工作台\wb' push origin v0.2.0
 | `v0.4.1` | 以 annotated tag 指向为准 | 浏览器窗口自适应与短窗口操作可达性；873 passed、3 skipped，2026-10-18 |
 | `v0.5.0` | 以 annotated tag 指向为准 | 自动识别扩展（Python/Node/Web/Go/Rust、Django）、首页大字可编辑与「我的空间」、待办提醒自定义/绝对时间、数据根迁入项目内 `data\`；978 passed、4 skipped，2026-10-19 |
 | `v0.5.1` | 以 annotated tag 指向为准 | 随手记查看全文/编辑/多行输入（1000 字、保留换行）；天气城市地理编码修复（洛阳等被同名乡镇带偏，pypinyin 兜底）；995 passed、4 skipped，2026-10-19 |
+| `v0.5.2` | 以 annotated tag 指向为准 | 待办删除确认弹窗：列表行/详情头/详情底统一入口，默认焦点取消，删除失败可重试，焦点恢复；1004 passed、4 skipped，2026-10-19 |
 
-发布详情见 [v0.4.0](releases/v0.4.0.md)、[v0.4.1](releases/v0.4.1.md)、[v0.5.0](releases/v0.5.0.md)、[v0.5.1](releases/v0.5.1.md)。
+发布详情见 [v0.4.0](releases/v0.4.0.md)、[v0.4.1](releases/v0.4.1.md)、[v0.5.0](releases/v0.5.0.md)、[v0.5.1](releases/v0.5.1.md)、[v0.5.2](releases/v0.5.2.md)。
