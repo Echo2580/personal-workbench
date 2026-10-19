@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import json
 import threading
-import uuid
 import time
-import urllib.parse
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -34,6 +33,12 @@ CITY_FALLBACK: dict[str, tuple[float, float]] = {
     "苏州": (31.2989, 120.5853),
     "上海": (31.2304, 121.4737),
 }
+
+# 地理编码：中文短名常与外地乡镇重名（「洛阳」会先命中福建洛阳镇），
+# 因此同时查原名和「原名+市」，按名称匹配/人口挑候选；还不够像城市时用拼音兜底。
+GEOCODE_COUNT = 20
+CITY_POPULATION_HINT = 100_000
+_PLACE_SUFFIXES = ("市", "县", "区", "旗", "盟", "镇", "乡")
 
 WEATHER_CODES = {
     0: "晴",
@@ -96,20 +101,113 @@ def _condition(code: Any) -> str:
         return "天气未知"
 
 
+def _is_chinese(text: str) -> bool:
+    return any("\u4e00" <= char <= "\u9fff" for char in text)
+
+
+def _normalise_place_name(name: object) -> str:
+    """去掉行政区划后缀再比较，让「洛阳」与「洛阳市」算同一个名字。"""
+    text = str(name or "").strip()
+    for suffix in _PLACE_SUFFIXES:
+        if len(text) > len(suffix) and text.endswith(suffix):
+            return text[: -len(suffix)]
+    return text
+
+
+def _population_of(item: dict[str, Any]) -> int:
+    try:
+        return int(item.get("population") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _search_geocode(client: httpx.Client, name: str, language: str = "zh") -> list[dict[str, Any]]:
+    response = client.get(
+        GEOCODE_URL,
+        params={"name": name, "count": GEOCODE_COUNT, "language": language, "format": "json"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    results = payload.get("results") if isinstance(payload, dict) else None
+    if not isinstance(results, list):
+        return []
+    return [
+        item
+        for item in results
+        if isinstance(item, dict)
+        and isinstance(item.get("latitude"), (int, float))
+        and isinstance(item.get("longitude"), (int, float))
+    ]
+
+
+def _pick_city_candidate(candidates: list[dict[str, Any]], city: str) -> dict[str, Any] | None:
+    """名称匹配优先，其次人口，最后国内结果；避免被同名乡镇/邻市挤掉。"""
+    target = _normalise_place_name(city)
+
+    def score(item: dict[str, Any]) -> tuple[int, int, int]:
+        exact = 1 if _normalise_place_name(item.get("name")) == target else 0
+        return (exact, _population_of(item), 1 if item.get("country_code") == "CN" else 0)
+
+    return max(candidates, key=score) if candidates else None
+
+
+def _pick_by_relevance(candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """拼音查询按 Open-Meteo 相关度排序返回；优先国内结果，避免同名国外城市。"""
+    if not candidates:
+        return None
+    for item in candidates:
+        if item.get("country_code") == "CN":
+            return item
+    return candidates[0]
+
+
+def _pinyin_name(city: str) -> str:
+    """中文转无音调拼音（「信阳」→ xinyang）；依赖缺失时返回空串，退化为原名查询。"""
+    try:
+        from pypinyin import lazy_pinyin
+    except Exception:  # noqa: BLE001 - 可选依赖缺失不阻塞天气
+        return ""
+    try:
+        return "".join(lazy_pinyin(city, errors="ignore")).strip()
+    except Exception:  # noqa: BLE001 - 拼音库异常不阻塞天气
+        return ""
+
+
 def _geocode(client: httpx.Client, city: str) -> tuple[float, float]:
     if city in CITY_FALLBACK:
         return CITY_FALLBACK[city]
+
+    queries = [city]
+    if _is_chinese(city) and not city.endswith(_PLACE_SUFFIXES):
+        queries.append(city + "市")
     try:
-        response = client.get(
-            GEOCODE_URL,
-            params={"name": city, "count": 1, "language": "zh", "format": "json"},
-        )
-        response.raise_for_status()
-        results = response.json().get("results") or []
-        if results:
-            return float(results[0]["latitude"]), float(results[0]["longitude"])
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        pass
+        candidates: list[dict[str, Any]] = []
+        for query in queries:
+            candidates.extend(_search_geocode(client, query))
+    except httpx.HTTPError as exc:
+        raise HomeServiceError("weather_unavailable", "天气服务暂时不可用。", 503) from exc
+
+    if _is_chinese(city):
+        best = _pick_city_candidate(candidates, city)
+        # 中文索引里有些城市缺失（如「信阳」「昆山」），人口不像城市时再用拼音查一次。
+        if _population_of(best or {}) < CITY_POPULATION_HINT:
+            pinyin_query = _pinyin_name(city)
+            if pinyin_query and pinyin_query.lower() != city.lower():
+                try:
+                    pinyin_candidates = _search_geocode(client, pinyin_query)
+                except httpx.HTTPError:
+                    pinyin_candidates = []
+                pinyin_best = _pick_by_relevance(pinyin_candidates)
+                if pinyin_best is not None and _population_of(pinyin_best) > _population_of(
+                    best or {}
+                ):
+                    best = pinyin_best
+    else:
+        # 英文名按 Open-Meteo 相关度取第一条（例如 Luoyang 第一条就是河南洛阳）。
+        best = candidates[0] if candidates else None
+
+    if best is not None:
+        return float(best["latitude"]), float(best["longitude"])
     raise HomeServiceError("city_not_found", f"找不到城市「{city}」的坐标。", 404)
 
 

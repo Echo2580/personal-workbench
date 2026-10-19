@@ -12,6 +12,7 @@ idna==3.20
 opentelemetry-api==1.45.1
 pydantic==2.14.1
 pydantic-core==2.50.1
+pypinyin==0.55.0
 python-multipart==0.0.20
 pywin32==312
 starlette==1.8.0
