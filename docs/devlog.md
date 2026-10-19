@@ -378,6 +378,15 @@ Windows 实测纠正了 pywin32 无名 Job 参数（空字符串）以及测试�
 - 说明：识别规则变化会改变既有自动项目的类型/配方（例如 Go 项目内部 panel 不再被当作独立 web 项目），首次执行新配方仍需按配方指纹确认；覆盖率样本口径与已知限制见同日验收记录。独立复核（只读）发现的弱边界、Go 无 main、报告 HTML 误报、失焦抢焦点、输入法 Enter 等问题已在提交前修复并补回归。
 
 
+## 2026-10-19：随手记支持查看全文、编辑与多行输入
+
+- 后端（`app/modules/home/services.py`）：新增 `_note_text_lines` 规范化——统一 CRLF/CR→LF、除换行外控制符转空格、去首尾空白，**保留行内连续空格与换行**；单条上限 500→1000（POST/PUT 超长仍 422）；旧 `notes.json` 与 legacy `lines` 读取兼容并按新规则规范化。
+- 前端（`app/web/pages/home.js`、`theme.css`）：首页卡片摘要 2 行，点击打开「随手记」详情弹窗（完整正文、创建时间、复制全文、编辑保存、转待办、删除）；全部随手记抽屉每条第 3 行摘要 +「查看全文」；输入改为多行 textarea（Enter 保存、Shift+Enter 换行，输入法 composition 保护）；补齐本地未编译的 `whitespace-pre-wrap` / `break-words` / `leading-6` / `resize-none` 工具类。
+- 交互：弹层按打开顺序置顶、Esc 只关最上层（抽屉→详情；编辑态 Esc 先回查看）；保存后焦点回编辑按钮、关闭时按 note id 找回触发项；编辑态隐藏复制/转待办/删除避免与未保存内容不一致；多行笔记转待办时标题折叠为单行。
+- 测试：单测更新/新增（多行保留、CRLF/控制符、1000 边界、旧数据规范化）；浏览器新增 8 例（长文摘要+详情全文、抽屉逐条查看全文、编辑保存持久、编辑 Esc、textarea Enter/Shift+Enter、抽屉/详情叠层与 Esc、转待办标题折叠、390 布局与复制失败降级）并同步既有深链搜索断言（搜索结果直接开详情）。
+- 全量回归 **995 passed / 4 skipped**（357.17s）；独立只读复核发现的深链测试同步与叠层/Esc 顺序问题已在提交前修复并补回归。
+
+
 ## 2026-10-19：数据根迁入项目内；新建待办提醒可选自定义/绝对时间
 
 - 数据：默认数据根从 `%LOCALAPPDATA%\PersonalWorkbench` 迁到 `<项目根>/data`（开发版 `wb\data`、稳定版 `wb-stable\data`），`--data-dir` / `WORKBENCH_DATA_DIR` 仍可覆盖；`.gitignore` 忽略 `/data/`，启动脚本、README、release 文档与 `tools/detection_report.py` 同步更新。
