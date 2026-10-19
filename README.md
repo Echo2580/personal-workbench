@@ -116,7 +116,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 
 - `wb`（主仓库 `main`）：**开发版**，功能与修复先在这里完成并通过回归
 - `wb-stable`（独立 worktree）：**稳定版**，日常运行的是它（端口 17843），开发过程中不直接改动
-- 每次把开发版迁移到稳定版时，都会给对应提交打 Git tag，当前稳定版为 **[v0.5.0](docs/releases/v0.5.0.md)**
+- 每次把开发版迁移到稳定版时，都会给对应提交打 Git tag，当前稳定版为 **[v0.5.1](docs/releases/v0.5.1.md)**
 
 发布和回滚流程见 [docs/release.md](docs/release.md)。
 
@@ -128,7 +128,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 - **首页与全局搜索**：真实任务与日程、天气、世界快讯、常用入口、随手记、可编辑大字与「我的空间」资料面板，以及跨页面搜索——已完成
 - **界面与数据**：全站深色风格、浏览器窗口自适应、数据根跟着项目走（`wb\data` / `wb-stable\data`）、设置页备份与恢复——已完成
 
-最近一次完整自动回归为 **978 项通过、4 项按规则跳过**。跳过项涉及真实模型调用、原项目路径依赖和 Windows 符号链接权限，具体说明见 [v0.5.0 发布记录](docs/releases/v0.5.0.md)。
+最近一次完整自动回归为 **995 项通过、4 项按规则跳过**。跳过项涉及真实模型调用、原项目路径依赖和 Windows 符号链接权限，具体说明见 [v0.5.1 发布记录](docs/releases/v0.5.1.md)。
 
 ## 后续计划
 
