@@ -5,6 +5,7 @@ from uuid import uuid4
 from .models import ScanResult, DetectedProject, utcnow
 from .detectors import detect_project
 from .recipes import generate_recipes
+from .metadata import project_name
 
 STRONG_MARKERS = ("package.json", "go.mod", "Cargo.toml", "pyproject.toml", "manage.py")
 
@@ -28,7 +29,30 @@ def root_boundary_is_weak(path, detection):
         for name in ("requirements.txt", "requirements-dev.txt")
     ):
         return False
+    if detection.type == "python" and any(
+        p.name.casefold() in {"readme.md", "readme.markdown"}
+        for p in Path(path).iterdir()
+        if p.is_file()
+    ):
+        return False
     return True
+
+
+def internal_project_root(path, settings):
+    path = Path(path)
+    for parent in (path, *path.parents):
+        if parent.name.casefold() not in {
+            ".venv",
+            "venv",
+            "node_modules",
+            "__pycache__",
+            ".git",
+        }:
+            continue
+        root = parent.parent
+        if root.is_dir() and not is_link(root) and detect_project(root, settings):
+            return root
+    return None
 
 
 def normalize_project_path(path):
@@ -52,8 +76,9 @@ def scan_roots(settings, manual_paths, scan_id=None):
     count = 0
     limited = False
     excluded = {n.casefold() for n in settings.excluded_names}
+    explicit_roots = {normalize_project_path(raw) for raw in settings.roots}
 
-    def visit(path, depth):
+    def visit(path, depth, inside_web=False):
         nonlocal count, limited
         key = normalize_project_path(path)
         if key in visited:
@@ -69,11 +94,19 @@ def scan_roots(settings, manual_paths, scan_id=None):
             visited.add(key)
             count += 1
             detection = detect_project(path, settings, warnings)
+            # A site's HTML fixtures are internal; independent manifest projects remain discoverable.
+            if (
+                inside_web
+                and detection
+                and detection.type == "web"
+                and key not in explicit_roots
+            ):
+                detection = None
             if detection:
                 recipe_set = generate_recipes(detection, settings)
                 projects[key] = DetectedProject(
                     id=project_id(path),
-                    name=path.name,
+                    name=project_name(path),
                     path=str(path),
                     type=detection.type,
                     recipes=recipe_set.recipes,
@@ -117,7 +150,11 @@ def scan_roots(settings, manual_paths, scan_id=None):
                     warnings.append(f"{path}：已达到深度限制")
                 return
             for child in children:
-                visit(child, depth + 1)
+                visit(
+                    child,
+                    depth + 1,
+                    inside_web or bool(detection and detection.type == "web"),
+                )
         except OSError as e:
             warnings.append(f"{path}：{e}")
 
@@ -178,7 +215,7 @@ def scan_roots(settings, manual_paths, scan_id=None):
             typ = "other"
         projects[key] = DetectedProject(
             id=project_id(path),
-            name=path.name,
+            name=project_name(path),
             path=str(path),
             type=typ,
             manual=True,

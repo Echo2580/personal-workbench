@@ -180,7 +180,7 @@ def test_node_script_priority_and_all_recipes(tmp_path):
 
 
 def test_node_main_field_fallback(tmp_path):
-    write(tmp_path, "lib/entry.js", "")
+    write(tmp_path, "lib/entry.js", "require('http').createServer(() => {}).listen(3000);")
     package_json(tmp_path, {"main": "./lib/entry.js"})
     d = detect_project(tmp_path, ProjectSettings())
     assert d.type == "node"
@@ -203,7 +203,7 @@ def test_node_main_field_outside_project_is_ignored(tmp_path):
 
 def test_node_missing_main_falls_back_to_single_entry(tmp_path):
     package_json(tmp_path, {"main": "./missing.js"})
-    write(tmp_path, "server.mjs", "")
+    write(tmp_path, "server.mjs", "import http from 'node:http'; http.createServer(() => {}).listen(3000);")
     d = detect_project(tmp_path, ProjectSettings())
     assert d.entry_candidates == ["server.mjs"]
     assert any("server.mjs" in item for item in d.evidence)
@@ -253,7 +253,7 @@ def test_node_scripts_win_over_framework_inference(tmp_path):
 
 
 def test_manifestless_single_node_entry(tmp_path):
-    write(tmp_path, "server.mjs", "")
+    write(tmp_path, "server.mjs", "import http from 'node:http'; http.createServer(() => {}).listen(3000);")
     d = detect_project(tmp_path, ProjectSettings())
     assert d.type == "node"
     assert d.entry_candidates == ["server.mjs"]
@@ -264,7 +264,7 @@ def test_manifestless_single_node_entry(tmp_path):
 
 def test_manifestless_node_yields_to_static_html(tmp_path):
     write(tmp_path, "index.html", "<h1>x</h1>")
-    write(tmp_path, "server.mjs", "")
+    write(tmp_path, "server.mjs", "import http from 'node:http'; http.createServer(() => {}).listen(3000);")
     assert detect_project(tmp_path, ProjectSettings()).type == "web"
 
 

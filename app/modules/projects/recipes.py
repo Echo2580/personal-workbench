@@ -103,7 +103,7 @@ def generate_recipes(detection, settings):
                         args=[entry],
                     )
                 )
-    elif detection.type == "go":
+    elif detection.type == "go" and len(detection.entry_candidates) <= 1:
         recipes.append(
             Recipe(
                 id="run-go",

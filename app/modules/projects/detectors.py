@@ -36,12 +36,30 @@ NODE_ENTRY_FILES = (
 )
 # (框架, 配置前缀, 允许后缀, 推断命令, 展示名)
 NODE_FRAMEWORKS = (
-    ("next", "next.config", (".js", ".mjs", ".cjs", ".ts", ".mts"), ("next", "dev"), "Next"),
+    (
+        "next",
+        "next.config",
+        (".js", ".mjs", ".cjs", ".ts", ".mts"),
+        ("next", "dev"),
+        "Next",
+    ),
     ("nuxt", "nuxt.config", (".js", ".mjs", ".cjs", ".ts"), ("nuxt", "dev"), "Nuxt"),
-    ("astro", "astro.config", (".js", ".mjs", ".cjs", ".ts"), ("astro", "dev"), "Astro"),
+    (
+        "astro",
+        "astro.config",
+        (".js", ".mjs", ".cjs", ".ts"),
+        ("astro", "dev"),
+        "Astro",
+    ),
     ("svelte", "svelte.config", (".js", ".mjs", ".cjs", ".ts"), ("vite",), "Svelte"),
     ("angular", "angular.json", (), ("ng", "serve"), "Angular"),
-    ("vite", "vite.config", (".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"), ("vite",), "Vite"),
+    (
+        "vite",
+        "vite.config",
+        (".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"),
+        ("vite",),
+        "Vite",
+    ),
 )
 PACKAGE_MANAGERS = ("npm", "pnpm", "yarn", "bun")
 PACKAGE_LOCKS = (
@@ -124,7 +142,9 @@ def _main_guard_candidates(names, warn):
         except (OSError, ValueError, SyntaxError) as e:
             warn(e)
     order = {name: index for index, name in enumerate(PYTHON_ENTRY_PRIORITY)}
-    candidates.sort(key=lambda name: (order.get(name.casefold(), len(order)), name.casefold()))
+    candidates.sort(
+        key=lambda name: (order.get(name.casefold(), len(order)), name.casefold())
+    )
     return candidates
 
 
@@ -158,11 +178,26 @@ def _node_framework(names):
             matched = (
                 low == prefix
                 if not suffixes
-                else low.startswith(prefix) and low[len(prefix):] in suffixes
+                else low.startswith(prefix) and low[len(prefix) :] in suffixes
             )
             if matched:
                 return framework, item.name, command, label
     return None
+
+
+def _node_runtime_entry(path):
+    try:
+        source = limited_read(path)
+    except (OSError, ValueError):
+        return False
+    if re.search(r"\b(?:window|document|localStorage|sessionStorage)\s*[.\[]", source):
+        return False
+    return bool(
+        re.search(
+            r"(?m)^#![^\n]*\bnode\b|\b(?:require\s*\(\s*|from\s*)['\"](?:node:)?(?:http|https|net|express|fastify)['\"]|\bprocess\.argv\b",
+            source,
+        )
+    )
 
 
 def _node_main_entry(path, package):
@@ -172,7 +207,7 @@ def _node_main_entry(path, package):
     relative = Path(main.strip())
     if relative.is_absolute() or ".." in relative.parts:
         return ""
-    if not plain_file(path / relative):
+    if not plain_file(path / relative) or not _node_runtime_entry(path / relative):
         return ""
     return main.strip()
 
@@ -180,11 +215,9 @@ def _node_main_entry(path, package):
 def _node_single_entry(names):
     wanted = {name.casefold() for name in NODE_ENTRY_FILES}
     found = [
-        item.name
-        for item in names
-        if plain_file(item) and item.name.casefold() in wanted
+        item for item in names if plain_file(item) and item.name.casefold() in wanted
     ]
-    return found[0] if len(found) == 1 else ""
+    return found[0].name if len(found) == 1 and _node_runtime_entry(found[0]) else ""
 
 
 def _detect_node(path, names, warn):
@@ -293,6 +326,7 @@ def _detect_go(path, names, warn):
             subdirs = _sorted_children(cmd)
         except OSError as e:
             warn(e)
+        entries = []
         for subdir in subdirs:
             try:
                 files = sorted(
@@ -309,14 +343,23 @@ def _detect_go(path, names, warn):
             for item in files:
                 if _package_main_go(item, warn):
                     relative = f"./cmd/{subdir.name}"
-                    return Detection(
-                        path=str(path),
-                        type="go",
-                        entry_candidates=[relative],
-                        evidence=[
-                            f"go.mod；cmd 入口：cmd/{subdir.name}/{item.name}（package main）"
-                        ],
+                    entries.append(relative)
+                    break
+        if entries:
+            return Detection(
+                path=str(path),
+                type="go",
+                entry_candidates=entries,
+                evidence=[
+                    "go.mod；cmd 入口："
+                    + ", ".join(entries)
+                    + (
+                        "；多个入口，请选择服务入口并编辑配方"
+                        if len(entries) > 1
+                        else "（package main）"
                     )
+                ],
+            )
     # 没有 package main 的 go.mod 多为库，不作为可启动项目（保持保守口径）。
     return None
 
@@ -329,9 +372,7 @@ def _detect_rust(path):
     src = path / "src"
     if not plain_dir(src) or not plain_file(src / "main.rs"):
         return None
-    return Detection(
-        path=str(path), type="rust", evidence=["Cargo.toml；src/main.rs"]
-    )
+    return Detection(path=str(path), type="rust", evidence=["Cargo.toml；src/main.rs"])
 
 
 def _detect_python(path, names, warn):
@@ -369,8 +410,7 @@ def _detect_python(path, names, warn):
             path=str(path), type="python", evidence=["pyproject 项目定义；需选择入口"]
         )
     has_readme = any(
-        item.name.casefold().startswith("readme") and plain_file(item)
-        for item in names
+        item.name.casefold().startswith("readme") and plain_file(item) for item in names
     )
     requirements = next(
         (
@@ -422,9 +462,7 @@ def _detect_web(path, names):
     )
     if not htmls:
         return None
-    index = next(
-        (item for item in htmls if item.name.casefold() == "index.html"), None
-    )
+    index = next((item for item in htmls if item.name.casefold() == "index.html"), None)
     chosen = index or htmls[0]
     if index is not None:
         evidence = (

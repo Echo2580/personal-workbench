@@ -11,7 +11,9 @@ from .models import (
     ProjectName,
     utcnow,
 )
-from .scanner import scan_roots, project_id, is_link
+from .scanner import scan_roots, project_id, is_link, internal_project_root
+from .metadata import project_name
+from .launch_checks import validate_launch_recipe
 from .detectors import detect_project
 from .recipes import generate_recipes, recipe_fingerprint
 from .settings import validate_settings
@@ -215,7 +217,7 @@ class ProjectService:
                         typ = "other"
                     projects[pid] = DetectedProject(
                         id=pid,
-                        name=row.get("name") or Path(row["path"]).name,
+                        name=row.get("name") or project_name(row["path"]),
                         path=row["path"],
                         type=typ,
                         recipes=rs.recipes,
@@ -265,8 +267,11 @@ class ProjectService:
                         p.last_run = run
                     if run["status"] in ("launching", "running", "stopping"):
                         p.active_run = run
+            manual_defaults = {project_id(row["path"]): row.get("name") for row in self.manual}
             for p in projects.values():
-                p.default_name = p.default_name or p.name
+                p.default_name = manual_defaults.get(p.id) or (
+                    project_name(p.path) if Path(p.path).is_dir() else p.default_name or p.name
+                )
                 p.has_custom_name = p.id in self.names
                 p.name = (
                     self.names[p.id]["name"] if p.has_custom_name else p.default_name
@@ -419,6 +424,14 @@ class ProjectService:
             raise WorkbenchError(
                 "invalid_project_path", "请填写存在且不是链接的目录绝对路径。", 422
             )
+        suggested = internal_project_root(p, self.settings)
+        if suggested:
+            raise WorkbenchError(
+                "project_internal_directory",
+                f"这是项目的环境或依赖内部目录，请改为添加项目根目录：{suggested}",
+                422,
+                {"suggested_root": str(suggested)},
+            )
         path = normalize_project_path(p)
         with self.lock:
             self.refresh_config()
@@ -569,6 +582,7 @@ class ProjectService:
                     "project_missing", "项目目录不存在，请恢复目录。", 422
                 )
             if r.kind == "command":
+                validate_launch_recipe(r)
                 result = {"run": self.runtime.launch(p, r)}
             else:
                 from .actions import OpenActionService

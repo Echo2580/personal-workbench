@@ -116,7 +116,7 @@ def test_go_rust_single_html_requirements_and_manifestless_node(tmp_path):
     make(tmp_path / "原型", "personal-workbench_home.html", "<h1>x</h1>")
     make(tmp_path / "章节", "requirements.txt", "requests\n")
     make(tmp_path / "章节", "README.md", "运行 python -m app")
-    make(tmp_path / "nodeapp", "server.mjs", "")
+    make(tmp_path / "nodeapp", "server.mjs", "import http from 'node:http'; http.createServer(() => {}).listen(3000);")
     result = scan_roots(ProjectSettings(roots=[str(tmp_path)]), [])
     by_name = {Path(p.path).name: p for p in result.projects}
     assert set(by_name) == {"goapp", "rustapp", "原型", "章节", "nodeapp"}
