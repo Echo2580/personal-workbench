@@ -15,7 +15,9 @@ from .scanner import scan_roots, project_id, is_link, internal_project_root
 from .metadata import project_name
 from .launch_checks import validate_launch_recipe
 from .detectors import detect_project
-from .recipes import generate_recipes, recipe_fingerprint
+from .recipes import generate_recipes, recipe_fingerprint, project_python
+from .scripts import discover_scripts, validate_script_path
+from .windows_job import command_line, recipe_execution
 from .settings import validate_settings
 from .store import ProjectStore
 from ...core.config_files import read_toml, write_toml_atomic, read_json, write_json
@@ -245,6 +247,16 @@ class ProjectService:
                         p.primary_recipe_id = rs.primary_recipe_id
                 if not Path(p.path).is_dir() and p.availability != "root_unavailable":
                     p.availability = "missing"
+                for recipe in p.recipes:
+                    if recipe.kind == "script":
+                        target = Path(recipe.target)
+                        if not target.is_absolute():
+                            recipe.target = str(Path(p.path) / target)
+                        recipe.program = (
+                            project_python(p.path, self.settings)
+                            if target.suffix.lower() == ".py"
+                            else None
+                        )
                 actions = [a for a in history if a.get("project_id") == p.id]
                 if actions:
                     p.last_action_at = max(a.get("created_at", "") for a in actions)
@@ -316,11 +328,17 @@ class ProjectService:
                     for r in p.recipes
                 ],
                 "primary_recipe_id": p.primary_recipe_id,
+                "execution": {r.id: recipe_execution(r) for r in p.recipes},
             }
+
+    def script_candidates(self, pid):
+        with self.lock:
+            p = self.project(pid)
+            return discover_scripts(p.path, self.settings)
 
     def check_recipe_paths(self, p, rs):
         for r in rs.recipes:
-            if r.kind in ("command", "app") and (
+            if r.kind in ("command", "script", "app") and (
                 not Path(r.cwd).is_absolute() or not Path(r.cwd).is_dir()
             ):
                 raise WorkbenchError(
@@ -329,6 +347,10 @@ class ProjectService:
                     422,
                     {"recipe_id": r.id},
                 )
+            if r.kind == "script":
+                validate_script_path(p.path, r.target)
+                if Path(r.target).suffix.lower() in (".bat", ".cmd"):
+                    command_line(r)
             if r.kind == "url" and not r.target.startswith(("http://", "https://")):
                 target = Path(r.target)
                 inside = False
@@ -358,6 +380,14 @@ class ProjectService:
         with self.lock:
             self.refresh_config()
             p = self.project(pid)
+            for recipe in draft.recipes:
+                if recipe.kind == "script":
+                    recipe.target = str(validate_script_path(p.path, recipe.target))
+                    recipe.program = (
+                        project_python(p.path, self.settings)
+                        if Path(recipe.target).suffix.lower() == ".py"
+                        else None
+                    )
             self.check_recipe_paths(p, draft)
             if p.active_run:
                 rid = p.active_run["recipe_id"]
@@ -581,8 +611,9 @@ class ProjectService:
                 raise WorkbenchError(
                     "project_missing", "项目目录不存在，请恢复目录。", 422
                 )
-            if r.kind == "command":
-                validate_launch_recipe(r)
+            if r.kind in ("command", "script"):
+                if r.kind == "command":
+                    validate_launch_recipe(r)
                 result = {"run": self.runtime.launch(p, r)}
             else:
                 from .actions import OpenActionService

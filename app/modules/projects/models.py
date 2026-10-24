@@ -50,11 +50,12 @@ class ProjectSettings(DTO):
 class Recipe(DTO):
     id: str = Field(min_length=1, max_length=100)
     label: str = Field(min_length=1, max_length=120)
-    kind: Literal["command", "app", "directory", "url"]
+    kind: Literal["command", "script", "app", "directory", "url"]
     cwd: str | None = None
     program: str | None = None
     args: list[str] = Field(default_factory=list)
     shell_command: str | None = None
+    shell: Literal["cmd", "powershell"] = "cmd"
     target: str | None = None
 
     @model_validator(mode="after")
@@ -67,9 +68,24 @@ class Recipe(DTO):
                 or not self.cwd
                 or self.target
             ):
-                raise ValueError("命令需要工作目录，且原生命令和 CMD 命令必须二选一")
+                raise ValueError("命令需要工作目录，且原生命令和 Shell 命令必须二选一")
             if self.shell_command and self.args:
-                raise ValueError("CMD 命令不接受独立参数")
+                raise ValueError("Shell 命令不接受独立参数")
+            if self.program and self.shell != "cmd":
+                raise ValueError("原生命令不使用 Shell；请选择自定义命令")
+        elif self.kind == "script":
+            from pathlib import Path
+
+            if (
+                not self.target
+                or not self.cwd
+                or self.shell_command
+                or Path(self.target).suffix.lower()
+                not in {".bat", ".cmd", ".ps1", ".py"}
+            ):
+                raise ValueError("运行脚本需要工作目录和 .bat/.cmd/.ps1/.py 路径")
+            if self.shell != "cmd":
+                raise ValueError("脚本按扩展名选择执行器")
         elif self.kind == "app":
             if not self.program or not self.cwd or self.shell_command or self.target:
                 raise ValueError("应用需要程序与工作目录")
@@ -93,6 +109,17 @@ class Recipe(DTO):
                         and Path(self.target).suffix.lower() == ".html"
                     ):
                         raise ValueError("只允许 http/https 或项目内 .html 绝对路径")
+        if any(
+            "\x00" in value
+            for value in [
+                self.program or "",
+                self.cwd or "",
+                self.target or "",
+                self.shell_command or "",
+                *self.args,
+            ]
+        ):
+            raise ValueError("命令和路径不能包含空字符")
         return self
 
 

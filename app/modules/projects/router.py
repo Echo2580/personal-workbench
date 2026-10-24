@@ -60,6 +60,10 @@ def create_router(service):
     def recipes(pid: str):
         return service.get_recipes(pid)
 
+    @router.get("/projects/{pid}/scripts")
+    def scripts(pid: str):
+        return service.script_candidates(pid)
+
     @router.put("/projects/{pid}/recipes")
     def save(pid: str, body: RecipeSet, if_match: str = Header()):
         return service.save_recipes(pid, body, if_match.strip('"'))

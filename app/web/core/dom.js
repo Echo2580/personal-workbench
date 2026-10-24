@@ -18,7 +18,21 @@ export function icon(name) {
   const paths={home:'M3 10 12 3l9 7v11h-6v-7H9v7H3z',projects:'M3 4h7v7H3z M14 4h7v7h-7z M3 15h7v6H3z M14 15h7v6h-7z',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2 M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',calendar:'M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4',folder:'M3 5h6l2 3h10v12H3z',code:'m8 7-5 5 5 5 m8-10 5 5-5 5 M14 4l-4 16',arrow:'M5 12h14 m-6-6 6 6-6 6'};
   const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('viewBox','0 0 24 24');n.setAttribute('class','icon');n.setAttribute('aria-hidden','true');const p=document.createElementNS(n.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.code);n.append(p);return n;
 }
-export function displayRecipe(r) {return r.shell_command||[r.program,...(r.args||[])].filter(Boolean).map(v=>/[\s"]/.test(v)?'"'+v.replaceAll('"','\\"')+'"':v).join(' ')||r.target;}
+export const managedRecipe=r=>['command','script'].includes(r.kind);
+export function recipeType(r) {
+ if(r.kind==='script')return /\.ps1$/i.test(r.target)?'Windows PowerShell 脚本':/\.py$/i.test(r.target)?'Python 脚本':'Windows CMD 脚本';
+ if(r.shell_command)return r.shell==='powershell'?'Windows PowerShell 命令':'Windows CMD 命令';
+ return {command:'原生程序',app:'打开应用',directory:'打开文件夹',url:'打开网页'}[r.kind];
+}
+export function displayRecipe(r) {
+ const quote=v=>'"'+v.replace(/(\\*)"/g,'$1$1\\"').replace(/(\\+)$/,'$1$1')+'"';
+ if(r.shell_command)return r.shell_command;
+ if(r.kind==='script'&&/\.ps1$/i.test(r.target))return '& '+[r.target,...(r.args||[])].map((v,i)=>i&&/^-[a-z_][a-z0-9_-]*(?::\$(?:true|false))?$/i.test(v)?v:"'"+v.replaceAll("'","''")+"'").join(' ');
+ if(r.kind==='script'&&/\.(bat|cmd)$/i.test(r.target))return [r.target,...(r.args||[])].map(v=>'"'+v+'"').join(' ');
+ const parts=r.kind==='script'?(/\.py$/i.test(r.target)?[r.program||'项目 Python',r.target,...(r.args||[])]:[r.target,...(r.args||[])]):[r.program,...(r.args||[])];
+ return parts.filter(v=>v!==undefined&&v!==null).map(v=>!v||/[\s"]/.test(v)?quote(v):v).join(' ')||r.target;
+}
+export function displayExecution(execution){return [execution?.command_line,...Object.entries(execution?.environment||{}).map(([key,value])=>key+' = '+JSON.stringify(value))].filter(Boolean).join('\n');}
 export async function copy(text,notify) {try{await navigator.clipboard.writeText(text);notify('已复制');}catch{notify('复制失败，请选中文本复制。',true);}}
 export function modal(title,content,actions,signal) {
  const previous=document.activeElement;

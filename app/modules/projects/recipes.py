@@ -137,6 +137,9 @@ def generate_recipes(detection, settings):
 
 def recipe_fingerprint(project_id, recipe):
     content = {"project_id": project_id, **recipe.model_dump()}
+    # Preserve approvals for old recipes whose implicit Shell was CMD.
+    if content["shell"] == "cmd":
+        del content["shell"]
     return hashlib.sha256(
         json.dumps(
             content, sort_keys=True, ensure_ascii=False, separators=(",", ":")

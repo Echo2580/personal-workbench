@@ -2,7 +2,7 @@ import logging
 import threading
 from pathlib import Path
 from uuid import uuid4
-from .windows_job import WindowsJob
+from .windows_job import WindowsJob, recipe_execution
 from .models import utcnow
 from ...core.config_files import read_json, write_json, file_lock
 from ...core.contracts import WorkbenchError
@@ -120,7 +120,10 @@ class RuntimeManager:
             self.runs[rid] = run
             self._persist()
             try:
+                run["execution"] = recipe_execution(recipe)
                 handle = self.adapter.start(recipe)
+                if getattr(handle, "command_line", ""):
+                    run["execution"]["command_line"] = handle.command_line
                 self.handles[rid] = handle
                 run.update(status="running", started_at=utcnow(), pid=handle.pid)
                 self._refresh()

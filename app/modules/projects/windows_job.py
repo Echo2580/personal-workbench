@@ -1,4 +1,5 @@
 import os
+import base64
 import re
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ class JobHandle:
     process: object
     pid: int
     closed: bool = False
+    command_line: str = ""
 
 
 def resolve_program(program):
@@ -32,8 +34,99 @@ def resolve_program(program):
     return str(Path(found).resolve())
 
 
+def recipe_execution(recipe):
+    if recipe.kind not in ("command", "script"):
+        return None
+    try:
+        result = {"command_line": command_line(recipe)[1]}
+        if batch_environment(recipe):
+            result["environment"] = batch_environment(recipe)
+        return result
+    except WorkbenchError as e:
+        return {"error": str(e)}
+
+
+def powershell_source(recipe):
+    if recipe.kind == "script":
+
+        def quote(value):
+            return "'" + value.replace("'", "''") + "'"
+
+        args = [
+            v
+            if re.fullmatch(
+                r"-[a-zA-Z_][a-zA-Z0-9_-]*(?::\$(?:true|false))?", v, re.IGNORECASE
+            )
+            else quote(v)
+            for v in recipe.args
+        ]
+        return "& " + " ".join([quote(recipe.target), *args])
+    return recipe.shell_command
+
+
+def powershell_program():
+    return str(
+        Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        / "System32"
+        / "WindowsPowerShell"
+        / "v1.0"
+        / "powershell.exe"
+    )
+
+
+def batch_environment(recipe):
+    if recipe.kind != "script" or Path(recipe.target).suffix.lower() not in (
+        ".bat",
+        ".cmd",
+    ):
+        return {}
+    return {
+        "__WB_SCRIPT": recipe.target,
+        **{f"__WB_ARG_{i}": value for i, value in enumerate(recipe.args)},
+    }
+
+
 def command_line(recipe):
     cmd = os.environ.get("COMSPEC", r"C:\Windows\System32\cmd.exe")
+    if (recipe.shell_command and recipe.shell == "powershell") or (
+        recipe.kind == "script" and Path(recipe.target).suffix.lower() == ".ps1"
+    ):
+        program = resolve_program(powershell_program())
+        source = powershell_source(recipe)
+        # UTF-16LE avoids Windows command-line quoting and console code-page loss.
+        wrapped = (
+            "& {\n"
+            + source
+            + "\nif (-not $?) { if ($LASTEXITCODE) { exit $LASTEXITCODE }; exit 1 }; if ($LASTEXITCODE) { exit $LASTEXITCODE }\n}"
+        )
+        encoded = base64.b64encode(wrapped.encode("utf-16-le")).decode("ascii")
+        return program, subprocess.list2cmdline(
+            [program, "-NoLogo", "-NoProfile", "-EncodedCommand", encoded]
+        )
+    if recipe.kind == "script":
+        if Path(recipe.target).suffix.lower() == ".py":
+            program = resolve_program(recipe.program)
+            return program, subprocess.list2cmdline(
+                [program, recipe.target, *recipe.args]
+            )
+        if any(
+            c in value
+            for value in [recipe.target, *recipe.args]
+            for c in ('"', "\r", "\n")
+        ):
+            raise WorkbenchError(
+                "batch_arguments",
+                "批处理路径或参数不支持字面双引号和换行。请改用自定义 CMD 命令，按脚本约定填写完整 CMD 语法。",
+                422,
+                recovery_action="edit_recipe",
+            )
+        # Single-pass environment expansion preserves literal % and metacharacters.
+        # Do not use CALL or caret escaping: both change normal batch %~1 values.
+        inner = '"%__WB_SCRIPT%"' + "".join(
+            ' "%__WB_ARG_' + str(i) + '%"' if value else ' ""'
+            for i, value in enumerate(recipe.args)
+        )
+        return cmd, f'"{cmd}" /d /v:off /s /c "{inner}"'
     if recipe.shell_command:
         return cmd, f'"{cmd}" /d /s /c "{recipe.shell_command}"'
     program = resolve_program(recipe.program)
@@ -75,6 +168,7 @@ class WindowsJob:
             win32api.SetHandleInformation(job, win32con.HANDLE_FLAG_INHERIT, 0)
             environment = dict(os.environ) if env is None else dict(env)
             environment.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
+            environment.update(batch_environment(recipe))
             startup = win32process.STARTUPINFO()
             startup.lpTitle = "个人工作台 · " + recipe.label
             process, thread, pid, _ = win32process.CreateProcess(
@@ -94,7 +188,7 @@ class WindowsJob:
             win32process.ResumeThread(thread)
             thread.Close()
             thread = None
-            return JobHandle(job, process, pid)
+            return JobHandle(job, process, pid, command_line=line)
         except Exception as e:
             if process:
                 try:
