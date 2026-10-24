@@ -79,7 +79,7 @@
 
 需要 **Windows + Python 3.12 或更高版本**，安装 Python 时包含 Python Launcher。首次安装依赖需要联网，日常界面不依赖 CDN 或 Node 构建工具。
 
-1. **获取代码**：日常试用建议打开[稳定版 v0.5.2 源码](https://github.com/Echo2580/personal-workbench/tree/v0.5.2)，选择 **Code → Download ZIP**，解压到自己选的目录。
+1. **获取代码**：日常试用建议打开[稳定版 v0.5.3 源码](https://github.com/Echo2580/personal-workbench/tree/v0.5.3)，选择 **Code → Download ZIP**，解压到自己选的目录。
 2. **安装依赖**：在解压后的仓库根目录双击 `install.cmd`。脚本会在当前仓库内创建专用 `.venv`，按锁文件安装依赖。
 3. **打开工作台**：安装完成后双击 `start.cmd`，服务就绪后会自动打开首页。以后日常使用都从这里进入。
 4. **接入项目**：进入“设置 → 扫描目录”，添加你存放项目的目录。只想用待办和笔记，也可以先跳过这一步。
@@ -87,7 +87,7 @@
 习惯使用 Git 的话，可以这样获取同一稳定版，再双击 `install.cmd`：
 
 ```powershell
-git clone --branch v0.5.2 --single-branch https://github.com/Echo2580/personal-workbench.git
+git clone --branch v0.5.3 --single-branch https://github.com/Echo2580/personal-workbench.git
 ```
 
 **普通用户只需要一个仓库目录。** 下方的稳定版 / 开发版双目录安排是本项目的开发方式，不是安装前提。
@@ -123,7 +123,7 @@ git clone --branch v0.5.2 --single-branch https://github.com/Echo2580/personal-w
 
 ## 稳定版与开发版
 
-截至 2026-10-19，当前稳定版为 **[v0.5.2](docs/releases/v0.5.2.md)**。GitHub 的 `main` 用于持续开发，可能包含尚未发布的改动；日常试用优先选择已发布的 tag。
+截至 2026-10-24，当前稳定版为 **[v0.5.3](docs/releases/v0.5.3.md)**。GitHub 的 `main` 用于持续开发，可能包含尚未发布的改动；日常试用优先选择已发布的 tag。
 
 我们本地采用两个目录，分别保留代码、Python 环境和数据：
 
@@ -138,11 +138,12 @@ git clone --branch v0.5.2 --single-branch https://github.com/Echo2580/personal-w
 
 ## 最近更新与验证
 
+- **v0.5.3**：改进项目边界与名称识别，修正 Node/Go 入口误判，增加内部目录提示、启动检查及失败详情；保留人工名称和配方。
 - **v0.5.2**：待办列表与详情统一使用删除确认弹窗，补充取消、失败重试和焦点恢复。
 - **v0.5.1**：随手记查看全文、编辑与多行输入，修复天气同名城市匹配。
 - **v0.5.0**：扩展项目识别，增加首页大字编辑与“我的空间”，支持自定义提醒，数据根迁入项目目录。
 
-**v0.5.2 发布前的完整自动回归记录为 1004 项通过、4 项跳过**；这是该版本的历史验证结果。范围与限制见[v0.5.2 发布记录](docs/releases/v0.5.2.md)，更完整的使用场景见[验收记录](docs/acceptance.md)。
+**v0.5.3 发布前的完整自动回归记录为 1036 项通过、4 项跳过**；这是该版本的历史验证结果。范围与限制见[v0.5.3 发布记录](docs/releases/v0.5.3.md)，更完整的使用场景见[验收记录](docs/acceptance.md)。
 
 ## 常见问题
 
