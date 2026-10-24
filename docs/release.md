@@ -80,6 +80,6 @@ git -C 'D:\AI实训project\个人工作台\wb' push origin v0.2.0
 | `v0.5.1` | 以 annotated tag 指向为准 | 随手记查看全文/编辑/多行输入（1000 字、保留换行）；天气城市地理编码修复（洛阳等被同名乡镇带偏，pypinyin 兜底）；995 passed、4 skipped，2026-10-19 |
 | `v0.5.2` | 以 annotated tag 指向为准 | 待办删除确认弹窗：列表行/详情头/详情底统一入口，默认焦点取消，删除失败可重试，焦点恢复；1004 passed、4 skipped，2026-10-19 |
 | `v0.5.3` | 以 annotated tag 指向为准 | 项目边界与名称识别、内部目录提示、Node/Go 启动入口纠正、启动检查与失败详情；2026-10-24 本机迁移，已同步 GitHub main 与 v0.5.3 tag |
-| `v0.5.4` | 以 annotated tag 指向为准 | 启动器自定义 CMD/Windows PowerShell 命令与项目内 .bat/.cmd/.ps1/.py 运行脚本（路径/参数/工作目录/主配方、有界只读候选）；保留指纹/原生命令/确认/运行锁/JobObject；2026-10-25 本机迁移至 wb-stable，未推送远端 |
+| `v0.5.4` | 以 annotated tag 指向为准 | 启动器自定义 CMD/Windows PowerShell 命令与项目内 .bat/.cmd/.ps1/.py 运行脚本（路径/参数/工作目录/主配方、有界只读候选）；保留指纹/原生命令/确认/运行锁/JobObject；2026-10-25 本机迁移至 wb-stable，同日推送 GitHub main 与 v0.5.4 tag，未创建 GitHub Release |
 
 发布详情见 [v0.5.4](releases/v0.5.4.md)、[v0.5.3](releases/v0.5.3.md)、[v0.4.0](releases/v0.4.0.md)、[v0.4.1](releases/v0.4.1.md)、[v0.5.0](releases/v0.5.0.md)、[v0.5.1](releases/v0.5.1.md)、[v0.5.2](releases/v0.5.2.md)。
